@@ -110,9 +110,9 @@ export class WAMonitoringService {
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instanceName: string) => {
       try {
-        await this.waInstances[instanceName].client?.logout();
+        await this.waInstances[instanceName]?.client.logout();
         delete this.waInstances[instanceName];
-      } catch (error) {}
+      } catch (_) {}
 
       try {
         if (this.db.ENABLED) {
@@ -137,7 +137,7 @@ export class WAMonitoringService {
   private noConnection() {
     this.eventEmitter.on('no.connection', async (instanceName) => {
       try {
-        this.waInstances[instanceName].client?.end(
+        this.waInstances[instanceName]?.client.end(
           new Boom('QR code limit reached, please login again', {
             statusCode: DisconnectReason.badSession,
           }),
