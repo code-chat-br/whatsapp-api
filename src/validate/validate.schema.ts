@@ -1,0 +1,482 @@
+import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
+import { v4 } from 'uuid';
+
+const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
+  const properties = {};
+  propertyNames.forEach(
+    (property) =>
+      (properties[property] = {
+        minLength: 1,
+        description: `The "${property}" cannot be empty`,
+      }),
+  );
+  return {
+    if: {
+      propertyNames: {
+        enum: [...propertyNames],
+      },
+    },
+    then: { properties },
+  };
+};
+
+// Instance Schema
+export const instanceNameSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    instanceName: { type: 'string' },
+  },
+  ...isNotEmpty('instanceName'),
+};
+
+export const oldTokenSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    oldToken: { type: 'string' },
+  },
+  required: ['oldToken'],
+  ...isNotEmpty('oldToken'),
+};
+
+// Send Message Schema
+const optionsSchema: JSONSchema7 = {
+  properties: {
+    delay: {
+      type: 'integer',
+      description: 'Enter a value in milliseconds',
+      title: 'Delay',
+    },
+    presence: {
+      type: 'string',
+      enum: ['unavailable', 'available', 'composing', 'recording', 'paused'],
+    },
+  },
+};
+
+const numberDefinition: JSONSchema7Definition = {
+  type: 'string',
+  pattern: '^\\d+$',
+  description: 'The number property must be a numeric string',
+};
+
+export const textMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    textMessage: {
+      type: 'object',
+      properties: {
+        text: { type: 'string' },
+      },
+      required: ['text'],
+      ...isNotEmpty('text'),
+    },
+  },
+  required: ['textMessage', 'number'],
+};
+
+export const mediaMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    mediaMessage: {
+      type: 'object',
+      properties: {
+        mediatype: { type: 'string', enum: ['image', 'document', 'video'] },
+        media: { type: 'string' },
+        fileName: { type: 'string' },
+        caption: { type: 'string' },
+      },
+      required: ['mediatype', 'media'],
+      ...isNotEmpty('fileName', 'caption'),
+    },
+  },
+  required: ['mediaMessage', 'number'],
+};
+
+export const buttonMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    buttonMessage: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        footerText: { type: 'string' },
+        buttons: {
+          type: 'array',
+          minItems: 1,
+          uniqueItems: true,
+          items: {
+            type: 'object',
+            properties: {
+              buttonText: { type: 'string' },
+              buttonId: { type: 'string' },
+            },
+            required: ['buttonText', 'buttonId'],
+            ...isNotEmpty('buttonText', 'buttonId'),
+          },
+        },
+        mediaMessage: {
+          type: 'object',
+          properties: {
+            media: { type: 'string' },
+            mediatype: { type: 'string', enum: ['image', 'document', 'video'] },
+          },
+          required: ['media', 'mediatype'],
+        },
+      },
+      required: ['title', 'description', 'buttons'],
+      ...isNotEmpty('title', 'description'),
+    },
+  },
+  required: ['number', 'buttonMessage'],
+};
+
+export const locationMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    locationMessage: {
+      type: 'object',
+      properties: {
+        latitude: { type: 'number' },
+        longitude: { type: 'number' },
+        name: { type: 'string' },
+        address: { type: 'string' },
+      },
+      required: ['latitude', 'longitude'],
+      ...isNotEmpty('name', 'addresss'),
+    },
+  },
+  required: ['number', 'locationMessage'],
+};
+
+export const listMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    listMessage: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        footerText: { type: 'string' },
+        buttonText: { type: 'string' },
+        sections: {
+          type: 'array',
+          minItems: 1,
+          uniqueItems: true,
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              rows: {
+                type: 'array',
+                minItems: 1,
+                uniqueItems: true,
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    description: { type: 'string' },
+                    rowId: { type: 'string' },
+                  },
+                  required: ['title', 'description', 'rowId'],
+                  ...isNotEmpty('title', 'description', 'rowId'),
+                },
+              },
+            },
+            required: ['title', 'rows'],
+            ...isNotEmpty('title'),
+          },
+        },
+      },
+      required: ['title', 'description', 'buttonText', 'sections'],
+      ...isNotEmpty('title', 'description', 'buttonText', 'footerText'),
+    },
+  },
+  required: ['number', 'listMessage'],
+};
+
+export const contactMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    contactMessage: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          fullName: { type: 'string' },
+          wuid: {
+            type: 'string',
+            minLength: 10,
+            pattern: '\\d+',
+            description: '"wuid" must be a numeric string',
+          },
+          phoneNumber: { type: 'string', minLength: 10 },
+        },
+        required: ['fullName', 'wuid', 'phoneNumber'],
+        ...isNotEmpty('fullName'),
+      },
+      minItems: 1,
+      uniqueItems: true,
+    },
+  },
+  required: ['number', 'contactMessage'],
+};
+
+export const reactionMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    reactionMessage: {
+      type: 'object',
+      properties: {
+        key: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            remoteJid: { type: 'string' },
+            fromMe: { type: 'boolean', enum: [true, false] },
+          },
+          required: ['id', 'remoteJid', 'fromMe'],
+          ...isNotEmpty('id', 'remoteJid'),
+        },
+        reaction: { type: 'string' },
+      },
+      required: ['key', 'reaction'],
+      ...isNotEmpty('reaction'),
+    },
+  },
+  required: ['reactionMessage'],
+};
+
+// Chat Schema
+export const whatsappNumberSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    numbers: {
+      type: 'array',
+      minItems: 1,
+      uniqueItems: true,
+      items: {
+        type: 'string',
+        pattern: '^\\d+',
+        description: '"numbers" must be an array of numeric strings',
+      },
+    },
+  },
+};
+
+export const readMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    readMessages: {
+      type: 'array',
+      minItems: 1,
+      uniqueItems: true,
+      items: {
+        properties: {
+          id: { type: 'string' },
+          fromMe: { type: 'boolean', enum: [true, false] },
+          remoteJid: { type: 'string' },
+        },
+        required: ['id', 'fromMe', 'remoteJid'],
+        ...isNotEmpty('id', 'remoteJid'),
+      },
+    },
+  },
+  required: ['readMessages'],
+};
+
+export const archiveChatSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    lastMessage: {
+      type: 'object',
+      properties: {
+        key: {
+          type: 'object',
+          properties: {
+            id: { type: 'string' },
+            remoteJid: { type: 'string' },
+            fromMe: { type: 'boolean', enum: [true, false] },
+          },
+          required: ['id', 'fromMe', 'remoteJid'],
+          ...isNotEmpty('id', 'remoteJid'),
+        },
+        messageTimestamp: { type: 'integer', minLength: 1 },
+      },
+      required: ['key'],
+      ...isNotEmpty('messageTimestamp'),
+    },
+    archive: { type: 'boolean', enum: [true, false] },
+  },
+  required: ['lastMessage', 'archive'],
+};
+
+export const contactValidateSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    where: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', minLength: 1 },
+        pushName: { type: 'string', minLength: 1 },
+        id: { type: 'string', minLength: 1 },
+      },
+      ...isNotEmpty('_id', 'id', 'pushName'),
+    },
+  },
+};
+
+export const messaseValidateSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    where: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', minLength: 1 },
+        key: {
+          type: 'object',
+          if: {
+            propertyNames: {
+              enum: ['fromMe', 'remoteJid', 'id'],
+            },
+          },
+          then: {
+            properties: {
+              remoteJid: {
+                type: 'string',
+                minLength: 1,
+                description: 'The property cannot be empty',
+              },
+              id: {
+                type: 'string',
+                minLength: 1,
+                description: 'The property cannot be empty',
+              },
+              fromMe: { type: 'boolean', enum: [true, false] },
+            },
+          },
+        },
+        message: { type: 'object' },
+      },
+      ...isNotEmpty('_id'),
+    },
+  },
+};
+
+export const messageUpSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    where: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string' },
+        remoteJid: { type: 'string' },
+        id: { type: 'object' },
+        fromMe: { type: 'boolean', enum: [true, false] },
+        participant: { type: 'string' },
+        status: {
+          type: 'string',
+          enum: ['ERROR', 'PENDING', 'SERVER_ACK', 'DELIVERY_ACK', 'READ', 'PLAYED'],
+        },
+      },
+      ...isNotEmpty('_id', 'remoteJid', 'id', 'status'),
+    },
+  },
+};
+
+// Group Schema
+export const createGroupSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    subject: { type: 'string' },
+    description: { type: 'string' },
+    profilePicture: { type: 'string' },
+    participants: {
+      type: 'array',
+      minItems: 1,
+      uniqueItems: true,
+      items: {
+        type: 'string',
+        minLength: 10,
+        pattern: '\\d+',
+        description: '"participants" must be an array of numeric strings',
+      },
+    },
+  },
+  required: ['subject', 'participants'],
+  ...isNotEmpty('subject', 'description', 'profilePicture'),
+};
+
+export const groupJidSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    groupJid: { type: 'string', pattern: '^[\\d]+@g.us$' },
+  },
+  ...isNotEmpty('groupJid'),
+};
+
+export const updateGparticipantsSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    groupJid: { type: 'string' },
+    action: {
+      type: 'string',
+      enum: ['add', 'remove', 'promote', 'demote'],
+    },
+    participants: {
+      type: 'array',
+      minItems: 1,
+      uniqueItems: true,
+      items: {
+        type: 'string',
+        minLength: 10,
+        pattern: '\\d+',
+        description: '"participants" must be an array of numeric strings',
+      },
+    },
+  },
+  required: ['groupJid', 'action', 'participants'],
+  ...isNotEmpty('groupJid', 'action'),
+};
+
+// Webhook Schema
+export const webhookSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    url: { type: 'string' },
+    enabled: { type: 'boolean', enum: [true, false] },
+  },
+  required: ['url', 'enabled'],
+  ...isNotEmpty('url'),
+};

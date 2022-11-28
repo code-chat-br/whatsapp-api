@@ -1,0 +1,25 @@
+# Compiled output
+/src
+
+# Dev
+/test
+/.vs
+/.vscode
+
+# Package
+/package-lock.json
+
+# Docker
+/Docker
+/Dockerfile
+/docker-compose.yml
+/.dockerignore
+
+# Project related
+/LICENCE
+/README.md
+/src
+/.eslintignore
+/.eslintrc.js
+/.pretierrc.js
+/.gitignore

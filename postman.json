@@ -1,0 +1,630 @@
+{
+  "info": {
+    "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
+    "name": "Api Whatsapp",
+    "schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Instance Controller",
+      "item": [
+        {
+          "name": "Views",
+          "item": [
+            {
+              "name": "QrCode",
+              "id": "e13e73d1-ca81-46b7-82a9-717e1558284e",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": "{{baseUrl}}/instance/qrcode/{{instance}}"
+              },
+              "response": []
+            }
+          ],
+          "id": "c58c742f-3010-4e95-99f8-28feeb37891a"
+        },
+        {
+          "name": "Create Instance",
+          "id": "0e70f058-7b96-4ca9-a31c-408bb638c00b",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"instanceName\": \"codechat\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/instance/create"
+          },
+          "response": []
+        },
+        {
+          "name": "Instance Connect",
+          "id": "39ef2c5a-bb9e-4996-94b5-689d161f5412",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/instance/connect/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Connection Status",
+          "id": "7b4d3891-9a72-4b8c-9fa8-393308273b99",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/instance/connectionState/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout Instance",
+          "id": "c852edac-88bc-4b14-8452-dc00749797f1",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/instance/logout/{{instance}}"
+          },
+          "response": []
+        }
+      ],
+      "id": "6513b816-9425-4ca7-b350-5f137dcf7239",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "id": "5777fabe-31ff-4f2e-b782-6b089f990b67",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "id": "fe0c8c67-1abf-4863-8a11-8f3dd54e6fa2",
+            "type": "text/javascript",
+            "exec": [
+              ""
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Send Message Controller",
+      "item": [
+        {
+          "name": "Send Text",
+          "id": "0989292a-7aba-4ba8-9b48-7097b3eaf218",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"textMessage\": {\r\n    \"text\": \"ok\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendText/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Media",
+          "id": "4d17edef-f237-4f00-906d-71687a2210d8",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"mediaMessage\": {\r\n    \"mediatype\": \"image | document | video\",\r\n    \"fileName\": \"image.png\",\r\n    \"caption\": \"Description\",\r\n    \"media\": \"https://fonts.freepiklabs.com/storage/4886/conversions/Mistaken-preview.jpg\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendMedia/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Buttons",
+          "id": "6ad2b81b-096c-4889-9c2b-778eab259445",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"number\": \"5531997853327\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"media\": \"https://fonts.freepiklabs.com/storage/4886/conversions/Mistaken-preview.jpg\"\r\n    }\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendButtons/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Location",
+          "id": "12dcb0d1-d6e1-465c-916e-8a238b1413e9",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"number\": \"5531997853327\",\r\n  \"locationMessage\": {\r\n    \"name\": \"Moeda - MG\",\r\n    \"address\": \"🗺️ Moeda 🗺️\",\r\n    \"latitude\": -20.32568196333534,\r\n    \"longitude\": -44.016271276581236\r\n  },\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendLocation/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Send List",
+          "id": "fc5feea6-9415-4036-8c5a-c8fccaf35e43",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"listMessage\": {\r\n    \"title\": \"List Title\",\r\n    \"description\": \"List description\",\r\n    \"buttonText\": \"Click Here\",\r\n    \"footerText\": \"footer list\\nhttps://examplelink.com.br\",\r\n    \"sections\": [\r\n      {\r\n        \"title\": \"Row tilte 01\",\r\n        \"rows\": [\r\n          {\r\n            \"title\": \"Title row 01\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 001\"\r\n          },\r\n          {\r\n            \"title\": \"Title row 02\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 002\"\r\n          }\r\n        ]\r\n      },\r\n      {\r\n        \"title\": \"Row tilte 02\",\r\n        \"rows\": [\r\n          {\r\n            \"title\": \"Title row 01\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 001\"\r\n          },\r\n          {\r\n            \"title\": \"Title row 02\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 002\"\r\n          }\r\n        ]\r\n      }\r\n    ]\r\n  },\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendList/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Contact",
+          "id": "55802759-f91c-4963-a191-7bc6d58face5",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"contactMessage\": [\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531922228888\",\r\n      \"phoneNumber\": \"+55 31 9 2222-8888\"\r\n    }\r\n  ],\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendContact/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Reaction",
+          "id": "94e29b21-410d-470b-925c-0739ad36efcb",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"reactionMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": true,\r\n      \"id\": \"BAE5A75CB0F39712\"\r\n    },\r\n    \"reaction\": \"😒\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/message/sendReaction/{{instance}}"
+          },
+          "response": []
+        }
+      ],
+      "id": "254b8181-a775-4f4c-b9f8-e7b61d77fed1"
+    },
+    {
+      "name": "Chat Controller",
+      "item": [
+        {
+          "name": "WhatsApp Number",
+          "id": "d75c7dda-1473-401e-9775-69baa4ce3de3",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"numbers\": [\r\n    \"5531900000000\",\r\n    \"5531911111111\"\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/chat/whatsappNumbers/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Read Messages",
+          "id": "32f9cd0c-69c8-4319-8526-a8154b2891c5",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"readMessages\": [\r\n    {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": false,\r\n      \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n    }\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/chat/markMessageAsRead/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Archive Chat",
+          "id": "26364791-b1df-4abe-910d-98b295509754",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"lastMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": false,\r\n      \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n    }\r\n  },\r\n  \"archive\": false\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/chat/archiveChat/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Contacts",
+          "id": "1ae99ab9-abca-4240-8097-a3aa067ebc90",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"where\": {\r\n    \"_id\": \"\",\r\n    \"pusName\": \"\",\r\n    \"id\": \"\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/chat/findContacts/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Messages",
+          "id": "4754ff87-4d2a-4933-9130-769c788cf625",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"where\": {\r\n    /* \r\n     * \"key.fromMe\": false,\r\n     * \"key.remoteJid\": \"553197853327@s.whatsapp.net\",\r\n    */\r\n    \"key\": {\r\n      \"fromMe\": false,\r\n      \"remoteJid\": \"553197853327@s.whatsapp.net\"\r\n    },\r\n    \"message.[...]\": { }\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/chat/findMessages/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Status Message",
+          "id": "b261a9c9-d41c-4e75-a537-dbdafd872d5f",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"where\": {\r\n    \"_id\": \"\",\r\n    \"remoteJid\": \"\",\r\n    \"id\": \"\",\r\n    \"fromMe\": true,\r\n    \"participant\": \"\",\r\n    \"status\": \"'ERROR', 'PENDING', 'SERVER_ACK', 'DELIVERY_ACK', 'READ', 'PLAYED'\"\r\n  }\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/chat/findStatusMessage/{{instance}}"
+          },
+          "response": []
+        }
+      ],
+      "id": "84b58e33-0408-481f-9874-b82ceeb6e1bc"
+    },
+    {
+      "name": "Group Controller",
+      "item": [
+        {
+          "name": "Create Group",
+          "id": "783e0b82-8960-4248-b432-9fa47697dd6a",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"subject\": \"Test 02\",\r\n  \"participants\": [\"5531900000000\", \"5531911111111\", \"5531922222222\"],\r\n  \"profilePicture\": \"optional: url or base64\",\r\n  \"description\": \"optional\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/group/create/{{instance}}"
+          },
+          "response": []
+        },
+        {
+          "name": "Find Group",
+          "id": "bf7c0e39-056e-4d89-acb6-bc5fc850a3eb",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/findGroupInfos/{{instance}}?groupJid={{groupJid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "findGroupInfos",
+                "{{instance}}"
+              ],
+              "query": [
+                {
+                  "key": "groupJid",
+                  "value": "{{groupJid}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Find Participants",
+          "id": "326818bf-c75d-4f1a-868e-a5079efff7a5",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/participants/{{instance}}?groupJid={{groupJid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "participants",
+                "{{instance}}"
+              ],
+              "query": [
+                {
+                  "key": "groupJid",
+                  "value": "{{groupJid}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Invite Code",
+          "id": "daacb24b-86cb-4a95-abe3-13fd1dfe8304",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/inviteCode/{{instance}}?groupJid={{groupJid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "inviteCode",
+                "{{instance}}"
+              ],
+              "query": [
+                {
+                  "key": "groupJid",
+                  "value": "{{groupJid}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Revoke Invite Code",
+          "id": "67291926-2d3e-4b97-911f-7f2760761681",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/revokeInviteCode/{{instance}}?groupJid={{groupJid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "revokeInviteCode",
+                "{{instance}}"
+              ],
+              "query": [
+                {
+                  "key": "groupJid",
+                  "value": "{{groupJid}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Participant",
+          "id": "aef56a44-c790-45d5-b370-7f5716c59d68",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"action\": \"'add' | 'remove' | 'promote' | 'demote'\",\r\n  \"participants\": [\r\n    \"5531900000000\",\r\n    \"5531911111111\",\r\n    \"5531922222222\"\r\n  ]\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/group/updateParticipant/{{instance}}?groupJid={{groupJid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "updateParticipant",
+                "{{instance}}"
+              ],
+              "query": [
+                {
+                  "key": "groupJid",
+                  "value": "{{groupJid}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Leave Group",
+          "id": "4918cfc2-7b8c-483b-80a6-ee6c977f0772",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/group/leaveGroup/{{instance}}?groupJid={{groupJid}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "group",
+                "leaveGroup",
+                "{{instance}}"
+              ],
+              "query": [
+                {
+                  "key": "groupJid",
+                  "value": "{{groupJid}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "e448a85f-92e6-4a3e-b400-1e58bebd1271"
+    },
+    {
+      "name": "JWT",
+      "item": [
+        {
+          "name": "Refresh Token",
+          "id": "8fa47d1f-712d-4138-84cc-2b793e04b838",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiZTZjZGY4YzctNWZmZS00MDkxLWEwYjYtOTMzOWQyOGMyNDA3IiwiaWF0IjoxNjY4MTkwMTY2LCJleHAiOjE2NjgxOTM3NjYsInN1YiI6ImctdCJ9.O1DJpprdBvBuOH_tW4wqnSXxdX4eVKYTpADH6aIf5rk\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/instance/refreshToken/"
+          },
+          "response": []
+        }
+      ],
+      "id": "088f2e19-b320-4513-ab9b-c19fa45d1b5c"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": {
+      "token": "{{token}}"
+    }
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "id": "cb1b7a2b-e575-465a-8a72-7335e48c52ee",
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "id": "8c3975e6-8d65-48b8-b113-c38ec42095eb",
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "id": "661d5580-fb5b-46df-b342-6133829c2b62",
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "id": "68c25258-b79c-47fc-ac27-00c899926d75",
+      "key": "instance",
+      "value": "codechat",
+      "type": "string"
+    },
+    {
+      "id": "7de13c92-f388-4cf9-80e6-f80898587701",
+      "key": "groupJid",
+      "value": "120363026700826424@g.us",
+      "type": "string"
+    },
+    {
+      "id": "5f5d457b-fa8c-48ce-8e54-77d1d374f4f6",
+      "key": "token",
+      "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiZTZjZGY4YzctNWZmZS00MDkxLWEwYjYtOTMzOWQyOGMyNDA3IiwiaWF0IjoxNjY4MTkwMTY2LCJleHAiOjE2NjgxOTM3NjYsInN1YiI6ImctdCJ9.O1DJpprdBvBuOH_tW4wqnSXxdX4eVKYTpADH6aIf5rk",
+      "type": "string"
+    }
+  ]
+}

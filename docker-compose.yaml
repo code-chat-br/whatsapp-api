@@ -1,0 +1,18 @@
+version: '3.8'
+
+networks:
+  api-net:
+    drive: bridge
+
+services:
+  codechatapi:
+    container_name: codechat
+    build:
+      context: backend
+      dockerfile: ./Dockerfile
+
+    expose:
+      8080:8080
+      443:443
+
+    command: npm run start:prod 
