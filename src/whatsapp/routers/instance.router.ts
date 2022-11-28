@@ -58,6 +58,16 @@ export class InstanceRouter extends RouterBroker {
         });
 
         return res.status(HttpStatus.OK).json(response);
+      })
+      .delete(this.routerPath('delete'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: instanceNameSchema,
+          ClassRef: InstanceDto,
+          execute: (instance) => instanceController.deleteInstance(instance),
+        });
+
+        return res.status(HttpStatus.OK).json(response);
       });
 
     if (auth.TYPE === 'jwt') {

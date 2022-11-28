@@ -1,7 +1,7 @@
 import { delay } from '@adiwajshing/baileys';
 import EventEmitter2 from 'eventemitter2';
 import { ConfigService } from '../../config/env.config';
-import { InternalServerErrorException } from '../../exceptions';
+import { BadRequestException, InternalServerErrorException } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
 import { RepositoryBroker } from '../repository/index.repository';
 import { AuthService, OldToken } from '../services/auth.service';
@@ -50,7 +50,7 @@ export class InstanceController {
       case 'connecting':
         return instance.qrCode;
       default:
-        return {};
+        return await this.connectionState({ instanceName });
     }
   }
 
@@ -64,6 +64,15 @@ export class InstanceController {
       return { error: false, message: 'Instance logged out' };
     } catch (error) {
       throw new InternalServerErrorException(error.toString());
+    }
+  }
+
+  public async deleteInstance({ instanceName }: InstanceDto) {
+    try {
+      delete this.waMonitor.waInstances[instanceName];
+      return { error: false, message: 'Instance deleted' };
+    } catch (error) {
+      throw new BadRequestException(error.toString());
     }
   }
 
