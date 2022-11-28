@@ -8,7 +8,7 @@ import { Boom } from '@hapi/boom';
 import { Logger } from '../../config/logger.config';
 import { ConfigService, Database } from '../../config/env.config';
 import { RepositoryBroker } from '../repository/index.repository';
-import { dbserver, mongoClient } from '../../db/db.connect';
+import { mongoClient } from '../../db/db.connect';
 
 export class WAMonitoringService {
   constructor(
@@ -28,6 +28,14 @@ export class WAMonitoringService {
 
   private readonly logger = new Logger(WAMonitoringService.name);
   public readonly waInstances: Record<string, WAStartupService> = {};
+
+  public delInstanceTime(instance: string) {
+    setTimeout(() => {
+      if (this.waInstances[instance].connectionStatus.state !== 'open') {
+        delete this.waInstances[instance];
+      }
+    }, 1000 * 60 * 5);
+  }
 
   private delInstanceFiles() {
     setInterval(async () => {
