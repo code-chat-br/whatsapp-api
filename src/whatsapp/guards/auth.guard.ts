@@ -6,7 +6,7 @@ import { Logger } from '../../config/logger.config';
 import { name } from '../../../package.json';
 import { InstanceDto } from '../dto/instance.dto';
 import { JwtPayload } from '../services/auth.service';
-import { UnauthorizedException } from '../../exceptions';
+import { ForbidenException, UnauthorizedException } from '../../exceptions';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { AUTH_DIR } from '../../config/path.config';
@@ -14,12 +14,15 @@ import { AUTH_DIR } from '../../config/path.config';
 const logger = new Logger('GUARD');
 
 function jwtGuard(req: Request, res: Response, next: NextFunction) {
-  if (req.originalUrl.includes('/instance/create')) {
-    return next();
-  }
-
   const key = req.get('apikey');
   if (configService.get<Auth>('AUTHENTICATION').API_KEY.KEY === key) {
+    if (req.originalUrl.includes('/instance/create')) {
+      throw new ForbidenException(
+        'Missing global api key',
+        'The global api key must be set',
+      );
+    }
+
     return next();
   }
 
