@@ -36,7 +36,7 @@ export abstract class RouterBroker {
       Object.assign(ref, body);
     }
 
-    const v = validate(ref, schema);
+    const v = schema ? validate(ref, schema) : { valid: true, errors: [] };
 
     logger.error(!v.valid ? v.errors : [null]);
 

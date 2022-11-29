@@ -14,6 +14,7 @@ import { chatController } from '../whatsapp.module';
 import { RouterBroker } from '../abstract/abstract.router';
 import { HttpStatus } from './index.router';
 import { MessageUpQuery } from '../repository/messageUp.repository';
+import { proto } from '@adiwajshing/baileys';
 
 export class ChatRouter extends RouterBroker {
   constructor(...guards: RequestHandler[]) {
@@ -57,6 +58,17 @@ export class ChatRouter extends RouterBroker {
           execute: (instance, data) => chatController.fetchContacts(instance, data),
         });
 
+        return res.status(HttpStatus.OK).json(response);
+      })
+      .post(this.routerPath('getBase64FromMediaMessage'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<proto.IWebMessageInfo>({
+          request: req,
+          schema: null,
+          ClassRef: Object,
+          execute: (instance, data) =>
+            chatController.getBase64FromMediaMessage(instance, data),
+        });
+
         return res.status(HttpStatus.CREATED).json(response);
       })
       .post(this.routerPath('findMessages'), ...guards, async (req, res) => {
@@ -67,7 +79,7 @@ export class ChatRouter extends RouterBroker {
           execute: (instance, data) => chatController.fetchMessages(instance, data),
         });
 
-        return res.status(HttpStatus.CREATED).json(response);
+        return res.status(HttpStatus.OK).json(response);
       })
       .post(this.routerPath('findStatusMessage'), ...guards, async (req, res) => {
         const response = await this.dataValidate<MessageUpQuery>({
@@ -77,7 +89,7 @@ export class ChatRouter extends RouterBroker {
           execute: (instance, data) => chatController.fetchStatusMessage(instance, data),
         });
 
-        return res.status(HttpStatus.CREATED).json(response);
+        return res.status(HttpStatus.OK).json(response);
       });
   }
 

@@ -1,3 +1,4 @@
+import { proto } from '@adiwajshing/baileys';
 import { ArchiveChatDto, ReadMessageDto, WhatsAppNumberDto } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { ContactQuery } from '../repository/contact.repository';
@@ -23,6 +24,15 @@ export class ChatController {
   public async fetchContacts({ instanceName }: InstanceDto, query: ContactQuery) {
     query.where.instanceName = instanceName;
     return await this.waMonitor.waInstances[instanceName].fetchContacts(query);
+  }
+
+  public async getBase64FromMediaMessage(
+    { instanceName }: InstanceDto,
+    message: proto.IWebMessageInfo,
+  ) {
+    return await this.waMonitor.waInstances[instanceName].getBase64FromMediaMessage(
+      message,
+    );
   }
 
   public async fetchMessages({ instanceName }: InstanceDto, query: MessageQuery) {

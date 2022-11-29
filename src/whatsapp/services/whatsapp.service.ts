@@ -2,6 +2,7 @@ import makeWASocket, {
   BaileysEventEmitter,
   delay,
   DisconnectReason,
+  downloadMediaMessage,
   fetchLatestBaileysVersion,
   generateWAMessageFromContent,
   getDevice,
@@ -807,6 +808,58 @@ export class WAStartupService {
           error.toString(),
         ],
       });
+    }
+  }
+
+  public async getBase64FromMediaMessage(m: proto.IWebMessageInfo) {
+    try {
+      const typeMessage = [
+        'imageMessage',
+        'documentMessage',
+        'audioMessage',
+        'videoMessage',
+        'stickerMessage',
+      ];
+
+      let mediaMessage: any;
+      let mediaType: string;
+
+      for (const type of typeMessage) {
+        mediaMessage = m.message[type];
+        if (mediaMessage) {
+          mediaType = type;
+          break;
+        }
+      }
+
+      if (!mediaMessage) {
+        throw 'The message is not of the media type';
+      }
+
+      const buffer = await downloadMediaMessage(
+        m,
+        'buffer',
+        {},
+        {
+          logger: P({ level: 'error' }),
+          reuploadRequest: this.client.updateMediaMessage,
+        },
+      );
+
+      return {
+        mediaType,
+        fileName: mediaMessage['fileName'],
+        caption: mediaMessage['caption'],
+        size: {
+          fileLength: mediaMessage['fileLength'],
+          height: mediaMessage['height'],
+          width: mediaMessage['width'],
+        },
+        mimetype: mediaMessage['mimetype'],
+        base64: buffer.toString('base64'),
+      };
+    } catch (error) {
+      throw new BadRequestException(error.toString());
     }
   }
 
