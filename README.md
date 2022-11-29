@@ -51,6 +51,12 @@ $ sudo apt-get install docker-compose
 ```sh
 $ nvm install 16.10.0
 ```
+
+### pm2 installation
+```sh
+$ npm i -g pm2
+```
+
 >
 > After finishing, restart the terminal to load the new information.
 >
@@ -91,9 +97,14 @@ $ yarn start
 # In production
 $ npm run build
 $ npm run start:prod
-// or
+# or
 $ yarn build
 $ yarn start:prod
+
+# pm2
+$ pm2 start 'npm run start:prod' --name ApiCodechat
+# or
+$ pm2 start 'yarn start:prod' -- name ApiCodechat
 ```
 ## Authentication
 
