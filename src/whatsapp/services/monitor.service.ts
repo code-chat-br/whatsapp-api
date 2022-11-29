@@ -128,7 +128,6 @@ export class WAMonitoringService {
           return await this.dbInstance.dropCollection(instanceName);
         }
         rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
-        this.logger.warn(`Ìnstance "${instanceName}" - REMOVED`);
       } catch (error) {
         this.logger.error({
           localError: 'removeInstance',
@@ -139,6 +138,7 @@ export class WAMonitoringService {
         if (this.db.ENABLED) {
           await mongoClient.close();
         }
+        this.logger.warn(`Ìnstance "${instanceName}" - REMOVED`);
       }
     });
   }
@@ -159,7 +159,6 @@ export class WAMonitoringService {
         }
 
         rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
-        this.logger.warn(`Ìnstance "${instanceName}" - REMOVED`);
       } catch (error) {
         this.logger.error({
           localError: 'noConnection',
@@ -170,6 +169,7 @@ export class WAMonitoringService {
         if (this.db.ENABLED) {
           await mongoClient.close();
         }
+        this.logger.warn(`Ìnstance "${instanceName}" - REMOVED`);
       }
     });
   }
