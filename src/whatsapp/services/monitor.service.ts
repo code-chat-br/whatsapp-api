@@ -138,19 +138,14 @@ export class WAMonitoringService {
         if (this.db.ENABLED) {
           await mongoClient.close();
         }
-        this.logger.warn(`Ìnstance "${instanceName}" - REMOVED`);
+        this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
     });
   }
 
   private noConnection() {
-    this.eventEmitter.on('no.connection', async (instanceName) => {
+    this.eventEmitter.once('no.connection', async (instanceName) => {
       try {
-        this.waInstances[instanceName]?.client.end(
-          new Boom('QR code limit reached, please login again', {
-            statusCode: DisconnectReason.badSession,
-          }),
-        );
         delete this.waInstances[instanceName];
 
         if (this.db.ENABLED) {
@@ -169,7 +164,7 @@ export class WAMonitoringService {
         if (this.db.ENABLED) {
           await mongoClient.close();
         }
-        this.logger.warn(`Ìnstance "${instanceName}" - REMOVED`);
+        this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
     });
   }

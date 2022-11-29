@@ -29,7 +29,8 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import axios from 'axios';
 import { v4 } from 'uuid';
-import { QRCodeToDataURLOptions, toDataURL } from 'qrcode';
+import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
+import qrcodeTerminal from 'qrcode-terminal';
 import { Events, wa } from '../types/wa.types';
 import { Boom } from '@hapi/boom';
 import EventEmitter2 from 'eventemitter2';
@@ -185,6 +186,10 @@ export class WAStartupService {
             statusReason: DisconnectReason.connectionClosed,
           });
 
+          this.client.ev.removeAllListeners('connection.update');
+
+          delete this.client.ev.on;
+
           return this.eventEmitter.emit('no.connection', this.instance.name);
         }
 
@@ -194,13 +199,10 @@ export class WAStartupService {
           margin: 3,
           scale: 4,
           errorCorrectionLevel: 'H',
-          color: {
-            light: '#ffffff',
-            dark: '#198754',
-          },
+          color: { light: '#ffffff', dark: '#198754' },
         };
 
-        toDataURL(qr, optsQrcode, (error, base64) => {
+        qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
           if (error) {
             this.logger.error('Qrcode generare failed:' + error.toString());
             return;
@@ -214,6 +216,13 @@ export class WAStartupService {
             qrcode: { code: qr, base64 },
           });
         });
+
+        qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
+          this.logger.log(
+            `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
+              qrcode,
+          ),
+        );
       }
 
       if (connection) {
@@ -290,12 +299,11 @@ export class WAStartupService {
       auth: this.instance.authState.state,
       logger: P({ level: 'error' }),
       msgRetryCounterMap: this.msgRetryCounterMap,
-      printQRInTerminal: true,
+      printQRInTerminal: false,
       browser,
       version,
       connectTimeoutMs: 60_000,
       emitOwnEvents: true,
-      qrTimeout: 60_000,
       getMessage: this.getMessage,
     };
 
