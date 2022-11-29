@@ -26,11 +26,18 @@ import { ROOT_DIR } from './config/path.config';
 import { waMonitor } from './whatsapp/whatsapp.module';
 import { HttpStatus, router } from './whatsapp/routers/index.router';
 import 'express-async-errors';
+import { readFileSync } from 'fs';
 
 const serverUp = {
   https(app: Express) {
     const { FULLCHAIN, PRIVKEY } = configService.get<SslConf>('SSL_CONF');
-    const server = https.createServer({ cert: FULLCHAIN, key: PRIVKEY }, app);
+    const server = https.createServer(
+      {
+        cert: readFileSync(FULLCHAIN),
+        key: readFileSync(PRIVKEY),
+      },
+      app,
+    );
     return server;
   },
 
