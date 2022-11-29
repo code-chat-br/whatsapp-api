@@ -114,11 +114,13 @@ Authentications must be inserted in the request header.
 
 ##### HTTP
 
+> *NOTE:* This key must be inserted in the request header to create an instance.
+
 ```http
 POST /instance/create HTTP/1.1
 Host: localhost:8080
 Content-Type: application/json
-Content-Length: 34
+apikey: t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns
 
 {
   "instanceName": "codechat"
@@ -129,6 +131,7 @@ Content-Length: 34
 ```bash
 curl --location --request POST 'http://localhost:8080/instance/create' \
 --header 'Content-Type: application/json' \
+--header 'apikey: t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns' \
 --data-raw '{
   "instanceName": "codechat"
 }'
@@ -194,6 +197,7 @@ $ docker-compose up
 
 ## Routes
   - [Postman Json](./postman.json)
+  - [Url Json](https://api.postman.com/collections/14064846-a346ce06-3faa-47c3-88f0-4924ab4ca92d?access_key=PMAT-01GK0CWZY1EC42NMY6F5DHSDGB)
 
 ## Webhook Events
 
