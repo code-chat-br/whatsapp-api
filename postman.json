@@ -70,7 +70,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"instanceName\": \"codechat\"\r\n}",
+                "raw": "{\r\n  \"instanceName\": \"codechat\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -221,7 +221,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"number\": \"5531900000000\",\r\n \"options\": {\r\n \"delay\": 1200\r\n },\r\n \"textMessage\": {\r\n \"text\": \"ok\"\r\n }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"textMessage\": {\r\n    \"text\": \"ok\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -253,7 +253,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"number\": \"5531900000000\",\r\n \"options\": {\r\n \"delay\": 1200\r\n },\r\n \"mediaMessage\": {\r\n \"mediatype\": \"image | document | video\",\r\n \"fileName\": \"image.png\",\r\n \"caption\": \"Description\",\r\n \"media\": \"https://fonts.freepiklabs.com/storage/4886/conversions/Mistaken-preview.jpg\"\r\n }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"mediaMessage\": {\r\n    \"mediatype\": \"image | document | video\",\r\n    \"fileName\": \"image.png\",\r\n    \"caption\": \"Description\",\r\n    \"media\": \"https://fonts.freepiklabs.com/storage/4886/conversions/Mistaken-preview.jpg\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -285,7 +285,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"number\": \"5531997853327\",\r\n \"options\": {\r\n \"delay\": 1200\r\n },\r\n \"buttonMessage\": {\r\n \"title\": \"Tutle Button\",\r\n \"description\": \"Description Button\",\r\n \"footerText\": \"Footer Button\",\r\n \"buttons\": [\r\n {\r\n \"buttonText\": \"Click here\",\r\n \"buttonId\": \"1\"\r\n },\r\n {\r\n \"buttonText\": \"Click here\",\r\n \"buttonId\": \"2\"\r\n }\r\n ],\r\n \"mediaMessage\": {\r\n \"mediatype\": \"image | document | video\",\r\n \"media\": \"https://fonts.freepiklabs.com/storage/4886/conversions/Mistaken-preview.jpg\"\r\n }\r\n }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"media\": \"https://fonts.freepiklabs.com/storage/4886/conversions/Mistaken-preview.jpg\"\r\n    }\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -317,7 +317,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"number\": \"5531997853327\",\r\n \"locationMessage\": {\r\n \"name\": \"Moeda - MG\",\r\n \"address\": \"🗺️ Moeda 🗺️\",\r\n \"latitude\": -20.32568196333534,\r\n \"longitude\": -44.016271276581236\r\n },\r\n \"options\": {\r\n \"delay\": 1200\r\n }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"locationMessage\": {\r\n    \"name\": \"Moeda - MG\",\r\n    \"address\": \"🗺️ Moeda 🗺️\",\r\n    \"latitude\": -20.32568196333534,\r\n    \"longitude\": -44.016271276581236\r\n  },\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -349,7 +349,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"number\": \"5531900000000\",\r\n \"listMessage\": {\r\n \"title\": \"List Title\",\r\n \"description\": \"List description\",\r\n \"buttonText\": \"Click Here\",\r\n \"footerText\": \"footer list\\nhttps://examplelink.com.br\",\r\n \"sections\": [\r\n {\r\n \"title\": \"Row tilte 01\",\r\n \"rows\": [\r\n {\r\n \"title\": \"Title row 01\",\r\n \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n \"rowId\": \"rowId 001\"\r\n },\r\n {\r\n \"title\": \"Title row 02\",\r\n \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n \"rowId\": \"rowId 002\"\r\n }\r\n ]\r\n },\r\n {\r\n \"title\": \"Row tilte 02\",\r\n \"rows\": [\r\n {\r\n \"title\": \"Title row 01\",\r\n \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n \"rowId\": \"rowId 001\"\r\n },\r\n {\r\n \"title\": \"Title row 02\",\r\n \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n \"rowId\": \"rowId 002\"\r\n }\r\n ]\r\n }\r\n ]\r\n },\r\n \"options\": {\r\n \"delay\": 1200\r\n }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"listMessage\": {\r\n    \"title\": \"List Title\",\r\n    \"description\": \"List description\",\r\n    \"buttonText\": \"Click Here\",\r\n    \"footerText\": \"footer list\\nhttps://examplelink.com.br\",\r\n    \"sections\": [\r\n      {\r\n        \"title\": \"Row tilte 01\",\r\n        \"rows\": [\r\n          {\r\n            \"title\": \"Title row 01\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 001\"\r\n          },\r\n          {\r\n            \"title\": \"Title row 02\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 002\"\r\n          }\r\n        ]\r\n      },\r\n      {\r\n        \"title\": \"Row tilte 02\",\r\n        \"rows\": [\r\n          {\r\n            \"title\": \"Title row 01\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 001\"\r\n          },\r\n          {\r\n            \"title\": \"Title row 02\",\r\n            \"description\": \"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s,\",\r\n            \"rowId\": \"rowId 002\"\r\n          }\r\n        ]\r\n      }\r\n    ]\r\n  },\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -381,7 +381,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"number\": \"5531900000000\",\r\n \"contactMessage\": [\r\n {\r\n \"fullName\": \"Contact Name\",\r\n \"wuid\": \"5531988882222\",\r\n \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n },\r\n {\r\n \"fullName\": \"Contact Name\",\r\n \"wuid\": \"5531988882222\",\r\n \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n },\r\n {\r\n \"fullName\": \"Contact Name\",\r\n \"wuid\": \"5531922228888\",\r\n \"phoneNumber\": \"+55 31 9 2222-8888\"\r\n }\r\n ],\r\n \"options\": {\r\n \"delay\": 1200\r\n }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"contactMessage\": [\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531922228888\",\r\n      \"phoneNumber\": \"+55 31 9 2222-8888\"\r\n    }\r\n  ],\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -413,7 +413,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"reactionMessage\": {\r\n \"key\": {\r\n \"remoteJid\": \"123@s.whatsapp.net\",\r\n \"fromMe\": true,\r\n \"id\": \"BAE5A75CB0F39712\"\r\n },\r\n \"reaction\": \"😒\"\r\n }\r\n}",
+                "raw": "{\r\n  \"reactionMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": true,\r\n      \"id\": \"BAE5A75CB0F39712\"\r\n    },\r\n    \"reaction\": \"😒\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -451,7 +451,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"numbers\": [\r\n \"5531900000000\",\r\n \"5531911111111\"\r\n ]\r\n}",
+                "raw": "{\r\n  \"numbers\": [\r\n    \"5531900000000\",\r\n    \"5531911111111\"\r\n  ]\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -483,7 +483,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"readMessages\": [\r\n {\r\n \"remoteJid\": \"123@s.whatsapp.net\",\r\n \"fromMe\": false,\r\n \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n }\r\n ]\r\n}",
+                "raw": "{\r\n  \"readMessages\": [\r\n    {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": false,\r\n      \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n    }\r\n  ]\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -515,7 +515,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"lastMessage\": {\r\n \"key\": {\r\n \"remoteJid\": \"123@s.whatsapp.net\",\r\n \"fromMe\": false,\r\n \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n }\r\n },\r\n \"archive\": false\r\n}",
+                "raw": "{\r\n  \"lastMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": false,\r\n      \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n    }\r\n  },\r\n  \"archive\": false\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -547,7 +547,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"where\": {\r\n \"_id\": \"\",\r\n \"pusName\": \"\",\r\n \"id\": \"\"\r\n }\r\n}",
+                "raw": "{\r\n  \"where\": {\r\n    \"_id\": \"\",\r\n    \"pusName\": \"\",\r\n    \"id\": \"\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -579,7 +579,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"where\": {\r\n \"_id\": \"\",\r\n \"pusName\": \"\",\r\n \"id\": \"\"\r\n }\r\n}",
+                "raw": "{\r\n  \"message\": {\r\n    \"stickerMessage\": {\r\n      \"url\": \"https://mmg.whatsapp.net/d/f/AmvxPG6xNw2Ai9qagf7_vgraMkzeZWTheyMIK2zZeuej.enc\",\r\n      \"fileSha256\": \"HDX23KW0ltT1p+iHbjHYJVRCIM/gX1lF5ddPMWazgNU=\",\r\n      \"fileEncSha256\": \"u0gm7SUxq3O6Z00CAX2QYl9MqGnrnxWuD3l5cAm/sOE=\",\r\n      \"mediaKey\": \"oDmXkvTfcWJUSnDaKhpXyQ3hqGoPTtb+vV6DSmZ3iNQ=\",\r\n      \"mimetype\": \"image/webp\",\r\n      \"height\": 64,\r\n      \"width\": 64,\r\n      \"directPath\": \"/v/t62.15575-24/40263354_136676265603823_2280650996642024039_n.enc?ccb=11-4&oh=01_AdTMerq4YIageb7KWKGvnek42oGD7NuF_Q4NP9lb_VI5vw&oe=63ACA995&_nc_hot=1669681753\",\r\n      \"fileLength\": \"160582\",\r\n      \"mediaKeyTimestamp\": \"1669678127\",\r\n      \"firstFrameLength\": 14884,\r\n      \"firstFrameSidecar\": \"yfPV5ra4PpVc9g==\",\r\n      \"isAnimated\": true\r\n    }\r\n  },\r\n  \"messageTimestamp\": 1669681753,\r\n  \"instanceName\": \"codechat\",\r\n  \"source\": \"android\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -587,13 +587,13 @@
                 }
               },
               "url": {
-                "raw": "{{baseUrl}}/chat/findContacts/{{instance}}",
+                "raw": "{{baseUrl}}/chat/getBase64FromMediaMessage/{{instance}}",
                 "host": [
                   "{{baseUrl}}"
                 ],
                 "path": [
                   "chat",
-                  "findContacts",
+                  "getBase64FromMediaMessage",
                   "{{instance}}"
                 ]
               }
@@ -611,7 +611,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"where\": {\r\n /* \r\n * \"key.fromMe\": false,\r\n * \"key.remoteJid\": \"553197853327@s.whatsapp.net\",\r\n */\r\n \"key\": {\r\n \"fromMe\": false,\r\n \"remoteJid\": \"553197853327@s.whatsapp.net\"\r\n },\r\n \"message.[...]\": { }\r\n }\r\n}",
+                "raw": "{\r\n  \"where\": {\r\n    /* \r\n     * \"key.fromMe\": false,\r\n     * \"key.remoteJid\": \"553197853327@s.whatsapp.net\",\r\n    */\r\n    \"key\": {\r\n      \"fromMe\": false,\r\n      \"remoteJid\": \"553197853327@s.whatsapp.net\"\r\n    },\r\n    \"message.[...]\": { }\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -643,7 +643,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"where\": {\r\n \"_id\": \"\",\r\n \"remoteJid\": \"\",\r\n \"id\": \"\",\r\n \"fromMe\": true,\r\n \"participant\": \"\",\r\n \"status\": \"'ERROR', 'PENDING', 'SERVER_ACK', 'DELIVERY_ACK', 'READ', 'PLAYED'\"\r\n }\r\n}",
+                "raw": "{\r\n  \"where\": {\r\n    \"_id\": \"\",\r\n    \"remoteJid\": \"\",\r\n    \"id\": \"\",\r\n    \"fromMe\": true,\r\n    \"participant\": \"\",\r\n    \"status\": \"'ERROR', 'PENDING', 'SERVER_ACK', 'DELIVERY_ACK', 'READ', 'PLAYED'\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -681,7 +681,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"subject\": \"Test 02\",\r\n \"participants\": [\"5531900000000\", \"5531911111111\", \"5531922222222\"],\r\n \"profilePicture\": \"optional: url or base64\",\r\n \"description\": \"optional\"\r\n}",
+                "raw": "{\r\n  \"subject\": \"Test 02\",\r\n  \"participants\": [\"5531900000000\", \"5531911111111\", \"5531922222222\"],\r\n  \"profilePicture\": \"optional: url or base64\",\r\n  \"description\": \"optional\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -829,7 +829,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"action\": \"'add' | 'remove' | 'promote' | 'demote'\",\r\n \"participants\": [\r\n \"5531900000000\",\r\n \"5531911111111\",\r\n \"5531922222222\"\r\n ]\r\n}",
+                "raw": "{\r\n  \"action\": \"'add' | 'remove' | 'promote' | 'demote'\",\r\n  \"participants\": [\r\n    \"5531900000000\",\r\n    \"5531911111111\",\r\n    \"5531922222222\"\r\n  ]\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -905,7 +905,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiODQ3MTg4YTEtMWZhZi00ZDc4LWE4YzktYjkyZGNhY2VlOTcwIiwiaWF0IjoxNjY5Njc3NDUyLCJleHAiOjE2Njk2ODEwNTIsInN1YiI6ImctdCJ9.Jyd38BpAFKDDESK1l-HRs1UgyBakmzgzzkZwUKCjVFY\"\r\n}",
+                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiODQ3MTg4YTEtMWZhZi00ZDc4LWE4YzktYjkyZGNhY2VlOTcwIiwiaWF0IjoxNjY5Njc3NDUyLCJleHAiOjE2Njk2ODEwNTIsInN1YiI6ImctdCJ9.Jyd38BpAFKDDESK1l-HRs1UgyBakmzgzzkZwUKCjVFY\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -964,38 +964,38 @@
     ],
     "variable": [
       {
-        "id": "894ba48e-4cc5-4783-a34b-06de24d4db49",
+        "id": "b17e9dac-0f61-473e-9aec-e1b15fe8959d",
         "key": "baseUrl",
         "value": "http://localhost:8080",
         "type": "string"
       },
       {
-        "id": "ac9e8176-e952-4450-a599-8906028fbd8d",
+        "id": "42e97d5d-658f-48b3-9261-5a09ff7bb954",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "9ceff8d6-52b5-4b95-8f1a-dfae35d66f9f",
+        "id": "e7809b97-d59d-4d42-8977-73f6a35c7249",
         "key": "groupJid",
         "value": "120363026700826424@g.us",
         "type": "string"
       },
       {
-        "id": "efb1ec17-62c1-43e5-aedc-4f4e9304e659",
+        "id": "e30da8d0-7347-4252-b5ff-6c41f4cdd722",
         "key": "token",
         "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMWY2ZjU1ZTktM2M2MC00ZDBmLWIyOTctODZmYmFiMjEyODU5IiwiaWF0IjoxNjY5NjgxMzIzLCJleHAiOjE2Njk2ODQ5MjMsInN1YiI6ImctdCJ9.O4R08qpwK-be7joGzUPyGL7cW9qDBUVnunLfUa1qHJQ",
         "type": "string"
       },
       {
-        "id": "f8083842-e1a5-440d-9ee7-026d50702974",
+        "id": "6600942e-f610-4c65-9988-8bb316fc5e19",
         "key": "apikey",
         "value": "88513847-1B0E-4188-8D76-4A2750C9B6C3",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "a35894d2-1b7f-4ccf-a587-da0738f4d1c3",
+        "id": "0d424f59-de80-4975-81ec-6e33d9fbfed5",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
         "type": "string"
