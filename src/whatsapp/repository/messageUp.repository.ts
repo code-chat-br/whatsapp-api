@@ -26,7 +26,7 @@ export class MessageUpRepository extends Repository {
 
       data.forEach((update) => {
         this.writeStore<MessageUpdateRaw>({
-          path: join(this.storePath, 'message-up'),
+          path: join(this.storePath, 'message-up', update.owner),
           fileName: update.id,
           data: update,
         });
@@ -46,9 +46,15 @@ export class MessageUpRepository extends Repository {
       if (query?.where?.id) {
         messageUpdate.push(
           JSON.parse(
-            readFileSync(join(this.storePath, 'message-up', query.where.id + '.json'), {
-              encoding: 'utf-8',
-            }),
+            readFileSync(
+              join(
+                this.storePath,
+                'message-up',
+                query.where.owner,
+                query.where.id + '.json',
+              ),
+              { encoding: 'utf-8' },
+            ),
           ),
         );
       } else {
@@ -60,9 +66,10 @@ export class MessageUpRepository extends Repository {
           if (dirent.isFile()) {
             messageUpdate.push(
               JSON.parse(
-                readFileSync(join(this.storePath, 'message-up', dirent.name), {
-                  encoding: 'utf-8',
-                }),
+                readFileSync(
+                  join(this.storePath, 'message-up', query.where.owner, dirent.name),
+                  { encoding: 'utf-8' },
+                ),
               ),
             );
           }

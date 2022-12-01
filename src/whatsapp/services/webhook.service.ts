@@ -10,9 +10,11 @@ export class WebhookService {
   private readonly store = join(ROOT_DIR, 'store', 'webhook');
 
   public create(instance: InstanceDto, data: WebhookDto) {
-    writeFileSync(join(this.store, instance.instanceName), JSON.stringify(data), {
-      encoding: 'utf-8',
-    });
+    writeFileSync(
+      join(this.store, instance.instanceName + '.json'),
+      JSON.stringify(data),
+      { encoding: 'utf-8' },
+    );
 
     this.waMonitor.waInstances[instance.instanceName].setWebhook(data);
 

@@ -55,7 +55,7 @@ function jwtGuard(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-function apiKey(req: Request, res: Response, next: NextFunction) {
+function apikey(req: Request, res: Response, next: NextFunction) {
   const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
   const key = req.get('apikey');
 
@@ -76,8 +76,8 @@ function apiKey(req: Request, res: Response, next: NextFunction) {
       readFileSync(join(AUTH_DIR, 'apikey', param.instanceName + '.json'), {
         encoding: 'utf-8',
       }),
-    ) as Pick<JwtPayload, 'instanceName' | 'apiKey'>;
-    if (storeKey.apiKey === 'key') {
+    ) as Pick<JwtPayload, 'instanceName' | 'apikey'>;
+    if (storeKey.apikey === key) {
       return next();
     }
   } catch (error) {}
@@ -88,4 +88,4 @@ function apiKey(req: Request, res: Response, next: NextFunction) {
   throw new UnauthorizedException();
 }
 
-export const authGuard = { jwt: jwtGuard, apiKey };
+export const authGuard = { jwt: jwtGuard, apikey };

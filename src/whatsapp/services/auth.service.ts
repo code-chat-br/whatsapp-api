@@ -14,7 +14,7 @@ export type JwtPayload = {
   instanceName: string;
   apiName: string;
   jwt?: string;
-  apiKey?: string;
+  apikey?: string;
   tokenId: string;
 };
 

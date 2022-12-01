@@ -1,10 +1,8 @@
-import { Dirent, opendirSync, readdirSync, rmSync } from 'fs';
+import { opendirSync, readdirSync, rmSync } from 'fs';
 import { WAStartupService } from './whatsapp.service';
 import { INSTANCE_DIR } from '../../config/path.config';
 import EventEmitter2 from 'eventemitter2';
 import { join } from 'path';
-import { DisconnectReason } from '@adiwajshing/baileys';
-import { Boom } from '@hapi/boom';
 import { Logger } from '../../config/logger.config';
 import { ConfigService, Database } from '../../config/env.config';
 import { RepositoryBroker } from '../repository/index.repository';
@@ -119,7 +117,7 @@ export class WAMonitoringService {
     this.eventEmitter.on('remove.instance', async (instanceName: string) => {
       try {
         await this.waInstances[instanceName]?.client.logout();
-        delete this.waInstances[instanceName];
+        this.waInstances[instanceName] = undefined;
       } catch (_) {}
 
       try {
@@ -146,7 +144,7 @@ export class WAMonitoringService {
   private noConnection() {
     this.eventEmitter.once('no.connection', async (instanceName) => {
       try {
-        delete this.waInstances[instanceName];
+        this.waInstances[instanceName] = undefined;
 
         if (this.db.ENABLED) {
           await mongoClient.connect();

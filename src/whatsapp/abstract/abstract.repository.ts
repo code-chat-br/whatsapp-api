@@ -1,4 +1,4 @@
-import { writeFileSync } from 'fs';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { ConfigService, Database } from '../../config/env.config';
 import { ROOT_DIR } from '../../config/path.config';
@@ -29,6 +29,9 @@ export abstract class Repository implements IRepository {
   readonly storePath = join(ROOT_DIR, 'store');
 
   public writeStore = <T = any>(create: WriteStore<T>) => {
+    if (!existsSync(create.path)) {
+      mkdirSync(create.path, { recursive: true });
+    }
     try {
       writeFileSync(
         join(create.path, create.fileName + '.json'),

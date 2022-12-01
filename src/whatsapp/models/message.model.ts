@@ -14,7 +14,7 @@ export class MessageRaw {
   key?: Key;
   message?: object;
   messageTimestamp?: number | Long.Long;
-  instanceName: string;
+  owner: string;
   source?: 'android' | 'web' | 'ios';
 }
 
@@ -28,7 +28,7 @@ const messageSchema = new Schema<MessageRaw>({
   message: { type: Object },
   source: { type: String, minlength: 3, enum: ['android', 'web', 'ios'] },
   messageTimestamp: { type: Number, required: true },
-  instanceName: { type: String, required: true, minlength: 1 },
+  owner: { type: String, required: true, minlength: 1 },
 });
 
 export const MessageModel = dbserver?.model(MessageRaw.name, messageSchema, 'messages');
@@ -42,7 +42,7 @@ export class MessageUpdateRaw {
   participant?: string;
   datetime?: number;
   status: wa.StatusMessage;
-  instanceName: string;
+  owner: string;
 }
 
 const messageUpdateSchema = new Schema({
@@ -51,7 +51,7 @@ const messageUpdateSchema = new Schema({
   fromMe: { type: Boolean, required: true },
   participante: { type: String, min: 1 },
   datetime: { type: Number, required: true },
-  instanceName: { type: String, required: true, min: 1 },
+  owner: { type: String, required: true, min: 1 },
 });
 
 export const MessageUpModel = dbserver?.model(

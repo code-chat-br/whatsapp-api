@@ -25,7 +25,7 @@ export class MessageRepository extends Repository {
 
       data.forEach((msg) =>
         this.writeStore<MessageRaw>({
-          path: join(this.storePath, 'messages'),
+          path: join(this.storePath, 'messages', msg.owner),
           fileName: msg.key.id,
           data: msg,
         }),
@@ -50,13 +50,19 @@ export class MessageRepository extends Repository {
       if (query?.where?.key?.id) {
         messages.push(
           JSON.parse(
-            readFileSync(join(this.storePath, 'messages', query.where.key.id + '.json'), {
-              encoding: 'utf-8',
-            }),
+            readFileSync(
+              join(
+                this.storePath,
+                'messages',
+                query.where.owner,
+                query.where.key.id + '.json',
+              ),
+              { encoding: 'utf-8' },
+            ),
           ),
         );
       } else {
-        const openDir = opendirSync(join(this.storePath, 'messages'), {
+        const openDir = opendirSync(join(this.storePath, 'messages', query.where.owner), {
           encoding: 'utf-8',
         });
 
@@ -64,9 +70,10 @@ export class MessageRepository extends Repository {
           if (dirent.isFile()) {
             messages.push(
               JSON.parse(
-                readFileSync(join(this.storePath, 'messages', dirent.name), {
-                  encoding: 'utf-8',
-                }),
+                readFileSync(
+                  join(this.storePath, 'messages', query.where.owner, dirent.name),
+                  { encoding: 'utf-8' },
+                ),
               ),
             );
           }

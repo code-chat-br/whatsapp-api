@@ -22,7 +22,6 @@ export class ChatController {
   }
 
   public async fetchContacts({ instanceName }: InstanceDto, query: ContactQuery) {
-    query.where.instanceName = instanceName;
     return await this.waMonitor.waInstances[instanceName].fetchContacts(query);
   }
 
@@ -36,12 +35,10 @@ export class ChatController {
   }
 
   public async fetchMessages({ instanceName }: InstanceDto, query: MessageQuery) {
-    query.where.instanceName = instanceName;
     return await this.waMonitor.waInstances[instanceName].fetchMessages(query);
   }
 
   public async fetchStatusMessage({ instanceName }: InstanceDto, query: MessageUpQuery) {
-    query.where.instanceName = instanceName;
     return await this.waMonitor.waInstances[instanceName].findStatusMessage(query);
   }
 }

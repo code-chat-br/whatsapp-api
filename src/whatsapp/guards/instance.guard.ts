@@ -1,4 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { INSTANCE_DIR } from '../../config/path.config';
 import {
   BadRequestException,
   ForbidenException,
@@ -29,8 +32,8 @@ export function instanceExistsGuard(req: Request, res: Response, next: NextFunct
 export function instanceLoggedGuard(req: Request, res: Response, next: NextFunction) {
   if (req.originalUrl.includes('/instance/create')) {
     const instance = req.body as InstanceDto;
-    const waInstance = waMonitor.waInstances[instance.instanceName];
-    if (waInstance) {
+    if (existsSync(join(INSTANCE_DIR, instance.instanceName))) {
+      waMonitor.waInstances[instance.instanceName] = undefined;
       throw new ForbidenException(
         `This name "${instance.instanceName}" is already in use.`,
       );

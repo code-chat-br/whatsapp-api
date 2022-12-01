@@ -1,4 +1,4 @@
-import { opendirSync, readFileSync } from 'fs';
+import { existsSync, opendirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { ConfigService } from '../../config/env.config';
 import { ContactRaw, IContactModel } from '../models/contact.model';
@@ -25,7 +25,7 @@ export class ContactRepository extends Repository {
 
       data.forEach((contact) => {
         this.writeStore({
-          path: join(this.storePath, 'contacts'),
+          path: join(this.storePath, 'contacts', contact.owner),
           fileName: contact.id,
           data: contact,
         });
@@ -48,22 +48,29 @@ export class ContactRepository extends Repository {
       if (query?.where?.id) {
         contacts.push(
           JSON.parse(
-            readFileSync(join(this.storePath, 'contacts', query.where.id + '.json'), {
-              encoding: 'utf-8',
-            }),
+            readFileSync(
+              join(
+                this.storePath,
+                'contacts',
+                query.where.owner,
+                query.where.id + '.json',
+              ),
+              { encoding: 'utf-8' },
+            ),
           ),
         );
       } else {
-        const openDir = opendirSync(join(this.storePath, 'contacts'), {
+        const openDir = opendirSync(join(this.storePath, 'contacts', query.where.owner), {
           encoding: 'utf-8',
         });
         for await (const dirent of openDir) {
           if (dirent.isFile()) {
             contacts.push(
               JSON.parse(
-                readFileSync(join(this.storePath, 'contacts', dirent.name), {
-                  encoding: 'utf-8',
-                }),
+                readFileSync(
+                  join(this.storePath, 'contacts', query.where.owner, dirent.name),
+                  { encoding: 'utf-8' },
+                ),
               ),
             );
           }
@@ -71,6 +78,7 @@ export class ContactRepository extends Repository {
       }
       return contacts;
     } catch (error) {
+      console.log(error);
       return [];
     }
   }

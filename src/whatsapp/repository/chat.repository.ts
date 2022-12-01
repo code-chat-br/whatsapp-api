@@ -20,7 +20,7 @@ export class ChatRepository extends Repository {
 
       data.forEach((chat) => {
         this.writeStore<ChatRaw>({
-          path: join(this.storePath, 'chats'),
+          path: join(this.storePath, 'chats', chat.owner),
           fileName: chat.id,
           data: chat,
         });
