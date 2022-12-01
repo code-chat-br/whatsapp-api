@@ -278,7 +278,13 @@ export class WAStartupService {
         try {
           for (const [key, value] of Object.entries(store)) {
             if (value === true) {
-              execSync(`rm -rf ${join(this.storePath, key)}/*.json`);
+              execSync(
+                `rm -rf ${join(
+                  this.storePath,
+                  key.toLowerCase(),
+                  this.instance.wuid,
+                )}/*.json`,
+              );
             }
           }
         } catch (error) {}
