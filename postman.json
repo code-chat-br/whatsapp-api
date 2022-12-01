@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2022-11-29T00:22:14.000Z"
+      "updatedAt": "2022-12-01T17:14:58.000Z"
     },
     "item": [
       {
@@ -928,14 +928,80 @@
           }
         ],
         "id": "088f2e19-b320-4513-ab9b-c19fa45d1b5c"
+      },
+      {
+        "name": "Webhook",
+        "item": [
+          {
+            "name": "Set Webhook",
+            "id": "2b7ce76a-d3ab-4065-a984-3774a35492b9",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\r\n  \"enabled\": true,\r\n  \"url\": \"https://webhook.site/347884fb-5f40-4758-80f1-1b808eea0e00\"\r\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/webhook/set/{{instance}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "webhook",
+                  "set",
+                  "{{instance}}"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Find Webhook",
+            "id": "a3e196de-3bc0-40b6-b907-831e1f2f8a8f",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/webhook/find/{{instance}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "webhook",
+                  "find",
+                  "{{instance}}"
+                ]
+              }
+            },
+            "response": []
+          }
+        ],
+        "id": "700b438c-2364-4445-8f7f-e4eb55277a22"
       }
     ],
     "auth": {
-      "type": "bearer",
-      "bearer": [
+      "type": "apikey",
+      "apikey": [
         {
-          "key": "token",
-          "value": "{{token}}",
+          "key": "value",
+          "value": "{{apikey}}",
+          "type": "string"
+        },
+        {
+          "key": "key",
+          "value": "apikey",
           "type": "string"
         }
       ]
@@ -944,7 +1010,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "b6c3925b-8f63-407a-bc73-d1a10c4fdfb2",
+          "id": "de5f7c6f-113f-4a40-a88e-dfb893cec37e",
           "type": "text/javascript",
           "exec": [
             ""
@@ -954,7 +1020,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "753988a0-2e60-424d-ac8f-75e7b401d2fb",
+          "id": "d1734a7f-14e2-49a3-9393-1677ec9b8607",
           "type": "text/javascript",
           "exec": [
             ""
@@ -964,38 +1030,38 @@
     ],
     "variable": [
       {
-        "id": "b17e9dac-0f61-473e-9aec-e1b15fe8959d",
+        "id": "b404cf0d-4d77-4f4a-a5c2-61593c8e31d1",
         "key": "baseUrl",
         "value": "http://localhost:8080",
         "type": "string"
       },
       {
-        "id": "42e97d5d-658f-48b3-9261-5a09ff7bb954",
+        "id": "9cd733c0-80fe-47dd-a696-de8206d93415",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "e7809b97-d59d-4d42-8977-73f6a35c7249",
+        "id": "be84e5a7-dbfc-428b-baf4-7542466813ae",
         "key": "groupJid",
         "value": "120363026700826424@g.us",
         "type": "string"
       },
       {
-        "id": "e30da8d0-7347-4252-b5ff-6c41f4cdd722",
+        "id": "f6384f4a-bbe3-4018-b8bf-5ba1268a94af",
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMWY2ZjU1ZTktM2M2MC00ZDBmLWIyOTctODZmYmFiMjEyODU5IiwiaWF0IjoxNjY5NjgxMzIzLCJleHAiOjE2Njk2ODQ5MjMsInN1YiI6ImctdCJ9.O4R08qpwK-be7joGzUPyGL7cW9qDBUVnunLfUa1qHJQ",
-        "type": "string"
-      },
-      {
-        "id": "6600942e-f610-4c65-9988-8bb316fc5e19",
-        "key": "apikey",
-        "value": "88513847-1B0E-4188-8D76-4A2750C9B6C3",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiYTQ0OWFjODgtYjViNy00YjMyLTgyNjAtOTczOGZiYWQ5MjZiIiwiaWF0IjoxNjY5OTEzNTA5LCJleHAiOjE2Njk5MTcxMDksInN1YiI6ImctdCJ9.axXMgrRSUhPJ5vydC1Kf1DWCCiC8nm6L8AxhMk-GEVY",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "0d424f59-de80-4975-81ec-6e33d9fbfed5",
+        "id": "06bb14cf-9092-42a1-aa9d-b6ca28e4f856",
+        "key": "apikey",
+        "value": "D7A0C048-A71A-41EC-BBF0-B56EBBBE699C",
+        "type": "string"
+      },
+      {
+        "id": "c896b93e-50de-4e69-9dd8-4e971de936f2",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
         "type": "string"
