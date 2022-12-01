@@ -139,8 +139,8 @@ export class WAStartupService {
           const httpService = axios.create({ baseURL: this.localWebhook.url });
           await httpService.post(
             '',
-            { event, data: { ...data } },
-            { params: '/' + this.instance.name },
+            { event, data },
+            { params: { owner: this.instance.wuid } },
           );
         }
 
@@ -149,8 +149,8 @@ export class WAStartupService {
           const httpService = axios.create({ baseURL: globalWebhhok.URL });
           await httpService.post(
             '',
-            { event, data: { ...data } },
-            { params: '/' + this.instance.name },
+            { event, data },
+            { params: { owner: this.instance.wuid } },
           );
         }
       } catch (error) {
@@ -246,7 +246,7 @@ export class WAStartupService {
 
       if (connection === 'open') {
         this.setHandles(this.client.ev);
-        this.instance.wuid = this.client.user.id.replace(/:d+/, '');
+        this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
         this.logger.info(
           `
           ┌──────────────────────────────┐
@@ -303,7 +303,7 @@ export class WAStartupService {
       browser,
       version,
       connectTimeoutMs: 60_000,
-      emitOwnEvents: true,
+      emitOwnEvents: false,
       getMessage: this.getMessage,
     };
 
@@ -321,7 +321,7 @@ export class WAStartupService {
         const chatsRaw: ChatRaw[] = chats.map((chat) => {
           return {
             id: chat.id,
-            isnatnceName: this.instance.name,
+            owner: this.instance.name,
           };
         });
         await this.sendDataWebhook(Events.CHATS_SET, chatsRaw);
@@ -333,7 +333,7 @@ export class WAStartupService {
       const chatsRaw: ChatRaw[] = chats.map((chat) => {
         return {
           id: chat.id,
-          isnatnceName: this.instance.name,
+          owner: this.instance.name,
         };
       });
       await this.sendDataWebhook(Events.CHATS_UPSERT, chatsRaw);
@@ -343,7 +343,7 @@ export class WAStartupService {
       const chatsRaw: ChatRaw[] = chats.map((chat) => {
         return {
           id: chat.id,
-          isnatnceName: this.instance.name,
+          owner: this.instance.name,
         };
       });
       await this.sendDataWebhook(Events.CHATS_UPDATE, chatsRaw);
@@ -354,7 +354,7 @@ export class WAStartupService {
     const database = this.configService.get<Database>('DATABASE');
     ev.on('contacts.upsert', async (contacts) => {
       const contactsRepository = await this.repository.contact.find({
-        where: { instanceName: this.instance.name },
+        where: { owner: this.instance.wuid },
       });
 
       const contactsRaw: ContactRaw[] = [];
@@ -367,10 +367,10 @@ export class WAStartupService {
           id: contact.id,
           pushName: contact?.name || contact?.verifiedName,
           profilePictureUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceName: this.instance.name,
+          owner: this.instance.wuid,
         });
       }
-      await this.sendDataWebhook(Events.CONTACTS_UPSERT, [...contactsRaw]);
+      await this.sendDataWebhook(Events.CONTACTS_UPSERT, contactsRaw);
       await this.repository.contact.insert(contactsRaw, database.SAVE_DATA.CONTACTS);
     });
 
@@ -381,7 +381,7 @@ export class WAStartupService {
           id: contact.id,
           pushName: contact?.name || contact?.verifiedName,
           profilePictureUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceName: this.instance.name,
+          owner: this.instance.wuid,
         });
       }
       await this.sendDataWebhook(Events.CONTACTS_UPDATE, contactsRaw);
@@ -391,39 +391,40 @@ export class WAStartupService {
   private messageHandle(ev: BaileysEventEmitter) {
     const database = this.configService.get<Database>('DATABASE');
     ev.on('messages.set', async ({ messages, isLatest }) => {
-      messages.forEach(async (m) => {
+      const messagesRaw: MessageRaw[] = [];
+      const messagesRepository = await this.repository.message.find({
+        where: { owner: this.instance.wuid },
+      });
+      for await (const [, m] of Object.entries(messages)) {
         if (
           m.message?.protocolMessage ||
           m.message?.senderKeyDistributionMessage ||
           !m.message
         ) {
-          return;
+          continue;
         }
-
-        const messagesRepository = await this.repository.message.find({
-          where: { instanceName: this.instance.name },
-        });
         if (
           messagesRepository.find(
-            (mr) => mr.instanceName === this.instance.name && mr.key.id === m.key.id,
+            (mr) => mr.owner === this.instance.wuid && mr.key.id === m.key.id,
           )
         ) {
-          return;
+          continue;
         }
 
-        const messagesRaw: MessageRaw[] = [];
         messagesRaw.push({
           key: m.key,
           message: { ...m.message },
           messageTimestamp: m.messageTimestamp,
-          instanceName: this.instance.name,
+          owner: this.instance.wuid,
         });
+      }
 
-        this.sendDataWebhook(Events.MESSAGES_SET, messagesRaw);
-        await this.repository.message.insert(messagesRaw, database.SAVE_DATA.OLD_MESSAGE);
-
-        messages = undefined;
-      });
+      await this.repository.message.insert(
+        [...messagesRaw],
+        database.SAVE_DATA.OLD_MESSAGE,
+      );
+      this.sendDataWebhook(Events.MESSAGES_SET, [...messagesRaw]);
+      messages = undefined;
     });
 
     ev.on('messages.upsert', async ({ messages, type }) => {
@@ -440,7 +441,7 @@ export class WAStartupService {
         key: received.key,
         message: { ...received.message },
         messageTimestamp: received.messageTimestamp,
-        instanceName: this.instance.name,
+        owner: this.instance.wuid,
         source: getDevice(received.key.id),
       };
 
@@ -465,7 +466,7 @@ export class WAStartupService {
             ...key,
             status: status[update.status],
             datetime: Date.now(),
-            instanceName: this.instance.name,
+            owner: this.instance.wuid,
           };
           await this.sendDataWebhook(Events.MESSAGES_UPDATE, message);
           await this.repository.messageUpdate.insert(
@@ -551,7 +552,7 @@ export class WAStartupService {
       );
       this.repository.message
         .insert(
-          [{ ...messageSent, instanceName: this.instance.name }],
+          [{ ...messageSent, owner: this.instance.wuid }],
           this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE,
         )
         .catch((error) => this.logger.error(error));
@@ -872,20 +873,28 @@ export class WAStartupService {
   }
 
   public async fetchContacts(query: ContactQuery) {
+    if (query?.where) {
+      query.where.owner = this.instance.wuid;
+    }
     return await this.repository.contact.find(query);
   }
 
   public async fetchMessages(query: MessageQuery) {
+    if (query?.where) {
+      query.where.owner = this.instance.wuid;
+    }
     if (query?.where?.key) {
       for (const [k, v] of Object.entries(query.where.key)) {
         query.where['key.' + k] = v;
-        delete query.where.key;
       }
     }
     return await this.repository.message.find(query);
   }
 
   public async findStatusMessage(query: MessageUpQuery) {
+    if (query?.where) {
+      query.where.owner = this.instance.wuid;
+    }
     return await this.repository.messageUpdate.find(query);
   }
 
