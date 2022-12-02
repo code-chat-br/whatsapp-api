@@ -79,7 +79,6 @@ export class WAStartupService {
     private readonly eventEmitter: EventEmitter2,
     private readonly repository: RepositoryBroker,
   ) {
-    this.loadWebhook();
     this.cleanStore();
     this.instance.qrcode = { count: 0 };
   }
@@ -114,14 +113,13 @@ export class WAStartupService {
   }
 
   private async loadWebhook() {
-    const path = join(SRC_DIR, 'store', 'webhook', this.instance.name + '.json');
+    const path = join(ROOT_DIR, 'store', 'webhook', this.instance.name + '.json');
     if (existsSync(path)) {
       try {
         const data = JSON.parse(
           readFileSync(path, { encoding: 'utf-8' }),
         ) as wa.LocalWebHook;
-        this.localWebhook.enabled = data.enabled;
-        this.localWebhook.url = data.url;
+        Object.assign(this.localWebhook, data);
       } catch (error) {}
     }
   }
@@ -231,6 +229,7 @@ export class WAStartupService {
           state: connection,
           statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode || 200,
         };
+        this.sendDataWebhook(Events.CONNECTION_UPDATE, this.stateConnection);
       }
 
       if (connection === 'close') {
@@ -293,6 +292,8 @@ export class WAStartupService {
   }
 
   public async connectToWhatsapp() {
+    this.loadWebhook();
+
     this.instance.authState = this.configService.get<Database>('DATABASE').ENABLED
       ? await useMultiFileAuthStateDb(this.instance.name)
       : await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));

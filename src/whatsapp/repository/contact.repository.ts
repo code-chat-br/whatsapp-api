@@ -78,7 +78,6 @@ export class ContactRepository extends Repository {
       }
       return contacts;
     } catch (error) {
-      console.log(error);
       return [];
     }
   }

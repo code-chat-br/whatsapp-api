@@ -6,7 +6,7 @@ export enum Events {
   CONNECTION_UPDATE = 'connection.update',
   INSTANCE = 'instance',
   MESSAGES_SET = 'messages.set',
-  MESSAGES_UPSERT = 'messges.upsert',
+  MESSAGES_UPSERT = 'messages.upsert',
   MESSAGES_UPDATE = 'messages.update',
   SEND_MESSAGE = 'send.message',
   CONTACTS_SET = 'contacts.set',
