@@ -1,4 +1,3 @@
-import { Model } from 'mongoose';
 import { ConfigService } from '../../config/env.config';
 import { IMessageUpModel, MessageUpdateRaw } from '../models/message.model';
 import { IInsert, Repository } from '../abstract/abstract.repository';
@@ -11,7 +10,7 @@ export class MessageUpQuery {
 
 export class MessageUpRepository extends Repository {
   constructor(
-    private readonly messageUpModel: Model<IMessageUpModel>,
+    private readonly messageUpModel: IMessageUpModel,
     private readonly configService: ConfigService,
   ) {
     super(configService);

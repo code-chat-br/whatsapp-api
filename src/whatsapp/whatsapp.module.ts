@@ -1,4 +1,4 @@
-import { configService, Database } from '../config/env.config';
+import { configService } from '../config/env.config';
 import { Logger } from '../config/logger.config';
 import { eventeEmitter } from '../config/event.config';
 import { RepositoryBroker } from './repository/index.repository';
@@ -24,10 +24,7 @@ const logger = new Logger('WA MODULE');
 const messageRepository = new MessageRepository(MessageModel, configService);
 const chatRepository = new ChatRepository(ChatModel, configService);
 const contactRepository = new ContactRepository(ContactModel, configService);
-const messageUpdateRepository = new MessageUpRepository(
-  MessageUpModel as any,
-  configService,
-);
+const messageUpdateRepository = new MessageUpRepository(MessageUpModel, configService);
 
 const repository = new RepositoryBroker(
   messageRepository,
