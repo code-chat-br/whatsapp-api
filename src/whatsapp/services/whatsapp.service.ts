@@ -259,9 +259,10 @@ export class WAStartupService {
   private async getMessage(key: proto.IMessageKey): Promise<proto.IMessage> {
     try {
       const webMessageInfo: proto.IWebMessageInfo = JSON.parse(
-        readFileSync(join(this.storePath, 'messages', key.id + '.json'), {
-          encoding: 'utf-8',
-        }),
+        readFileSync(
+          join(this.storePath, 'messages', this.instance.wuid, key.id + '.json'),
+          { encoding: 'utf-8' },
+        ),
       );
       return webMessageInfo.message;
     } catch (error) {
@@ -287,7 +288,7 @@ export class WAStartupService {
             }
           }
         } catch (error) {}
-      }, store?.CLEANING_INTARVAL * 1000);
+      }, (store?.CLEANING_INTARVAL || 3600) * 1000);
     }
   }
 
