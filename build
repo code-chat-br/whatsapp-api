@@ -1,9 +1,8 @@
-echo
-echo > rm -rf ./dist
-echo
+echo \> removing dist
 rm -rf ./dist
-echo > tsc
+echo
+echo \> transpiling...
 echo
 tsc
 cp ./src/env.yml ./dist/src
-echo build success
+echo \> build success
