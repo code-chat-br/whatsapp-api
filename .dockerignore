@@ -1,16 +1,9 @@
-# Compiled output
-/src
-
 # Dev
 /test
 /.vs
 /.vscode
 
-# Package
-/package-lock.json
-
 # Docker
-/Docker
 /Dockerfile
 /docker-compose.yml
 /.dockerignore
@@ -23,3 +16,7 @@
 /.eslintrc.js
 /.pretierrc.js
 /.gitignore
+/mongodb
+/build
+/postman.json
+/tsconfig.json
