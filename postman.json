@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2022-12-02T08:32:53.000Z"
+      "updatedAt": "2022-12-05T13:13:13.000Z"
     },
     "item": [
       {
@@ -120,14 +120,20 @@
               "method": "GET",
               "header": [],
               "url": {
-                "raw": "{{baseUrl}}/instance/fetchInstances/{{instance}} 👈🏼 optional",
+                "raw": "{{baseUrl}}/instance/fetchInstances?instanceName={{instance}}",
                 "host": [
                   "{{baseUrl}}"
                 ],
                 "path": [
                   "instance",
-                  "fetchInstances",
-                  "{{instance}} 👈🏼 optional"
+                  "fetchInstances"
+                ],
+                "query": [
+                  {
+                    "key": "instanceName",
+                    "value": "{{instance}}",
+                    "description": "optional"
+                  }
                 ]
               }
             },
@@ -328,7 +334,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"media\": \"url or base64\"\r\n    }\r\n  }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here 1\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here 2\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    // optional 👇🏼\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"media\": \"url or base64\"\r\n    }\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -573,6 +579,38 @@
                 "path": [
                   "chat",
                   "archiveChat",
+                  "{{instance}}"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Fetch Profile Picture",
+            "id": "0106583a-2842-432f-88bc-f63df3469e1c",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\r\n  \"number\": \"5531900000000\"\r\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/chat/fetchProfilePictureUrl/{{instance}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "chat",
+                  "fetchProfilePictureUrl",
                   "{{instance}}"
                 ]
               }
@@ -1048,7 +1086,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "de606500-024b-485b-ac66-1311d2d88290",
+          "id": "e1b59297-c787-4b8e-a609-6f255cf28616",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1058,7 +1096,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "a5938919-7621-4584-b55d-ce77affcd19f",
+          "id": "fd11536d-8f5e-45d1-9331-10c6c379f003",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1068,38 +1106,38 @@
     ],
     "variable": [
       {
-        "id": "70b67007-ffd3-4af7-8d3a-587237bf870c",
+        "id": "06258614-ed0b-4514-a748-4cf03634c9f1",
         "key": "baseUrl",
         "value": "http://localhost:8080",
         "type": "string"
       },
       {
-        "id": "c1f89ea4-509c-4675-8349-ab2a11590457",
+        "id": "f621dfec-6e83-46f2-ab3b-d9c7243fb79c",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "3508575e-e938-47ce-bf6d-6bee923709ab",
+        "id": "fd5023bf-5bd7-43ec-b1c2-5346c98a16fd",
         "key": "groupJid",
         "value": "120363026700826424@g.us",
         "type": "string"
       },
       {
-        "id": "1857f0cd-a3d5-46a9-954a-f68dfaaffd05",
+        "id": "f24c4756-b224-4ece-b06b-398b4a5c31ae",
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiZTg3NjE3MGQtMmVmNi00OGUyLThhZDMtMDVkOWRiOTVhYjk1IiwiaWF0IjoxNjY5OTY5OTU5LCJleHAiOjE2Njk5NzM1NTksInN1YiI6ImctdCJ9.8y3ng61PeI1dtAXIdb_-y9BgZdZaAYlA41sVDtTcgRw",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOWJmMGQyMjItMDFlMS00ZTRjLTljYzgtMTI2OGJjZTliZGUzIiwiaWF0IjoxNjcwMjQ1OTc0LCJleHAiOjE2NzAyNDk1NzQsInN1YiI6ImctdCJ9.H_Uj2oxPsZpIpNqG7xmZnW8OTWyHEM5n-GUEpJpMJzc",
         "type": "string"
       },
       {
-        "id": "a15657ca-3057-4366-9707-f6c219407ea4",
+        "id": "5722e7a5-04c6-4f4e-b07c-26176e5f4517",
         "key": "apikey",
         "value": "D7A0C048-A71A-41EC-BBF0-B56EBBBE699C",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "3729fcc9-0a13-4904-ae8b-3964c860a6e4",
+        "id": "fcfa08ef-2162-42ff-af2b-edfb7085bff2",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
         "type": "string"
