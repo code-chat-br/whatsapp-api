@@ -24,9 +24,9 @@ export type SaveData = {
 
 export type StoreConf = {
   CLEANING_INTARVAL: number;
-  MESSAGES: true;
-  CONTACTS: true;
-  CHATS: true;
+  MESSAGES: boolean;
+  CONTACTS: boolean;
+  CHATS: boolean;
 };
 
 export type DBConnection = {

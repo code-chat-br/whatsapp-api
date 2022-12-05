@@ -23,15 +23,19 @@ export class MessageRepository extends Repository {
         return { insertCount: insert.length };
       }
 
-      data.forEach((msg) =>
-        this.writeStore<MessageRaw>({
-          path: join(this.storePath, 'messages', msg.owner),
-          fileName: msg.key.id,
-          data: msg,
-        }),
-      );
+      if (saveDb) {
+        data.forEach((msg) =>
+          this.writeStore<MessageRaw>({
+            path: join(this.storePath, 'messages', msg.owner),
+            fileName: msg.key.id,
+            data: msg,
+          }),
+        );
 
-      return { insertCount: data.length };
+        return { insertCount: data.length };
+      }
+
+      return { insertCount: 0 };
     } catch (error) {
       console.log('ERROR: ', error);
       return error;
