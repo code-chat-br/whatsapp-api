@@ -108,7 +108,7 @@ $ pm2 start 'yarn start:prod' -- name ApiCodechat
 ```
 ## Authentication
 
-You can define two authentication **types** for the routes in the **[env file](./src/env.yml)**.
+You can define two authentication **types** for the routes in the **[env file](./src/dev-env.yml)**.
 Authentications must be inserted in the request header.
 
 1. **apikey**
@@ -214,6 +214,7 @@ $ docker-compose up
 
 | Name | Event | TypeData | Description |
 |------|-------|-----------|------------|
+| STATUS_INSTANCE | status.instance | json | Reports any modifications to the instance |
 | QRCODE_UPDATED | qrcode.updated | json | Sends the base64 of the qrcode for reading |
 | CONNECTION_UPDATE | connection.update | json | Informs the status of the connection with whatsapp |
 | INSTANCE | instance | json | Informs instance loading |
@@ -231,7 +232,9 @@ $ docker-compose up
 
 ## Env File
 
-See additional settings that can be applied through the **env** file by clicking **[here](./src/env.yml)**.
+See additional settings that can be applied through the **env** file by clicking **[here](./src/dev-env.yml)**.
+
+> **⚠️Attention⚠️:** rename the **dev-env.yml** file to **env.yml**.
 
 ## SSL
 
