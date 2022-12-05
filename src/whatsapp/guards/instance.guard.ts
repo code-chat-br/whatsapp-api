@@ -11,7 +11,10 @@ import { InstanceDto } from '../dto/instance.dto';
 import { waMonitor } from '../whatsapp.module';
 
 export function instanceExistsGuard(req: Request, res: Response, next: NextFunction) {
-  if (req.originalUrl.includes('/instance/create')) {
+  if (
+    req.originalUrl.includes('/instance/create') ||
+    req.originalUrl.includes('/instance/instanceInfo')
+  ) {
     return next();
   }
 
