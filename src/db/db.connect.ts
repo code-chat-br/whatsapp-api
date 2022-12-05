@@ -4,7 +4,7 @@ import { Logger } from '../config/logger.config';
 
 const logger = new Logger('Db Connection');
 
-const db = configService.get<Database>('DATABASE');
+export const db = configService.get<Database>('DATABASE');
 
 export const dbserver = db.ENABLED
   ? mongoose.createConnection(
