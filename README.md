@@ -67,7 +67,7 @@ $ node --version
 
 $ docker-compose --version
 ```
-## MongoDb
+## MongoDb [optional]
 
 After installing docker and docker-compose, up the container.
   - [compose from mongodb](./mongodb/docker-compose.yaml)
@@ -80,8 +80,15 @@ Using the database is optional.
 
 ## Application startup
 
+Cloning the Repository
+```
+$ git clone https://github.com/code-chat-br/whatsapp-api.git
+```
+
 Go to the project directory and install all dependencies.</br>
 ```sh
+$ cd whatsapp-api
+
 $ npm i
 // or
 $ yarn install
