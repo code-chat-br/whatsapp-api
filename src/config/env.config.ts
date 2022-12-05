@@ -43,7 +43,7 @@ export type Database = {
 };
 
 export type EventsWebhook = {
-  INSTANCE: boolean;
+  STATUS_INSTANCE: boolean;
   MESSAGES_SET: boolean;
   MESSAGES_UPSERT: boolean;
   MESSAGES_UPDATE: boolean;

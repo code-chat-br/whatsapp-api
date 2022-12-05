@@ -99,6 +99,10 @@ export class WAStartupService {
       return;
     }
     this.instance.name = name;
+    this.sendDataWebhook(Events.STATUS_INSTANCE, {
+      instance: this.instance.name,
+      status: 'created',
+    });
   }
 
   public get instanceName() {
@@ -192,6 +196,11 @@ export class WAStartupService {
             statusReason: DisconnectReason.connectionClosed,
           });
 
+          this.sendDataWebhook(Events.STATUS_INSTANCE, {
+            instance: this.instance.name,
+            status: 'removed',
+          });
+
           this.client.ev.removeAllListeners('connection.update');
 
           delete this.client.ev.on;
@@ -247,6 +256,10 @@ export class WAStartupService {
         if (shouldRecnnect) {
           await this.connectToWhatsapp();
         } else {
+          this.sendDataWebhook(Events.STATUS_INSTANCE, {
+            instance: this.instance.name,
+            status: 'removed',
+          });
           return this.eventEmitter.emit('remove.instance', this.instance.name);
         }
       }

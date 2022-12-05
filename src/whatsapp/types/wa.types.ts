@@ -4,7 +4,7 @@ import { AuthenticationState, WAConnectionState } from '@adiwajshing/baileys';
 export enum Events {
   QRCODE_UPDATED = 'qrcode.updated',
   CONNECTION_UPDATE = 'connection.update',
-  INSTANCE = 'instance',
+  STATUS_INSTANCE = 'status.instance',
   MESSAGES_SET = 'messages.set',
   MESSAGES_UPSERT = 'messages.upsert',
   MESSAGES_UPDATE = 'messages.update',
