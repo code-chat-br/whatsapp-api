@@ -6,7 +6,7 @@
   "scripts": {
     "build": "bash ./build",
     "start": "ts-node --files --transpile-only ./index.ts",
-    "start:prod": "node  ./dist/index.js",
+    "start:prod": "node NODE_ENV=prod ./dist/index.js",
     "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./index.ts",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
   },
