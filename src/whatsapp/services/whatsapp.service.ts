@@ -105,6 +105,14 @@ export class WAStartupService {
     return this.instance.name;
   }
 
+  public get wuid() {
+    return this.instance.wuid;
+  }
+
+  public get profilePictureUrl() {
+    return this.instance.profilePictureUrl;
+  }
+
   public get qrCode(): wa.QrCode {
     return {
       code: this.instance.qrcode?.code,
@@ -246,6 +254,9 @@ export class WAStartupService {
       if (connection === 'open') {
         this.setHandles(this.client.ev);
         this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
+        this.instance.profilePictureUrl = (
+          await this.profilePicture(this.instance.wuid)
+        ).profilePictureUrl;
         this.logger.info(
           `
           ┌──────────────────────────────┐

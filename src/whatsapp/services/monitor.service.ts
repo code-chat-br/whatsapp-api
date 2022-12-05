@@ -35,6 +35,28 @@ export class WAMonitoringService {
     }, 1000 * 60 * 5);
   }
 
+  public instanceInfo(instanceName?: string) {
+    if (instanceName && this.waInstances[instanceName]) {
+      return {
+        instance: {
+          owner: this.waInstances[instanceName].wuid,
+          instanceName,
+          profilePictureUrl: this.waInstances[instanceName].profilePictureUrl,
+        },
+      };
+    }
+
+    return Array.from(Object.keys(this.waInstances), (instanceName) => {
+      return {
+        instance: {
+          owner: this.waInstances[instanceName].wuid,
+          instanceName,
+          profilePictureUrl: this.waInstances[instanceName].profilePictureUrl,
+        },
+      };
+    });
+  }
+
   private delInstanceFiles() {
     setInterval(async () => {
       if (this.db.ENABLED) {

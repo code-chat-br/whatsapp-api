@@ -25,6 +25,7 @@ export declare namespace wa {
     authState?: { state: AuthenticationState; saveCreds: () => void };
     name?: string;
     wuid?: string;
+    profilePictureUrl?: string;
   };
 
   export type LocalWebHook = { enabled?: boolean; url?: string };

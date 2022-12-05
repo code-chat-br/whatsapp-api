@@ -63,7 +63,10 @@ function apikey(req: Request, res: Response, next: NextFunction) {
     return next();
   }
 
-  if (req.originalUrl.includes('/instance/create') && !key) {
+  if (
+    req.originalUrl.includes('/instance/create') ||
+    (req.originalUrl.includes('/instance/fetchInstances') && !key)
+  ) {
     throw new ForbidenException(
       'Missing global api key',
       'The global api key must be set',

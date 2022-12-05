@@ -58,6 +58,14 @@ export class InstanceController {
     return this.waMonitor.waInstances[instanceName].connectionStatus;
   }
 
+  public async fetchInstances({ instanceName }: InstanceDto) {
+    if (instanceName) {
+      return this.waMonitor.instanceInfo(instanceName);
+    }
+
+    return this.waMonitor.instanceInfo();
+  }
+
   public async logout({ instanceName }: InstanceDto) {
     try {
       this.eventEmitter.emit('remove.instance', instanceName);

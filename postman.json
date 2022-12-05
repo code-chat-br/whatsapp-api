@@ -91,6 +91,49 @@
             "response": []
           },
           {
+            "name": "Fetch Instances",
+            "id": "cf9aeacf-dd2e-4798-8c9a-123420d2b66e",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "auth": {
+                "type": "apikey",
+                "apikey": [
+                  {
+                    "key": "in",
+                    "value": "header",
+                    "type": "string"
+                  },
+                  {
+                    "key": "key",
+                    "value": "apikey",
+                    "type": "string"
+                  },
+                  {
+                    "key": "value",
+                    "value": "{{globalApikey}}",
+                    "type": "string"
+                  }
+                ]
+              },
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/instance/fetchInstances/{{instance}} 👈🏼 optional",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "instance",
+                  "fetchInstances",
+                  "{{instance}} 👈🏼 optional"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
             "name": "Instance Connect",
             "id": "39ef2c5a-bb9e-4996-94b5-689d161f5412",
             "protocolProfileBehavior": {
@@ -1025,38 +1068,38 @@
     ],
     "variable": [
       {
-        "id": "bf852b0e-c43d-4a15-af42-e2e5994bb6a6",
+        "id": "70b67007-ffd3-4af7-8d3a-587237bf870c",
         "key": "baseUrl",
         "value": "http://localhost:8080",
         "type": "string"
       },
       {
-        "id": "f733d77b-e6c0-43e5-a749-cdafe539df25",
+        "id": "c1f89ea4-509c-4675-8349-ab2a11590457",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "99b38435-1b87-4f89-8694-64731f35b636",
+        "id": "3508575e-e938-47ce-bf6d-6bee923709ab",
         "key": "groupJid",
         "value": "120363026700826424@g.us",
         "type": "string"
       },
       {
-        "id": "96a0eee3-ff84-4db3-854b-0da137ca7bba",
+        "id": "1857f0cd-a3d5-46a9-954a-f68dfaaffd05",
         "key": "token",
         "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiZTg3NjE3MGQtMmVmNi00OGUyLThhZDMtMDVkOWRiOTVhYjk1IiwiaWF0IjoxNjY5OTY5OTU5LCJleHAiOjE2Njk5NzM1NTksInN1YiI6ImctdCJ9.8y3ng61PeI1dtAXIdb_-y9BgZdZaAYlA41sVDtTcgRw",
         "type": "string"
       },
       {
-        "id": "c7d4f5b3-a476-49e0-9431-3fdc5d722a6a",
+        "id": "a15657ca-3057-4366-9707-f6c219407ea4",
         "key": "apikey",
         "value": "D7A0C048-A71A-41EC-BBF0-B56EBBBE699C",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "8bd4d1d0-ebcb-4f3f-be77-9c1042313e0a",
+        "id": "3729fcc9-0a13-4904-ae8b-3964c860a6e4",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
         "type": "string"
