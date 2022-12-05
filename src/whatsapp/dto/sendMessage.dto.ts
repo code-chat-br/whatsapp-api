@@ -19,7 +19,7 @@ export class SendTextDto extends Metadata {
   textMessage: TextMessage;
 }
 
-export type MediaType = 'image' | 'document' | 'video';
+export type MediaType = 'image' | 'document' | 'video' | 'audio';
 export class MediaMessage {
   mediatype: MediaType;
   caption?: string;

@@ -88,13 +88,13 @@ export const mediaMessageSchema: JSONSchema7 = {
     mediaMessage: {
       type: 'object',
       properties: {
-        mediatype: { type: 'string', enum: ['image', 'document', 'video'] },
+        mediatype: { type: 'string', enum: ['image', 'document', 'video', 'audio'] },
         media: { type: 'string' },
         fileName: { type: 'string' },
         caption: { type: 'string' },
       },
       required: ['mediatype', 'media'],
-      ...isNotEmpty('fileName', 'caption'),
+      ...isNotEmpty('fileName', 'caption', 'media'),
     },
   },
   required: ['mediaMessage', 'number'],
