@@ -27,9 +27,7 @@ export async function useMultiFileAuthStateDb(
         JSON.parse(JSON.stringify(data, BufferJSON.replacer)),
         { upsert: true },
       );
-    } catch (error) {
-      return logger.error({ localError: 'writeData', error });
-    }
+    } catch {}
   };
 
   const readData = async (key: string): Promise<any> => {
@@ -43,19 +41,14 @@ export async function useMultiFileAuthStateDb(
         }
       }
       return;
-    } catch (error) {
-      logger.error({ readData: 'writeData', error });
-      return;
-    }
+    } catch {}
   };
 
   const removeData = async (key: string) => {
     try {
       await mongoClient.connect();
       return await collection.deleteOne({ _id: key });
-    } catch (error) {
-      logger.error({ readData: 'removeData', error });
-    }
+    } catch {}
   };
 
   const creds: AuthenticationCreds = (await readData('creds')) || initAuthCreds();
