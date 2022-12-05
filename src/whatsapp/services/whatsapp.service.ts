@@ -37,7 +37,7 @@ import EventEmitter2 from 'eventemitter2';
 import { release } from 'os';
 import P from 'pino';
 import { execSync } from 'child_process';
-import { RepositoryBroker } from '../repository/index.repository';
+import { RepositoryBroker } from '../repository/repository.manager';
 import { MessageRaw, MessageUpdateRaw } from '../models/message.model';
 import { ContactRaw } from '../models/contact.model';
 import { ChatRaw } from '../models/chat.model';

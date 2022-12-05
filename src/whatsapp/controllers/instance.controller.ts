@@ -3,7 +3,7 @@ import EventEmitter2 from 'eventemitter2';
 import { ConfigService } from '../../config/env.config';
 import { BadRequestException, InternalServerErrorException } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
-import { RepositoryBroker } from '../repository/index.repository';
+import { RepositoryBroker } from '../repository/repository.manager';
 import { AuthService, OldToken } from '../services/auth.service';
 import { WAMonitoringService } from '../services/monitor.service';
 import { WAStartupService } from '../services/whatsapp.service';

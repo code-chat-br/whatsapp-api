@@ -1,14 +1,10 @@
 import { configService } from '../config/env.config';
 import { Logger } from '../config/logger.config';
 import { eventeEmitter } from '../config/event.config';
-import { RepositoryBroker } from './repository/index.repository';
 import { MessageRepository } from './repository/message.repository';
 import { WAMonitoringService } from './services/monitor.service';
-import { MessageModel, MessageUpModel } from './models/message.model';
 import { ChatRepository } from './repository/chat.repository';
-import { ChatModel } from './models/chat.model';
 import { ContactRepository } from './repository/contact.repository';
-import { ContactModel } from './models/contact.model';
 import { MessageUpRepository } from './repository/messageUp.repository';
 import { ChatController } from './controllers/chat.controller';
 import { InstanceController } from './controllers/instance.controller';
@@ -18,6 +14,8 @@ import { GroupController } from './controllers/group.controller';
 import { ViewsController } from './controllers/views.controller';
 import { WebhookService } from './services/webhook.service';
 import { WebhookController } from './controllers/webhook.controller';
+import { RepositoryBroker } from './repository/repository.manager';
+import { ChatModel, ContactModel, MessageModel, MessageUpModel } from './models';
 
 const logger = new Logger('WA MODULE');
 
@@ -26,7 +24,7 @@ const chatRepository = new ChatRepository(ChatModel, configService);
 const contactRepository = new ContactRepository(ContactModel, configService);
 const messageUpdateRepository = new MessageUpRepository(MessageUpModel, configService);
 
-const repository = new RepositoryBroker(
+export const repository = new RepositoryBroker(
   messageRepository,
   chatRepository,
   contactRepository,

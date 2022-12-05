@@ -47,10 +47,12 @@ export class MessageRepository extends Repository {
   public async find(query: MessageQuery): Promise<MessageRaw[]> {
     try {
       if (this.dbSettings.ENABLED) {
+        delete query?.where?.key;
         return await this.messageModel.find({ ...query.where });
       }
 
       const messages: MessageRaw[] = [];
+      console.log(query?.where);
       if (query?.where?.key?.id) {
         messages.push(
           JSON.parse(

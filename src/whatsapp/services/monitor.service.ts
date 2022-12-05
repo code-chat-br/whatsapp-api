@@ -5,7 +5,7 @@ import EventEmitter2 from 'eventemitter2';
 import { join } from 'path';
 import { Logger } from '../../config/logger.config';
 import { ConfigService, Database } from '../../config/env.config';
-import { RepositoryBroker } from '../repository/index.repository';
+import { RepositoryBroker } from '../repository/repository.manager';
 import { mongoClient } from '../../db/db.connect';
 
 export class WAMonitoringService {
@@ -128,11 +128,7 @@ export class WAMonitoringService {
           await set(dirent.name);
         }
       }
-    } finally {
-      if (this.db.ENABLED) {
-        await mongoClient.close();
-      }
-    }
+    } catch {}
   }
 
   private removeInstance() {
@@ -155,9 +151,6 @@ export class WAMonitoringService {
           error,
         });
       } finally {
-        if (this.db.ENABLED) {
-          await mongoClient.close();
-        }
         this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
     });
@@ -181,9 +174,6 @@ export class WAMonitoringService {
           error,
         });
       } finally {
-        if (this.db.ENABLED) {
-          await mongoClient.close();
-        }
         this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
     });
