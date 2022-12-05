@@ -31,19 +31,17 @@ import { readFileSync } from 'fs';
 const serverUp = {
   https(app: Express) {
     const { FULLCHAIN, PRIVKEY } = configService.get<SslConf>('SSL_CONF');
-    const server = https.createServer(
+    return https.createServer(
       {
         cert: readFileSync(FULLCHAIN),
         key: readFileSync(PRIVKEY),
       },
       app,
     );
-    return server;
   },
 
   http(app: Express) {
-    const server = http.createServer(app);
-    return server;
+    return http.createServer(app);
   },
 };
 
@@ -111,7 +109,9 @@ export function bootstrap() {
 
   const httpServer = configService.get<HttpServer>('SERVER');
 
-  serverUp[httpServer.TYPE](app).listen(httpServer.PORT, () =>
+  const server = serverUp[httpServer.TYPE](app);
+
+  server.listen(httpServer.PORT, () =>
     logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT),
   );
 

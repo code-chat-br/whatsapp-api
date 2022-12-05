@@ -8,7 +8,7 @@ export type HttpServer = { TYPE: 'http' | 'https'; PORT: number };
 export type HttpMethods = 'POST' | 'GET' | 'PUT' | 'DELETE';
 export type Cors = {
   ORIGIN: string[];
-  METHODS: HttpMethods;
+  METHODS: HttpMethods[];
   CREDENTIALS: boolean;
 };
 
