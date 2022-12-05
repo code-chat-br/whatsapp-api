@@ -49,7 +49,7 @@ $ sudo apt-get install docker-compose
 ### Nodejs installation
 
 ```sh
-$ nvm install 16.10.0
+$ nvm install 16.17.0
 ```
 
 ### pm2 installation
