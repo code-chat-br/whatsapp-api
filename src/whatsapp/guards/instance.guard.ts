@@ -33,10 +33,13 @@ export function instanceLoggedGuard(req: Request, res: Response, next: NextFunct
   if (req.originalUrl.includes('/instance/create')) {
     const instance = req.body as InstanceDto;
     if (existsSync(join(INSTANCE_DIR, instance.instanceName))) {
-      waMonitor.waInstances[instance.instanceName] = undefined;
       throw new ForbidenException(
         `This name "${instance.instanceName}" is already in use.`,
       );
+    }
+
+    if (waMonitor.waInstances[instance.instanceName]) {
+      delete waMonitor.waInstances[instance.instanceName];
     }
   }
 
