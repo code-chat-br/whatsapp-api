@@ -1,5 +1,10 @@
 import { proto } from '@adiwajshing/baileys';
-import { ArchiveChatDto, ReadMessageDto, WhatsAppNumberDto } from '../dto/chat.dto';
+import {
+  ArchiveChatDto,
+  NumberDto,
+  ReadMessageDto,
+  WhatsAppNumberDto,
+} from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { ContactQuery } from '../repository/contact.repository';
 import { MessageQuery } from '../repository/message.repository';
@@ -19,6 +24,10 @@ export class ChatController {
 
   public async archiveChat({ instanceName }: InstanceDto, data: ArchiveChatDto) {
     return await this.waMonitor.waInstances[instanceName].archiveChat(data);
+  }
+
+  public async fetchProfilePicture({ instanceName }: InstanceDto, data: NumberDto) {
+    return await this.waMonitor.waInstances[instanceName].profilePicture(data.number);
   }
 
   public async fetchContacts({ instanceName }: InstanceDto, query: ContactQuery) {

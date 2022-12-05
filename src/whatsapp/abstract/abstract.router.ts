@@ -18,8 +18,11 @@ const logger = new Logger('Validate');
 
 export abstract class RouterBroker {
   constructor() {}
-  public routerPath(path: string) {
-    return '/' + path + '/:instanceName';
+  public routerPath(path: string, param = true) {
+    let route = '/' + path;
+    param ? (route += '/:instanceName') : null;
+
+    return route;
   }
 
   public async dataValidate<T>(args: DataValidate<T>) {
@@ -29,12 +32,15 @@ export abstract class RouterBroker {
     const body = request.body;
     const instance = request.params as unknown as InstanceDto;
 
-    if (Object.keys(instance).length === 0) {
-      Object.assign(instance, body);
-      Object.assign(ref, instance);
-    } else {
-      Object.assign(ref, body);
+    if (request?.query && Object.keys(request.query).length > 0) {
+      Object.assign(instance, request.query);
     }
+
+    if (request.originalUrl.includes('/instance/create')) {
+      Object.assign(instance, body);
+    }
+
+    Object.assign(ref, body);
 
     const v = schema ? validate(ref, schema) : { valid: true, errors: [] };
 

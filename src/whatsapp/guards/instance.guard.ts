@@ -13,7 +13,7 @@ import { waMonitor } from '../whatsapp.module';
 export function instanceExistsGuard(req: Request, res: Response, next: NextFunction) {
   if (
     req.originalUrl.includes('/instance/create') ||
-    req.originalUrl.includes('/instance/instanceInfo')
+    req.originalUrl.includes('/instance/fetchInstances')
   ) {
     return next();
   }

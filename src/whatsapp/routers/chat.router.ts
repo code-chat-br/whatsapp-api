@@ -4,10 +4,16 @@ import {
   contactValidateSchema,
   messageUpSchema,
   messaseValidateSchema,
+  profilePictureSchema,
   readMessageSchema,
   whatsappNumberSchema,
 } from '../../validate/validate.schema';
-import { ArchiveChatDto, ReadMessageDto, WhatsAppNumberDto } from '../dto/chat.dto';
+import {
+  ArchiveChatDto,
+  NumberDto,
+  ReadMessageDto,
+  WhatsAppNumberDto,
+} from '../dto/chat.dto';
 import { ContactQuery } from '../repository/contact.repository';
 import { MessageQuery } from '../repository/message.repository';
 import { chatController } from '../whatsapp.module';
@@ -49,6 +55,16 @@ export class ChatRouter extends RouterBroker {
         });
 
         return res.status(HttpStatus.CREATED).json(response);
+      })
+      .post(this.routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<NumberDto>({
+          request: req,
+          schema: profilePictureSchema,
+          ClassRef: NumberDto,
+          execute: (instance, data) => chatController.fetchProfilePicture(instance, data),
+        });
+
+        return res.status(HttpStatus.OK).json(response);
       })
       .post(this.routerPath('findContacts'), ...guards, async (req, res) => {
         const response = await this.dataValidate<ContactQuery>({

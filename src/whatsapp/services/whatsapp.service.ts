@@ -641,6 +641,8 @@ export class WAStartupService {
       mimetype = getMIMEType(mediaMessage.fileName);
     }
 
+    this.logger.debug({ mimetype });
+
     prepareMedia[type].caption = mediaMessage?.caption;
     prepareMedia[type].mimetype = mimetype;
     prepareMedia[type].fileName = mediaMessage.fileName;
@@ -664,9 +666,10 @@ export class WAStartupService {
 
   public async buttonMessage(data: SendButtonDto) {
     const embeddMedia: any = {};
-    const mediatype = data.buttonMessage.mediaMessage.mediatype.toUpperCase() || 'TEXT';
+    let mediatype = 'TEXT';
 
     if (data.buttonMessage?.mediaMessage) {
+      mediatype = data.buttonMessage.mediaMessage.mediatype.toUpperCase() || 'TEXT';
       embeddMedia.mediaKey = mediatype.toLowerCase() + 'Message';
       const generate = await this.prepareMediaMessage(data.buttonMessage.mediaMessage);
       embeddMedia.message = generate.message[embeddMedia.mediaKey];

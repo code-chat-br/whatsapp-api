@@ -351,6 +351,15 @@ export const contactValidateSchema: JSONSchema7 = {
   },
 };
 
+export const profilePictureSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { type: 'string' },
+  },
+  ...isNotEmpty('number'),
+};
+
 export const messaseValidateSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',

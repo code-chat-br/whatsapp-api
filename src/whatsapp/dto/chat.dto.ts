@@ -1,10 +1,13 @@
-import { proto } from '@adiwajshing/baileys';
-
 export class OnWhatsAppDto {
   constructor(public readonly jid: string, public readonly exists: boolean) {}
 }
+
 export class WhatsAppNumberDto {
   numbers: string[];
+}
+
+export class NumberDto {
+  number: string;
 }
 
 class Key {
