@@ -20,13 +20,6 @@ export class InstanceRouter extends RouterBroker {
           execute: (instance) => instanceController.createInstance(instance),
         });
 
-        let session: any = {};
-
-        auth.TYPE === 'jwt'
-          ? (session = { type: 'jwt', hash: response.hash.jwt })
-          : (session = { type: 'apikey', hash: response.hash.apikey });
-        req.session[response.instance.instanceName] = session;
-
         return res.status(HttpStatus.CREATED).json(response);
       })
       .get(this.routerPath('connect'), ...guards, async (req, res) => {

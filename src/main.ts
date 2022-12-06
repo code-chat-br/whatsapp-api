@@ -76,14 +76,7 @@ export function bootstrap() {
   if (!configService.get<Production>('PRODUCTION')) {
     app.set('view engine', 'hbs');
     app.set('views', join(ROOT_DIR, 'views'));
-    app.use(
-      express.static(join(ROOT_DIR, 'public')),
-      session({
-        secret: configService.get<ExpressSession>('EXPRESS_SESSION').SECRET,
-        resave: false,
-        saveUninitialized: false,
-      }),
-    );
+    app.use(express.static(join(ROOT_DIR, 'public')));
   }
 
   app.use('/', router);
