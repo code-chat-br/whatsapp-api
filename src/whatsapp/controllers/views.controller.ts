@@ -17,27 +17,20 @@ export class ViewsController {
 
   public qrcode(request: Request, response: Response) {
     const param = request.params as unknown as InstanceDto;
-
     const instance = this.waMonit.waInstances[param.instanceName];
     if (instance.connectionStatus.state === 'open') {
       throw new BadRequestException('The instance is already connected');
     }
+    const type = this.configService.get<Auth>('AUTHENTICATION').TYPE;
+    const data: JwtPayload = JSON.parse(
+      readFileSync(join(AUTH_DIR, type, param.instanceName + '.json'), {
+        encoding: 'utf-8',
+      }),
+    );
 
-    let auth: { type: 'jwt' | 'apikey'; hash: string } =
-      request.session[param.instanceName];
+    const hash = type === 'jwt' ? `Bearer ${data[type]}` : data[type];
 
-    if (!auth) {
-      const type = this.configService.get<Auth>('AUTHENTICATION').TYPE;
-      const data: JwtPayload = JSON.parse(
-        readFileSync(join(AUTH_DIR, type, param.instanceName + '.json'), {
-          encoding: 'utf-8',
-        }),
-      );
-
-      const hash = type === 'jwt' ? `Bearer ${data[type]}` : data[type];
-
-      auth = { type, hash };
-    }
+    const auth = { type, hash };
 
     return response.status(HttpStatus.OK).render('qrcode', { ...auth, ...param });
   }
