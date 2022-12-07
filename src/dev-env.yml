@@ -36,6 +36,11 @@ LOG_LEVEL:
   - VERBOSE
   - DARK
 
+# Determine how long the instance should be deleted from memory in case of no connection.
+# Default time: 5 minutes
+# If you don't even want an expiration, enter the value false
+DEL_INSTANCE: 5 # or false
+
 # Temporary data storage
 STORE:
   CLEANING_INTARVAL: 7200 # seconds === 2h
@@ -87,9 +92,6 @@ CONFIG_SESSION_PHONE:
   # Name that will be displayed on smartphone connection
   CLIENT: CodeChat
   NAME: Chrome # firefox | edge | opera | safari
-
-EXPRESS_SESSION:
-  SECRET: C%I6IkpXV*CJ9.eyJjb2RlI
 
 # Set qrcode display limit
 QRCODE:

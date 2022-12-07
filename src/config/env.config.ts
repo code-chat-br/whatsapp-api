@@ -60,11 +60,12 @@ export type ApiKey = { KEY: string };
 export type Jwt = { EXPIRIN_IN: number; SECRET: string };
 export type Auth = { API_KEY: ApiKey; JWT: Jwt; TYPE: 'jwt' | 'apikey' };
 
+export type DelInstance = number | boolean;
+
 export type GlobalWebhook = { URL: string; ENABLED: boolean };
 export type SslConf = { PRIVKEY: string; FULLCHAIN: string };
 export type Webhook = { GLOBAL?: GlobalWebhook; EVENTS: EventsWebhook };
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
-export type ExpressSession = { SECRET: string };
 export type QrCode = { LINIT: number };
 export type Production = boolean;
 
@@ -75,9 +76,9 @@ export interface Env {
   STORE: StoreConf;
   DATABASE: Database;
   LOG_LEVEL: LogLevel[];
+  DEL_INSTANCE: DelInstance;
   WEBHOOK: Webhook;
   CONFIG_SESSION_PHONE: ConfigSessionPhone;
-  EXPRESS_SESSION: ExpressSession;
   QRCODE: QrCode;
   AUTHENTICATION: Auth;
   PRODUCTION: Production;

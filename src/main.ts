@@ -4,7 +4,6 @@ import {
   Cors,
   Production,
   HttpServer,
-  ExpressSession,
   SslConf,
 } from './config/env.config';
 import cors from 'cors';
@@ -17,7 +16,6 @@ import express, {
   urlencoded,
 } from 'express';
 import { join } from 'path';
-import session from 'express-session';
 import * as https from 'https';
 import * as http from 'http';
 import { onUnexpectedError } from './config/error.config';

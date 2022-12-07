@@ -4,7 +4,7 @@ import { INSTANCE_DIR } from '../../config/path.config';
 import EventEmitter2 from 'eventemitter2';
 import { join } from 'path';
 import { Logger } from '../../config/logger.config';
-import { ConfigService, Database } from '../../config/env.config';
+import { ConfigService, Database, DelInstance } from '../../config/env.config';
 import { RepositoryBroker } from '../repository/repository.manager';
 import { mongoClient } from '../../db/db.connect';
 
@@ -28,11 +28,14 @@ export class WAMonitoringService {
   public readonly waInstances: Record<string, WAStartupService> = {};
 
   public delInstanceTime(instance: string) {
-    setTimeout(() => {
-      if (this.waInstances[instance].connectionStatus.state !== 'open') {
-        delete this.waInstances[instance];
-      }
-    }, 1000 * 60 * 5);
+    const time = this.configService.get<DelInstance>('DEL_INSTANCE');
+    if (typeof time === 'number' && time > 0) {
+      setTimeout(() => {
+        if (this.waInstances[instance].connectionStatus.state !== 'open') {
+          delete this.waInstances[instance];
+        }
+      }, 1000 * 60 * time);
+    }
   }
 
   public instanceInfo(instanceName?: string) {
