@@ -35,6 +35,10 @@ $ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bas
 # or
 $ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 ```
+>
+> After finishing, restart the terminal to load the new information.
+>
+
 ### Docker installation \[optional\]
 
 ```sh
@@ -57,9 +61,6 @@ $ nvm install 16.17.0
 $ npm i -g pm2
 ```
 
->
-> After finishing, restart the terminal to load the new information.
->
 ```sh
 $ docker --version
 
