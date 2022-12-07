@@ -2,7 +2,7 @@
 version: '3.8'
 
 networks:
-  mongo-net:
+  api-net:
     driver: bridge
 
 services:
@@ -26,6 +26,6 @@ services:
       - MONGODB_ROOT_PASSWORD=<password>
       - MONGODB_REPLICA_SET_KEY=9glkjQlr855kU
     networks:
-      - mongo-net
+      - api-net
     expose:
       - 26712

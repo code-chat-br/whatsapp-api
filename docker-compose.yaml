@@ -2,17 +2,20 @@ version: '3.8'
 
 networks:
   api-net:
-    drive: bridge
+    driver: bridge
 
 services:
   codechatapi:
-    container_name: codechat
+    container_name: api_codechat
     build:
-      context: backend
+      context: .
       dockerfile: ./Dockerfile
+    image: whatsappapi/codechat:latest
 
-    expose:
-      8080:8080
-      443:443
+    ports:
+      - 8080:8080
 
-    command: npm run start:prod 
+    command: npm run start:prod
+
+    networks:
+      - api-net

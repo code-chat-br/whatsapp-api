@@ -7,10 +7,16 @@ LABEL contact="suporte@codechat.rest"
 RUN apt-get update -y
 RUN apt-get upgrade -y
 
-WORKDIR /~/codechat
+WORKDIR /~/Projects
 
 COPY . .
 
-EXPOSE 8080 443
+ENV SERVER_TYPE=http
+ENV SERVER_PORT=8080
+
+RUN npm i
+RUN npm run build
+
+EXPOSE 8080
 
 CMD [ "npm", "run", "start:prod" ]
