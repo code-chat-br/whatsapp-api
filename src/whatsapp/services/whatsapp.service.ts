@@ -629,8 +629,6 @@ export class WAStartupService {
       const regex = new RegExp(/.*\/(.+?)\./);
       const arryMatch = regex.exec(mediaMessage.media);
       mediaMessage.fileName = arryMatch[1];
-    } else {
-      mediaMessage.fileName = type;
     }
 
     let mimetype: string;
@@ -641,7 +639,7 @@ export class WAStartupService {
       mimetype = getMIMEType(mediaMessage.fileName);
     }
 
-    this.logger.debug({ mimetype });
+    this.logger.log(mediaMessage);
 
     prepareMedia[type].caption = mediaMessage?.caption;
     prepareMedia[type].mimetype = mimetype;

@@ -130,9 +130,11 @@ export const buttonMessageSchema: JSONSchema7 = {
           type: 'object',
           properties: {
             media: { type: 'string' },
+            fileName: { type: 'string' },
             mediatype: { type: 'string', enum: ['image', 'document', 'video'] },
           },
           required: ['media', 'mediatype'],
+          ...isNotEmpty('media', 'fileName'),
         },
       },
       required: ['title', 'description', 'buttons'],

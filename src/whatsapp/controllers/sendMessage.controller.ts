@@ -20,13 +20,22 @@ export class SendMessageController {
   }
 
   public async sendMedia({ instanceName }: InstanceDto, data: SendMediaDto) {
-    if (!isURL(data?.mediaMessage?.media) || !isBase64(data?.mediaMessage?.media)) {
-      throw new BadRequestException('Owned media must be a url or base64');
+    if (isBase64(data?.mediaMessage?.media) && !data?.mediaMessage?.fileName) {
+      throw new BadRequestException('For bse64 the file name must be informed.');
     }
-    return await this.waMonitor.waInstances[instanceName].mediaMessage(data);
+    if (isURL(data?.mediaMessage?.media) || isBase64(data?.mediaMessage?.media)) {
+      return await this.waMonitor.waInstances[instanceName].mediaMessage(data);
+    }
+    throw new BadRequestException('Owned media must be a url or base64');
   }
 
   public async sendButtons({ instanceName }: InstanceDto, data: SendButtonDto) {
+    if (
+      isBase64(data.buttonMessage.mediaMessage?.media) &&
+      !data.buttonMessage.mediaMessage?.fileName
+    ) {
+      throw new BadRequestException('For bse64 the file name must be informed.');
+    }
     return await this.waMonitor.waInstances[instanceName].buttonMessage(data);
   }
 
