@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2022-12-05T13:13:13.000Z"
+      "updatedAt": "2022-12-07T20:52:28.000Z"
     },
     "item": [
       {
@@ -70,7 +70,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"instanceName\": \"codechat\"\r\n}",
+                "raw": "{\r\n  \"instanceName\": \"codedrop\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -218,14 +218,14 @@
               "method": "DELETE",
               "header": [],
               "url": {
-                "raw": "{{baseUrl}}/instance/logout/{{instance}}",
+                "raw": "{{baseUrl}}/instance/delete/codedrop",
                 "host": [
                   "{{baseUrl}}"
                 ],
                 "path": [
                   "instance",
-                  "logout",
-                  "{{instance}}"
+                  "delete",
+                  "codedrop"
                 ]
               }
             },
@@ -334,7 +334,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here 1\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here 2\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    // optional 👇🏼\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"media\": \"url or base64\"\r\n    }\r\n  }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here 1\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here 2\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    // optional 👇🏼\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"fileName\": \"image.png\",\r\n      \"media\": \"url or base64\"\r\n    }\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1086,7 +1086,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "e1b59297-c787-4b8e-a609-6f255cf28616",
+          "id": "7a30bdde-65d3-4755-b1cf-7d5e0913f363",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1096,7 +1096,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "fd11536d-8f5e-45d1-9331-10c6c379f003",
+          "id": "49025f72-bfa4-4d33-bf46-2b99cd1b8418",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1106,38 +1106,38 @@
     ],
     "variable": [
       {
-        "id": "06258614-ed0b-4514-a748-4cf03634c9f1",
+        "id": "cce97b1c-defc-4aca-b0d9-f77dfac5fb77",
         "key": "baseUrl",
-        "value": "http://localhost:8080",
+        "value": "https://api.codechat.dev",
         "type": "string"
       },
       {
-        "id": "f621dfec-6e83-46f2-ab3b-d9c7243fb79c",
+        "id": "5a74e954-cc7a-48b2-9890-9d820f8c52f2",
         "key": "instance",
-        "value": "codechat",
+        "value": "codedrop",
         "type": "string"
       },
       {
-        "id": "fd5023bf-5bd7-43ec-b1c2-5346c98a16fd",
+        "id": "9bc65d29-1963-4da8-847a-1333b611e05b",
         "key": "groupJid",
         "value": "120363026700826424@g.us",
         "type": "string"
       },
       {
-        "id": "f24c4756-b224-4ece-b06b-398b4a5c31ae",
+        "id": "d8747d4c-d352-4364-ac56-f61f3aa4a2d6",
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOWJmMGQyMjItMDFlMS00ZTRjLTljYzgtMTI2OGJjZTliZGUzIiwiaWF0IjoxNjcwMjQ1OTc0LCJleHAiOjE2NzAyNDk1NzQsInN1YiI6ImctdCJ9.H_Uj2oxPsZpIpNqG7xmZnW8OTWyHEM5n-GUEpJpMJzc",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlZHJvcCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMjAxMWZlMzktZjdlZS00NDEzLWI5Y2MtMTUyYzk3NmY4NGYzIiwiaWF0IjoxNjcwNDQ2MzM2LCJleHAiOjE2NzA0NDk5MzYsInN1YiI6ImctdCJ9.3NhRmGpx8t6YU35ULJFuHNAK3m0h-QhcAdbQtWpjbnc",
         "type": "string"
       },
       {
-        "id": "5722e7a5-04c6-4f4e-b07c-26176e5f4517",
+        "id": "f6c029e4-1bb2-4bde-afe8-3462e9067a7f",
         "key": "apikey",
-        "value": "D7A0C048-A71A-41EC-BBF0-B56EBBBE699C",
+        "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "fcfa08ef-2162-42ff-af2b-edfb7085bff2",
+        "id": "b7d1fd62-e534-4235-a489-0dd1ee2afdcf",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
         "type": "string"
