@@ -101,6 +101,10 @@ export class ConfigService {
     const YAML_PATH = join(SRC_DIR, 'env.yml');
     const configYml = load(readFileSync(YAML_PATH, { encoding: 'utf-8' })) as Env;
     configYml.PRODUCTION = process.env.NODE_ENV === 'PROD' ? true : false;
+    if (process.env.SERVER_TYPE) {
+      configYml.SERVER.TYPE = process.env.SERVER_TYPE as 'http';
+      configYml.SERVER.PORT = Number.parseInt(process.env.SERVER_PORT);
+    }
     return configYml;
   }
 }
