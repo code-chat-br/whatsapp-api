@@ -3,9 +3,15 @@ import {
   createGroupSchema,
   groupJidSchema,
   updateGparticipantsSchema,
+  updateGroupPicture,
 } from '../../validate/validate.schema';
 import { RouterBroker } from '../abstract/abstract.router';
-import { CreateGroupDto, GroupJid, GroupUpdateParticipantDto } from '../dto/group.dto';
+import {
+  CreateGroupDto,
+  GroupJid,
+  GroupPictureDto,
+  GroupUpdateParticipantDto,
+} from '../dto/group.dto';
 import { groupController } from '../whatsapp.module';
 import { HttpStatus } from './index.router';
 
@@ -19,6 +25,16 @@ export class GroupRouter extends RouterBroker {
           schema: createGroupSchema,
           ClassRef: CreateGroupDto,
           execute: (instance, data) => groupController.createGroup(instance, data),
+        });
+
+        res.status(HttpStatus.CREATED).json(response);
+      })
+      .put(this.routerPath('updateGroupPicture'), ...guards, async (req, res) => {
+        const response = await this.groupValidate<GroupPictureDto>({
+          request: req,
+          schema: updateGroupPicture,
+          ClassRef: GroupPictureDto,
+          execute: (instance, data) => groupController.updateGroupPicture(instance, data),
         });
 
         res.status(HttpStatus.CREATED).json(response);
@@ -69,7 +85,7 @@ export class GroupRouter extends RouterBroker {
           request: req,
           schema: updateGparticipantsSchema,
           ClassRef: GroupUpdateParticipantDto,
-          execute: (instance, data) => groupController.revokeInviteCode(instance, data),
+          execute: (instance, data) => groupController.updateGParticipat(instance, data),
         });
 
         res.status(HttpStatus.CREATED).json(response);
@@ -77,9 +93,9 @@ export class GroupRouter extends RouterBroker {
       .delete(this.routerPath('leaveGroup'), ...guards, async (req, res) => {
         const response = await this.groupValidate<GroupJid>({
           request: req,
-          schema: updateGparticipantsSchema,
+          schema: {},
           ClassRef: GroupJid,
-          execute: (instance, data) => groupController.revokeInviteCode(instance, data),
+          execute: (instance, data) => groupController.leaveGroup(instance, data),
         });
 
         res.status(HttpStatus.OK).json(response);
