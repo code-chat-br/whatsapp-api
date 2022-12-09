@@ -82,11 +82,6 @@ export class InstanceRouter extends RouterBroker {
           execute: (_, data) => instanceController.refreshToken(_, data),
         });
 
-        req.session[response.instanceName] = {
-          header: 'Authorization',
-          hash: response.jwt,
-        } as any;
-
         return res.status(HttpStatus.CREATED).json(response);
       });
     }

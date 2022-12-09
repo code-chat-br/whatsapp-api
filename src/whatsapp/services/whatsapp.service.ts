@@ -14,6 +14,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   UserFacingSocketConfig,
   WABrowserDescription,
+  WAMediaUpload,
   WASocket,
 } from '@adiwajshing/baileys';
 import {
@@ -24,7 +25,7 @@ import {
   Webhook,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
-import { INSTANCE_DIR, ROOT_DIR, SRC_DIR } from '../../config/path.config';
+import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import axios from 'axios';
@@ -68,7 +69,12 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '../../exceptions';
-import { CreateGroupDto, GroupJid, GroupUpdateParticipantDto } from '../dto/group.dto';
+import {
+  CreateGroupDto,
+  GroupJid,
+  GroupPictureDto,
+  GroupUpdateParticipantDto,
+} from '../dto/group.dto';
 import { WebhookDto } from '../dto/webhook.dto';
 import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
@@ -445,6 +451,7 @@ export class WAStartupService {
 
         messagesRaw.push({
           key: m.key,
+          pushName: m.pushName,
           message: { ...m.message },
           messageTimestamp: m.messageTimestamp,
           owner: this.instance.wuid,
@@ -471,6 +478,7 @@ export class WAStartupService {
       }
       const messageRaw: MessageRaw = {
         key: received.key,
+        pushName: received.pushName,
         message: { ...received.message },
         messageTimestamp: received.messageTimestamp,
         owner: this.instance.wuid,
@@ -908,6 +916,12 @@ export class WAStartupService {
   public async fetchContacts(query: ContactQuery) {
     if (query?.where) {
       query.where.owner = this.instance.wuid;
+    } else {
+      query = {
+        where: {
+          owner: this.instance.wuid,
+        },
+      };
     }
     return await this.repository.contact.find(query);
   }
@@ -915,6 +929,12 @@ export class WAStartupService {
   public async fetchMessages(query: MessageQuery) {
     if (query?.where) {
       query.where.owner = this.instance.wuid;
+    } else {
+      query = {
+        where: {
+          owner: this.instance.wuid,
+        },
+      };
     }
     if (query?.where?.key) {
       for (const [k, v] of Object.entries(query.where.key)) {
@@ -939,21 +959,29 @@ export class WAStartupService {
       if (create?.description) {
         await this.client.groupUpdateDescription(id, create.description);
       }
-      if (create?.profilePicture) {
-        let picture: any;
-        if (isURL(create.profilePicture)) {
-          picture = { url: create.profilePicture };
-        } else if (isBase64(create.profilePicture)) {
-          picture = Buffer.from(create.profilePicture, 'base64');
-        } else {
-          throw new BadRequestException('"profilePicture" must be a url or a base64');
-        }
-        await this.client.updateProfilePicture(id, picture);
-      }
 
       const group = await this.client.groupMetadata(id);
 
       return { groupMetadata: group };
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException('Error creating group', error.toString());
+    }
+  }
+
+  public async updateGroupPicture(picture: GroupPictureDto) {
+    try {
+      let pic: WAMediaUpload;
+      if (isURL(picture.image)) {
+        pic = (await axios.get(picture.image, { responseType: 'arraybuffer' })).data;
+      } else if (isBase64(picture.image)) {
+        pic = Buffer.from(picture.image, 'base64');
+      } else {
+        throw new BadRequestException('"profilePicture" must be a url or a base64');
+      }
+      await this.client.updateProfilePicture(picture.groupJid, pic);
+
+      return { update: 'success' };
     } catch (error) {
       throw new InternalServerErrorException('Error creating group', error.toString());
     }
@@ -963,7 +991,7 @@ export class WAStartupService {
     try {
       return await this.client.groupMetadata(id.groupJid);
     } catch (error) {
-      throw new InternalServerErrorException('Error fetching group', error.toString());
+      throw new NotFoundException('Error fetching group', error.toString());
     }
   }
 

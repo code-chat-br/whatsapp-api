@@ -7,6 +7,7 @@ import { Logger } from '../../config/logger.config';
 import { ConfigService, Database, DelInstance } from '../../config/env.config';
 import { RepositoryBroker } from '../repository/repository.manager';
 import { mongoClient } from '../../db/db.connect';
+import { NotFoundException } from '../../exceptions';
 
 export class WAMonitoringService {
   constructor(
@@ -39,6 +40,9 @@ export class WAMonitoringService {
   }
 
   public instanceInfo(instanceName?: string) {
+    if (instanceName && !this.waInstances[instanceName]) {
+      throw new NotFoundException(`Instance "${instanceName}" not found`);
+    }
     if (instanceName && this.waInstances[instanceName]) {
       return {
         instance: {
