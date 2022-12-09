@@ -155,7 +155,11 @@ export class WAStartupService {
           const httpService = axios.create({ baseURL: this.localWebhook.url });
           await httpService.post(
             '',
-            { event, data },
+            {
+              event,
+              instanceName: this.instance.name,
+              data,
+            },
             { params: { owner: this.instance.wuid } },
           );
         }
