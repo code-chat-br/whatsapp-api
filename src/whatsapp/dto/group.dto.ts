@@ -2,7 +2,11 @@ export class CreateGroupDto {
   subject: string;
   description?: string;
   participants: string[];
-  profilePicture: string;
+}
+
+export class GroupPictureDto {
+  groupJid: string;
+  image: string;
 }
 
 export class GroupJid {
