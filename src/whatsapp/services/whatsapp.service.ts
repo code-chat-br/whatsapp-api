@@ -237,7 +237,6 @@ export class WAStartupService {
           this.instance.qrcode.code = qr;
 
           this.sendDataWebhook(Events.QRCODE_UPDATED, {
-            instance: this.instance.name,
             qrcode: { code: qr, base64 },
           });
         });
@@ -252,7 +251,6 @@ export class WAStartupService {
 
       if (connection) {
         this.stateConnection = {
-          instance: this.instance.name,
           state: connection,
           statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode || 200,
         };
