@@ -452,6 +452,7 @@ export const groupJidSchema: JSONSchema7 = {
   properties: {
     groupJid: { type: 'string', pattern: '^[\\d]+@g.us$' },
   },
+  required: ['groupJid'],
   ...isNotEmpty('groupJid'),
 };
 
@@ -478,6 +479,17 @@ export const updateGparticipantsSchema: JSONSchema7 = {
   },
   required: ['groupJid', 'action', 'participants'],
   ...isNotEmpty('groupJid', 'action'),
+};
+
+export const updateGroupPicture: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    groupJid: { type: 'string' },
+    image: { type: 'string' },
+  },
+  required: ['groupJid', 'image'],
+  ...isNotEmpty('groupJid', 'image'),
 };
 
 // Webhook Schema
