@@ -157,7 +157,7 @@ export class WAStartupService {
             '',
             {
               event,
-              instanceName: this.instance.name,
+              instance: this.instance.name,
               data,
             },
             { params: { owner: this.instance.wuid } },
