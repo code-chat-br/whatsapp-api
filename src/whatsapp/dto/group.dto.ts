@@ -15,5 +15,5 @@ export class GroupJid {
 
 export class GroupUpdateParticipantDto extends GroupJid {
   action: 'add' | 'remove' | 'promote' | 'demote';
-  paticipants: string[];
+  participants: string[];
 }
