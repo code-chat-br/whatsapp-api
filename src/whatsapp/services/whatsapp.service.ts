@@ -1026,7 +1026,7 @@ export class WAStartupService {
 
   public async updateGParticipant(update: GroupUpdateParticipantDto) {
     try {
-      const participants = update.paticipants.map((p) => this.createJid(p));
+      const participants = update.participants.map((p) => this.createJid(p));
       const updatePaticipants = await this.client.groupParticipantsUpdate(
         update.groupJid,
         participants,
