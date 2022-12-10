@@ -169,7 +169,11 @@ export class WAStartupService {
           const httpService = axios.create({ baseURL: globalWebhhok.URL });
           await httpService.post(
             '',
-            { event, data },
+            { 
+              event,
+              instance: this.instance.name,
+              data 
+            },
             { params: { owner: this.instance.wuid } },
           );
         }
