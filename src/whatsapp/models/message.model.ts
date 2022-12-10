@@ -53,6 +53,7 @@ const messageUpdateSchema = new Schema({
   fromMe: { type: Boolean, required: true },
   participante: { type: String, min: 1 },
   datetime: { type: Number, required: true },
+  status: { type: String, required: true },
   owner: { type: String, required: true, min: 1 },
 });
 
