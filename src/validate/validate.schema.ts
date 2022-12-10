@@ -409,7 +409,7 @@ export const messageUpSchema: JSONSchema7 = {
       properties: {
         _id: { type: 'string' },
         remoteJid: { type: 'string' },
-        id: { type: 'object' },
+        id: { type: 'string' },
         fromMe: { type: 'boolean', enum: [true, false] },
         participant: { type: 'string' },
         status: {
