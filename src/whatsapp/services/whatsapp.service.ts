@@ -169,10 +169,10 @@ export class WAStartupService {
           const httpService = axios.create({ baseURL: globalWebhhok.URL });
           await httpService.post(
             '',
-            { 
+            {
               event,
               instance: this.instance.name,
-              data 
+              data,
             },
             { params: { owner: this.instance.wuid } },
           );
@@ -241,7 +241,7 @@ export class WAStartupService {
           this.instance.qrcode.code = qr;
 
           this.sendDataWebhook(Events.QRCODE_UPDATED, {
-            qrcode: { code: qr, base64 },
+            qrcode: { instance: this.instance.name, code: qr, base64 },
           });
         });
 
@@ -258,7 +258,10 @@ export class WAStartupService {
           state: connection,
           statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode || 200,
         };
-        this.sendDataWebhook(Events.CONNECTION_UPDATE, this.stateConnection);
+        this.sendDataWebhook(Events.CONNECTION_UPDATE, {
+          instance: this.instance.name,
+          ...this.stateConnection,
+        });
       }
 
       if (connection === 'close') {
