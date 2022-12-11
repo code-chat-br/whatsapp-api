@@ -397,6 +397,7 @@ export const messaseValidateSchema: JSONSchema7 = {
       },
       ...isNotEmpty('_id'),
     },
+    limit: { type: 'integer' },
   },
 };
 
@@ -419,6 +420,7 @@ export const messageUpSchema: JSONSchema7 = {
       },
       ...isNotEmpty('_id', 'remoteJid', 'id', 'status'),
     },
+    limit: { type: 'integer' },
   },
 };
 

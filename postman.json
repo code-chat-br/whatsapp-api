@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2022-12-09T11:22:58.000Z"
+      "updatedAt": "2022-12-11T12:59:50.000Z"
     },
     "item": [
       {
@@ -70,7 +70,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"instanceName\": \"codedrop\"\r\n}",
+                "raw": "{\r\n  \"instanceName\": \"codechat\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -691,7 +691,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"key.id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n{\r\n  \"where\": {\r\n    /* \r\n     * \"key.fromMe\": false,\r\n     * \"key.remoteJid\": \"123@s.whatsapp.net\",\r\n     * \"key.id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    */\r\n    \"key\": {\r\n      \"fromMe\": false,\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    },\r\n    \"message.[...]\": { }\r\n  }\r\n}",
+                "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"key.id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n{\r\n  \"where\": {\r\n    /* \r\n     * \"key.fromMe\": false,\r\n     * \"key.remoteJid\": \"123@s.whatsapp.net\",\r\n     * \"key.id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    */\r\n    \"key\": {\r\n      \"fromMe\": false,\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    },\r\n    \"message.[...]\": { }\r\n  },\r\n  // optional\r\n  \"limit\": 10\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -723,7 +723,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n{\r\n  \"where\": {\r\n    \"_id\": \"6390fe2eba512dacefa8ce3a\",\r\n    \"remoteJid\": \"123@s.whatsapp.net\",\r\n    \"id\": \"BAE5959535174C7E\",\r\n    \"fromMe\": true\r\n  }\r\n}",
+                "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n{\r\n  \"where\": {\r\n    \"_id\": \"6390fe2eba512dacefa8ce3a\",\r\n    \"remoteJid\": \"123@s.whatsapp.net\",\r\n    \"id\": \"BAE5959535174C7E\",\r\n    \"fromMe\": true\r\n  },\r\n  // optional\r\n  \"limit\": 10\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1023,7 +1023,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlZHJvcCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMDE1Y2FmZTctMjUzMy00NGY3LWI4YTMtMzlkZjE1ZWJlOTk0IiwiaWF0IjoxNjcwNTgxMzI2LCJleHAiOjE2NzA1ODQ5MjYsInN1YiI6ImctdCJ9.cYEdfZuqi6zqQQaIL246efiZ2ydcoqjj5Bta_SsDEdM\"\r\n}",
+                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMDkxNjc0ZmMtNDYzYS00Y2VjLTg1MWItMGEwMWEwNmJkYWIwIiwiaWF0IjoxNjcwNzE4NTIxLCJleHAiOjE2NzA3MjIxMjEsInN1YiI6ImctdCJ9.hz_EgxvPnYUSb9gdZkp_hpyh05cU_bViuUSbI71FQeY\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1123,7 +1123,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "fb0fa11a-dea9-4678-8914-423ab4e53866",
+          "id": "1162ed68-66bc-4dee-a754-9a3b1b99cb48",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1133,7 +1133,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "defed07b-425b-4929-a535-4efc8cfefbf3",
+          "id": "0b06ce77-63e9-4819-9a03-5a33e3126378",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1143,38 +1143,38 @@
     ],
     "variable": [
       {
-        "id": "3dc91381-36dd-4bbd-8b94-e3228884765b",
+        "id": "264576f3-460f-4ac9-a2a6-beab0216dedf",
         "key": "baseUrl",
         "value": "https://api.codechat.dev",
         "type": "string"
       },
       {
-        "id": "d8640fc0-0ee3-423f-9dd2-7d29cc7cb388",
+        "id": "9497e7d6-afd9-48d8-9fcc-34ce4f77a4dd",
         "key": "instance",
-        "value": "codedrop",
+        "value": "codechat",
         "type": "string"
       },
       {
-        "id": "1d8b8f14-40d7-4908-a351-9918b5a55481",
+        "id": "672e1b72-0a03-41c9-8aac-bfd01df5e264",
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlZHJvcCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiNDEzYmY4MWUtYWQ2ZC00NTM3LWIyNTAtMTgxNTAwMDBiYzJjIiwiaWF0IjoxNjcwNTQ3OTgwLCJleHAiOjE2NzA1NTE1ODAsInN1YiI6ImctdCJ9.zNGNWS-lOl0GhvKJ9VPRNeV-alocFgyf0oSB52eeZvs",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOTFmMWUyMGYtOTU1ZC00YWZkLWExYTUtNmVkMDcyOGYwNDkzIiwiaWF0IjoxNjcwNjI3OTI1LCJleHAiOjE2NzA2MzE1MjUsInN1YiI6ImctdCJ9.kKUYzB6HCnIrDO9yzOOCUDuFeID6uytwKMjzTvppkg4",
         "type": "string"
       },
       {
-        "id": "e9e9efae-a31f-4491-a464-007908b73ccc",
+        "id": "e6e2c061-ce7a-4e74-8f84-4beaf9272411",
         "key": "apikey",
         "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "e3ce5175-817e-45e9-942b-e136e188736a",
+        "id": "1fa9becf-5a0a-4b4f-8b31-f5e01cfbfcdb",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
         "type": "string"
       },
       {
-        "id": "cfb8df34-af7b-40ea-be40-0382814a8fd6",
+        "id": "3ad24a26-e307-4607-8e23-3ac723bb5adb",
         "key": "groupJid",
         "value": "120363046555718472@g.us",
         "type": "string"

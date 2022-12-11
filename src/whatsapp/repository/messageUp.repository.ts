@@ -6,6 +6,7 @@ import { opendirSync, readFileSync } from 'fs';
 
 export class MessageUpQuery {
   where: MessageUpdateRaw;
+  limit?: number;
 }
 
 export class MessageUpRepository extends Repository {
@@ -35,10 +36,13 @@ export class MessageUpRepository extends Repository {
     }
   }
 
-  public async find(query: MessageUpQuery): Promise<MessageUpdateRaw[]> {
+  public async find(query: MessageUpQuery) {
     try {
       if (this.dbSettings.ENABLED) {
-        return await this.messageUpModel.find({ ...query.where });
+        return await this.messageUpModel
+          .find({ ...query.where })
+          .sort({ datetime: -1 })
+          .limit(query?.limit ?? 0);
       }
 
       const messageUpdate: MessageUpdateRaw[] = [];
@@ -57,9 +61,10 @@ export class MessageUpRepository extends Repository {
           ),
         );
       } else {
-        const openDir = opendirSync(join(this.storePath, 'message-up'), {
-          encoding: 'utf-8',
-        });
+        const openDir = opendirSync(
+          join(this.storePath, 'message-up', query.where.owner),
+          { encoding: 'utf-8' },
+        );
 
         for await (const dirent of openDir) {
           if (dirent.isFile()) {
@@ -74,7 +79,11 @@ export class MessageUpRepository extends Repository {
           }
         }
 
-        return messageUpdate;
+        return messageUpdate
+          .sort((x, y) => {
+            return y.datetime - x.datetime;
+          })
+          .splice(0, query?.limit ?? messageUpdate.length);
       }
     } catch (error) {
       return [];

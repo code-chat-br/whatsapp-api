@@ -78,6 +78,7 @@ import {
 import { WebhookDto } from '../dto/webhook.dto';
 import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
+import Long from 'long';
 
 export class WAStartupService {
   constructor(
@@ -256,7 +257,7 @@ export class WAStartupService {
       if (connection) {
         this.stateConnection = {
           state: connection,
-          statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode || 200,
+          statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200,
         };
         this.sendDataWebhook(Events.CONNECTION_UPDATE, {
           instance: this.instance.name,
@@ -327,7 +328,7 @@ export class WAStartupService {
             }
           }
         } catch (error) {}
-      }, (store?.CLEANING_INTARVAL || 3600) * 1000);
+      }, (store?.CLEANING_INTARVAL ?? 3600) * 1000);
     }
   }
 
@@ -426,7 +427,7 @@ export class WAStartupService {
       for await (const contact of contacts) {
         contactsRaw.push({
           id: contact.id,
-          pushName: contact?.name || contact?.verifiedName,
+          pushName: contact?.name ?? contact?.verifiedName,
           profilePictureUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
           owner: this.instance.wuid,
         });
@@ -458,11 +459,15 @@ export class WAStartupService {
           continue;
         }
 
+        if (Long.isLong(m?.messageTimestamp)) {
+          m.messageTimestamp = m.messageTimestamp?.toNumber();
+        }
+
         messagesRaw.push({
           key: m.key,
           pushName: m.pushName,
           message: { ...m.message },
-          messageTimestamp: m.messageTimestamp,
+          messageTimestamp: m.messageTimestamp as number,
           owner: this.instance.wuid,
         });
       }
@@ -485,11 +490,16 @@ export class WAStartupService {
       ) {
         return;
       }
+
+      if (Long.isLong(received.messageTimestamp)) {
+        received.messageTimestamp = received.messageTimestamp?.toNumber();
+      }
+
       const messageRaw: MessageRaw = {
         key: received.key,
         pushName: received.pushName,
         message: { ...received.message },
-        messageTimestamp: received.messageTimestamp,
+        messageTimestamp: received.messageTimestamp as number,
         owner: this.instance.wuid,
         source: getDevice(received.key.id),
       };
@@ -584,7 +594,7 @@ export class WAStartupService {
       const jid = this.createJid(number);
       if (options?.delay) {
         await this.client.presenceSubscribe(jid);
-        await this.client.sendPresenceUpdate(options?.presence || 'composing', jid);
+        await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
         await delay(options.delay);
         await this.client.sendPresenceUpdate('paused', jid);
       }
@@ -684,7 +694,7 @@ export class WAStartupService {
     let mediatype = 'TEXT';
 
     if (data.buttonMessage?.mediaMessage) {
-      mediatype = data.buttonMessage.mediaMessage.mediatype.toUpperCase() || 'TEXT';
+      mediatype = data.buttonMessage.mediaMessage?.mediatype.toUpperCase() ?? 'TEXT';
       embeddMedia.mediaKey = mediatype.toLowerCase() + 'Message';
       const generate = await this.prepareMediaMessage(data.buttonMessage.mediaMessage);
       embeddMedia.message = generate.message[embeddMedia.mediaKey];
@@ -708,7 +718,7 @@ export class WAStartupService {
       {
         buttonsMessage: {
           text: !embeddMedia?.mediaKey ? data.buttonMessage.title : undefined,
-          contentText: embeddMedia?.contentText || data.buttonMessage.description,
+          contentText: embeddMedia?.contentText ?? data.buttonMessage.description,
           footerText: data.buttonMessage?.footerText,
           buttons: data.buttonMessage.buttons.map((button) => {
             return {
@@ -846,7 +856,7 @@ export class WAStartupService {
   public async archiveChat(data: ArchiveChatDto) {
     try {
       data.lastMessage.messageTimestamp =
-        data.lastMessage?.messageTimestamp || Date.now();
+        data.lastMessage?.messageTimestamp ?? Date.now();
       await this.client.chatModify(
         {
           archive: data.archive,
@@ -943,6 +953,7 @@ export class WAStartupService {
         where: {
           owner: this.instance.wuid,
         },
+        limit: query?.limit,
       };
     }
     if (query?.where?.key) {
@@ -956,6 +967,13 @@ export class WAStartupService {
   public async findStatusMessage(query: MessageUpQuery) {
     if (query?.where) {
       query.where.owner = this.instance.wuid;
+    } else {
+      query = {
+        where: {
+          owner: this.instance.wuid,
+        },
+        limit: query?.limit,
+      };
     }
     return await this.repository.messageUpdate.find(query);
   }

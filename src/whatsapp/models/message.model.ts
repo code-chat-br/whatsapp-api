@@ -43,7 +43,7 @@ export class MessageUpdateRaw {
   fromMe?: boolean;
   participant?: string;
   datetime?: number;
-  status: wa.StatusMessage;
+  status?: wa.StatusMessage;
   owner: string;
 }
 
@@ -52,7 +52,7 @@ const messageUpdateSchema = new Schema({
   id: { type: String, required: true, min: 1 },
   fromMe: { type: Boolean, required: true },
   participante: { type: String, min: 1 },
-  datetime: { type: Number, required: true },
+  datetime: { type: Number, required: true, min: 1 },
   status: { type: String, required: true },
   owner: { type: String, required: true, min: 1 },
 });
