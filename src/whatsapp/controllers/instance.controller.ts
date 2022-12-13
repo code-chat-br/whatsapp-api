@@ -92,6 +92,6 @@ export class InstanceController {
   }
 
   public async refreshToken(_: InstanceDto, oldToken: OldToken) {
-    return this.authService.refreshToken(oldToken);
+    return await this.authService.refreshToken(oldToken);
   }
 }

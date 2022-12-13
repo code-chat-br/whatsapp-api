@@ -537,10 +537,17 @@ export class WAStartupService {
     });
   }
 
+  private presenceHandle(ev: BaileysEventEmitter) {
+    ev.on('presence.update', async (presence) => {
+      await this.sendDataWebhook(Events.PRESENCE_UPDATE, presence);
+    });
+  }
+
   private setHandles(ev: BaileysEventEmitter) {
     this.chatHandle(ev);
     this.contactHandle(ev);
     this.messageHandle(ev);
+    this.presenceHandle(ev);
   }
 
   private createJid(number: string) {

@@ -1,14 +1,17 @@
-import { Auth, ConfigService } from '../../config/env.config';
+import { Auth, ConfigService, Webhook } from '../../config/env.config';
 import { InstanceDto } from '../dto/instance.dto';
 import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
 import { readFileSync, writeFile } from 'fs';
 import { join } from 'path';
-import { AUTH_DIR } from '../../config/path.config';
+import { AUTH_DIR, ROOT_DIR } from '../../config/path.config';
 import { Logger } from '../../config/logger.config';
 import { v4 } from 'uuid';
 import { isJWT } from 'class-validator';
 import { BadRequestException } from '../../exceptions';
+import axios from 'axios';
+import { wa } from '../types/wa.types';
+import { WAMonitoringService } from './monitor.service';
 
 export type JwtPayload = {
   instanceName: string;
@@ -23,7 +26,10 @@ export class OldToken {
 }
 
 export class AuthService {
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly waMonitor: WAMonitoringService,
+  ) {}
 
   private readonly logger = new Logger(AuthService.name);
 
@@ -79,7 +85,7 @@ export class AuthService {
     return this[options.TYPE](instance) as { jwt: string } | { apikey: string };
   }
 
-  public refreshToken({ oldToken }: OldToken) {
+  public async refreshToken({ oldToken }: OldToken) {
     if (!isJWT(oldToken)) {
       throw new BadRequestException('Invalid "oldToken"');
     }
@@ -108,6 +114,32 @@ export class AuthService {
         jwt: this.jwt({ instanceName: decode.instanceName }).jwt,
         instanceName: decode.instanceName,
       };
+
+      try {
+        const webhook: wa.LocalWebHook = JSON.parse(
+          readFileSync(
+            join(ROOT_DIR, 'store', 'webhook', decode.instanceName + '.json'),
+            { encoding: 'utf-8' },
+          ),
+        );
+        if (
+          webhook.enabled &&
+          this.configService.get<Webhook>('WEBHOOK').EVENTS.NEW_JWT_TOKEN
+        ) {
+          const httpService = axios.create({ baseURL: webhook.url });
+          await httpService.post(
+            '',
+            {
+              event: 'new.jwt',
+              instance: decode.instanceName,
+              data: token,
+            },
+            { params: { ownre: this.waMonitor.waInstances[decode.instanceName].wuid } },
+          );
+        }
+      } catch (error) {
+        this.logger.error(error);
+      }
 
       return token;
     } catch (error) {

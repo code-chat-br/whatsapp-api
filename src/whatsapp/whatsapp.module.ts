@@ -31,13 +31,13 @@ export const repository = new RepositoryBroker(
   messageUpdateRepository,
 );
 
-const authService = new AuthService(configService);
-
 export const waMonitor = new WAMonitoringService(
   eventeEmitter,
   configService,
   repository,
 );
+
+const authService = new AuthService(configService, waMonitor);
 
 const webhookService = new WebhookService(waMonitor);
 

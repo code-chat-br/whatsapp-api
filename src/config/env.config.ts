@@ -44,6 +44,7 @@ export type Database = {
 
 export type EventsWebhook = {
   STATUS_INSTANCE: boolean;
+  QRCODE_UPDATED: boolean;
   MESSAGES_SET: boolean;
   MESSAGES_UPSERT: boolean;
   MESSAGES_UPDATE: boolean;
@@ -54,6 +55,9 @@ export type EventsWebhook = {
   PRESENCE_UPDATE: boolean;
   CHATS_SET: boolean;
   CHATS_UPDATE: boolean;
+  CHATS_UPSERT: boolean;
+  CONNECTION_UPDATE: boolean;
+  NEW_JWT_TOKEN: boolean;
 };
 
 export type ApiKey = { KEY: string };
