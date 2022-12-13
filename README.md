@@ -26,9 +26,13 @@ It is a version of this API with advanced features like message queue management
 This code is an implementation of [Baileys](https://github.com/adiwajshing/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
 With this one you can create multiservice chats, service bots or any other system that uses whatsapp. With this code you don't need to know javascript for nodejs , just start the server and make the language requests that you feel most comfortable with.
 
-## node n8n
+## [Node n8n](https://github.com/code-chat-br/docs-codechat)
 
-[n8n-codechat-wapi](https://github.com/jrCleber/n8n-codechat-wapi)
+<div align="center">
+  <a href="https://github.com/code-chat-br/docs-codechat" target="_blank" rel="noopener noreferrer">
+    <img src="./public/images/n8n-codechat-wapi.png" heigth="20%">
+  </a>
+</div>
 
 ## Infrastructure
 
