@@ -224,7 +224,7 @@ $ docker-compose up
 
 ## Routes
   - [Postman Json](./postman.json)
-  - [Url Json](https://api.postman.com/collections/14064846-a346ce06-3faa-47c3-88f0-4924ab4ca92d?access_key=PMAT-01GK0CWZY1EC42NMY6F5DHSDGB)
+  - [Url Json](https://docs.codechat.dev/postman)
 
 ## Webhook Events
 
