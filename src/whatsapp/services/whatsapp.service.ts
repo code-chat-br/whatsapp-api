@@ -673,8 +673,6 @@ export class WAStartupService {
       mimetype = getMIMEType(mediaMessage.fileName);
     }
 
-    this.logger.log(mediaMessage);
-
     prepareMedia[type].caption = mediaMessage?.caption;
     prepareMedia[type].mimetype = mimetype;
     prepareMedia[type].fileName = mediaMessage.fileName;
