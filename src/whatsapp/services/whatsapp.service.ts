@@ -613,7 +613,7 @@ export class WAStartupService {
         },
       });
 
-      this.sendDataWebhook(Events.MESSAGES_UPSERT, messageSent).catch((error) =>
+      this.sendDataWebhook(Events.SEND_MESSAGE, messageSent).catch((error) =>
         this.logger.error(error),
       );
       this.repository.message
