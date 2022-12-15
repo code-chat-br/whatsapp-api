@@ -16,11 +16,19 @@ const logger = new Logger('GUARD');
 function jwtGuard(req: Request, res: Response, next: NextFunction) {
   const key = req.get('apikey');
 
+  if (key && configService.get<Auth>('AUTHENTICATION').API_KEY.KEY !== key) {
+    throw new UnauthorizedException();
+  }
+
   if (configService.get<Auth>('AUTHENTICATION').API_KEY.KEY === key) {
     return next();
   }
 
-  if (req.originalUrl.includes('/instance/create') && !key) {
+  if (
+    (req.originalUrl.includes('/instance/create') ||
+      req.originalUrl.includes('/instance/fetchInstances')) &&
+    !key
+  ) {
     throw new ForbidenException(
       'Missing global api key',
       'The global api key must be set',
@@ -64,8 +72,9 @@ function apikey(req: Request, res: Response, next: NextFunction) {
   }
 
   if (
-    req.originalUrl.includes('/instance/create') ||
-    (req.originalUrl.includes('/instance/fetchInstances') && !key)
+    (req.originalUrl.includes('/instance/create') ||
+      req.originalUrl.includes('/instance/fetchInstances')) &&
+    !key
   ) {
     throw new ForbidenException(
       'Missing global api key',
