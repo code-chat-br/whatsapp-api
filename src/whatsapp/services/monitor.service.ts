@@ -32,7 +32,7 @@ export class WAMonitoringService {
     const time = this.configService.get<DelInstance>('DEL_INSTANCE');
     if (typeof time === 'number' && time > 0) {
       setTimeout(() => {
-        if (this.waInstances[instance].connectionStatus.state !== 'open') {
+        if (this.waInstances[instance]?.connectionStatus?.state !== 'open') {
           delete this.waInstances[instance];
         }
       }, 1000 * 60 * time);
