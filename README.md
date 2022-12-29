@@ -221,6 +221,19 @@ After building the application, in the same directory as the files above, run th
 ```sh
 $ docker-compose up
 ```
+## Send Messages
+|     |   |
+|-----|---|
+| Send Text | ✔ |
+| Send Buttons | ✔ |
+| Send Media: audio - video - image - documet - gif <br></br>base64: ```true``` | ✔ |
+| Send Media File | ❌ |
+| Send Audio type WhatsApp | ❌ |
+| Send Location | ✔ |
+| Send List | ✔ |
+| Send Link Preview | ❌ |
+| Send Contact | ✔ |
+| Send Reaction - emoji | ✔ |
 
 ## Routes
   - [Postman Json](./postman.json)
