@@ -56,7 +56,6 @@ export class MessageRepository extends Repository {
       }
 
       const messages: MessageRaw[] = [];
-      console.log(query?.where);
       if (query?.where?.key?.id) {
         messages.push(
           JSON.parse(

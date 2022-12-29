@@ -46,8 +46,9 @@ export class WAMonitoringService {
     if (instanceName && this.waInstances[instanceName]) {
       return {
         instance: {
-          owner: this.waInstances[instanceName].wuid,
           instanceName,
+          owner: this.waInstances[instanceName].wuid,
+          profileName: this.waInstances[instanceName].profileName,
           profilePictureUrl: this.waInstances[instanceName].profilePictureUrl,
         },
       };

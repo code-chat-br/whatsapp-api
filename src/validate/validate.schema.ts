@@ -137,7 +137,7 @@ export const buttonMessageSchema: JSONSchema7 = {
           ...isNotEmpty('media', 'fileName'),
         },
       },
-      required: ['title', 'description', 'buttons'],
+      required: ['title', 'buttons'],
       ...isNotEmpty('title', 'description'),
     },
   },

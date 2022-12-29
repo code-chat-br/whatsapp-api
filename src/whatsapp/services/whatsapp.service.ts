@@ -120,6 +120,10 @@ export class WAStartupService {
     return this.instance.wuid;
   }
 
+  public get profileName() {
+    return { profileName: this.instance.profileName };
+  }
+
   public get profilePictureUrl() {
     return this.instance.profilePictureUrl;
   }
@@ -283,6 +287,8 @@ export class WAStartupService {
       if (connection === 'open') {
         this.setHandles(this.client.ev);
         this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
+        this.instance.profileName =
+          this.client.user?.name ?? this.client.user?.verifiedName;
         this.instance.profilePictureUrl = (
           await this.profilePicture(this.instance.wuid)
         ).profilePictureUrl;
