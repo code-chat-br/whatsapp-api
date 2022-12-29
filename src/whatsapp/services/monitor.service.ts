@@ -43,26 +43,23 @@ export class WAMonitoringService {
     if (instanceName && !this.waInstances[instanceName]) {
       throw new NotFoundException(`Instance "${instanceName}" not found`);
     }
-    if (instanceName && this.waInstances[instanceName]) {
-      return {
-        instance: {
-          instanceName,
-          owner: this.waInstances[instanceName].wuid,
-          profileName: this.waInstances[instanceName].profileName,
-          profilePictureUrl: this.waInstances[instanceName].profilePictureUrl,
-        },
-      };
+
+    const instances: any[] = [];
+
+    for (const [key, value] of Object.entries(this.waInstances)) {
+      if (value && value.connectionStatus.state === 'open') {
+        instances.push({
+          instance: {
+            instanceName: key,
+            owner: value.wuid,
+            profileName: value.profileName,
+            profilePictureUrl: value.profilePictureUrl,
+          },
+        });
+      }
     }
 
-    return Array.from(Object.keys(this.waInstances), (instanceName) => {
-      return {
-        instance: {
-          owner: this.waInstances[instanceName].wuid,
-          instanceName,
-          profilePictureUrl: this.waInstances[instanceName].profilePictureUrl,
-        },
-      };
-    });
+    return instances.find((i) => i.instance.instanceName === instanceName) ?? instances;
   }
 
   private delInstanceFiles() {
@@ -142,9 +139,12 @@ export class WAMonitoringService {
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instanceName: string) => {
       try {
-        await this.waInstances[instanceName]?.client.logout();
-        this.waInstances[instanceName] = undefined;
-      } catch (_) {}
+        await this.waInstances[instanceName]?.client?.logout();
+      } catch {}
+
+      try {
+        delete this.waInstances[instanceName];
+      } catch {}
 
       try {
         if (this.db.ENABLED) {
@@ -152,12 +152,6 @@ export class WAMonitoringService {
           return await this.dbInstance.dropCollection(instanceName);
         }
         rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
-      } catch (error) {
-        this.logger.error({
-          localError: 'removeInstance',
-          warn: `Error deleting ${instanceName} folder with whatsapp connection files, or files do not exist.`,
-          error,
-        });
       } finally {
         this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
@@ -167,7 +161,7 @@ export class WAMonitoringService {
   private noConnection() {
     this.eventEmitter.once('no.connection', async (instanceName) => {
       try {
-        this.waInstances[instanceName] = undefined;
+        delete this.waInstances[instanceName];
 
         if (this.db.ENABLED) {
           await mongoClient.connect();

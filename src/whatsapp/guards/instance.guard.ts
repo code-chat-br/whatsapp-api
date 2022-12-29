@@ -12,13 +12,13 @@ import { InstanceDto } from '../dto/instance.dto';
 import { waMonitor } from '../whatsapp.module';
 
 async function getInstance(instanceName: string) {
-  const exists = waMonitor.waInstances[instanceName] ? true : false;
+  const exists = waMonitor.waInstances[instanceName];
 
   if (db.ENABLED) {
     const collection = mongoClient
       .db(db.CONNECTION.DB_PREFIX_NAME + '-instances')
       .collection(instanceName);
-    return exists || (await collection.find({}).toArray()).length > 0 ? true : false;
+    return (await collection.find({}).toArray()).length > 0;
   }
 
   return exists || existsSync(join(INSTANCE_DIR, instanceName));

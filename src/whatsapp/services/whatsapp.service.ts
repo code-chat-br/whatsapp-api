@@ -121,7 +121,16 @@ export class WAStartupService {
   }
 
   public get profileName() {
-    return { profileName: this.instance.profileName };
+    let profileName = this.client.user?.name ?? this.client.user?.verifiedName;
+    if (!profileName) {
+      const creds = JSON.parse(
+        readFileSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'), {
+          encoding: 'utf-8',
+        }),
+      );
+      profileName = creds.me?.name ?? creds.me?.verifiedName;
+    }
+    return profileName;
   }
 
   public get profilePictureUrl() {
@@ -287,8 +296,6 @@ export class WAStartupService {
       if (connection === 'open') {
         this.setHandles(this.client.ev);
         this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
-        this.instance.profileName =
-          this.client.user?.name ?? this.client.user?.verifiedName;
         this.instance.profilePictureUrl = (
           await this.profilePicture(this.instance.wuid)
         ).profilePictureUrl;
