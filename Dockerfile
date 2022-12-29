@@ -11,8 +11,7 @@ WORKDIR /~/Projects
 
 COPY . .
 
-ENV SERVER_TYPE=http
-ENV SERVER_PORT=8080
+ENV DOCKER_ENV=true
 
 RUN npm i
 RUN npm run build

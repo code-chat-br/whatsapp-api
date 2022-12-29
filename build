@@ -1,8 +1,12 @@
-echo \> removing dist
+echo 'Enabling environment variables for Docker'
+export DOCKER_ENV=false
+echo 'DOCKER_ENV='$DOCKER_ENV
+echo
+echo \> 'removing dist'
 rm -rf ./dist
 echo
-echo \> transpiling...
+echo \> 'transpiling...'
 echo
 tsc
 cp ./src/env.yml ./dist/src
-echo \> build success
+echo \> 'build success'
