@@ -226,6 +226,7 @@ $ docker-compose up
 |-----|---|
 | Send Text | ✔ |
 | Send Buttons | ✔ |
+| Send Template | | ❌ |
 | Send Media: audio - video - image - documet - gif <br></br>base64: ```true``` | ✔ |
 | Send Media File | ❌ |
 | Send Audio type WhatsApp | ❌ |
