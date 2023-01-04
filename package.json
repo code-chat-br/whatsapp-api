@@ -1,13 +1,13 @@
 {
   "name": "whatsapp-api",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Rest api for communication with WhatsApp",
   "main": "index.js",
   "scripts": {
     "build": "bash ./build",
-    "start": "ts-node --files --transpile-only ./index.ts",
-    "start:prod": "cross-env NODE_ENV=PROD node ./dist/index.js",
-    "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./index.ts",
+    "start": "ts-node --files --transpile-only ./src/main.ts",
+    "start:prod": "cross-env NODE_ENV=PROD node ./dist/src/main.js",
+    "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
   },
   "repository": {
@@ -40,7 +40,7 @@
   },
   "homepage": "https://github.com/code-chat-br/whatsapp-api#readme",
   "dependencies": {
-    "@adiwajshing/baileys": "^4.4.0",
+    "@adiwajshing/baileys": "github:adiwajshing/baileys",
     "@hapi/boom": "^10.0.0",
     "@types/express-session": "^1.17.5",
     "axios": "^1.1.3",
