@@ -15,7 +15,7 @@ function initWA() {
   waMonitor.loadInstance();
 }
 
-export function bootstrap() {
+function bootstrap() {
   initWA();
 
   const logger = new Logger('SERVER');
