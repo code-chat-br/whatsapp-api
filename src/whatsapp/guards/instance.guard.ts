@@ -18,7 +18,7 @@ async function getInstance(instanceName: string) {
     const collection = mongoClient
       .db(db.CONNECTION.DB_PREFIX_NAME + '-instances')
       .collection(instanceName);
-    return (await collection.find({}).toArray()).length > 0;
+    return exists || (await collection.find({}).toArray()).length > 0;
   }
 
   return exists || existsSync(join(INSTANCE_DIR, instanceName));
