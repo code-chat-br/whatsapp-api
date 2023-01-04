@@ -26,7 +26,7 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import axios from 'axios';
 import { v4 } from 'uuid';
@@ -366,6 +366,24 @@ export class WAStartupService {
       connectTimeoutMs: 60_000,
       emitOwnEvents: false,
       getMessage: this.getMessage,
+      patchMessageBeforeSending: (message) => {
+        const requiresPatch = !!(message.buttonsMessage || message.listMessage);
+        if (requiresPatch) {
+          message = {
+            viewOnceMessageV2: {
+              message: {
+                messageContextInfo: {
+                  deviceListMetadataVersion: 2,
+                  deviceListMetadata: {},
+                },
+                ...message,
+              },
+            },
+          };
+        }
+
+        return message;
+      },
     };
 
     this.client = makeWASocket(socketConfig);
@@ -377,19 +395,6 @@ export class WAStartupService {
   }
 
   private chatHandle(ev: BaileysEventEmitter) {
-    ev.on('chats.set', async ({ chats, isLatest }) => {
-      if (isLatest) {
-        const chatsRaw: ChatRaw[] = chats.map((chat) => {
-          return {
-            id: chat.id,
-            owner: this.instance.name,
-          };
-        });
-        await this.sendDataWebhook(Events.CHATS_SET, chatsRaw);
-        // await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
-      }
-    });
-
     ev.on('chats.upsert', async (chats) => {
       const chatsRaw: ChatRaw[] = chats.map((chat) => {
         return {
@@ -451,7 +456,18 @@ export class WAStartupService {
 
   private messageHandle(ev: BaileysEventEmitter) {
     const database = this.configService.get<Database>('DATABASE');
-    ev.on('messages.set', async ({ messages, isLatest }) => {
+    ev.on('messaging-history.set', async ({ messages, chats, contacts, isLatest }) => {
+      if (isLatest) {
+        const chatsRaw: ChatRaw[] = chats.map((chat) => {
+          return {
+            id: chat.id,
+            owner: this.instance.name,
+          };
+        });
+        await this.sendDataWebhook(Events.CHATS_SET, chatsRaw);
+        // await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
+      }
+
       const messagesRaw: MessageRaw[] = [];
       const messagesRepository = await this.repository.message.find({
         where: { owner: this.instance.wuid },
