@@ -1,47 +1,15 @@
 import compression from 'compression';
-import {
-  configService,
-  Cors,
-  Production,
-  HttpServer,
-  SslConf,
-} from './config/env.config';
+import { configService, Cors, Production, HttpServer } from './config/env.config';
 import cors from 'cors';
-import express, {
-  Express,
-  json,
-  NextFunction,
-  Request,
-  Response,
-  urlencoded,
-} from 'express';
+import express, { json, NextFunction, Request, Response, urlencoded } from 'express';
 import { join } from 'path';
-import * as https from 'https';
-import * as http from 'http';
 import { onUnexpectedError } from './config/error.config';
 import { Logger } from './config/logger.config';
 import { ROOT_DIR } from './config/path.config';
 import { waMonitor } from './whatsapp/whatsapp.module';
 import { HttpStatus, router } from './whatsapp/routers/index.router';
 import 'express-async-errors';
-import { readFileSync } from 'fs';
-
-const serverUp = {
-  https(app: Express) {
-    const { FULLCHAIN, PRIVKEY } = configService.get<SslConf>('SSL_CONF');
-    return https.createServer(
-      {
-        cert: readFileSync(FULLCHAIN),
-        key: readFileSync(PRIVKEY),
-      },
-      app,
-    );
-  },
-
-  http(app: Express) {
-    return http.createServer(app);
-  },
-};
+import { ServerUP } from './utils/server-up';
 
 function initWA() {
   waMonitor.loadInstance();
@@ -100,11 +68,14 @@ export function bootstrap() {
 
   const httpServer = configService.get<HttpServer>('SERVER');
 
-  const server = serverUp[httpServer.TYPE](app);
+  ServerUP.app = app;
+  const server = ServerUP[httpServer.TYPE];
 
-  server.listen(httpServer.PORT, () =>
+  server().listen(httpServer.PORT, () =>
     logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT),
   );
 
   onUnexpectedError();
 }
+
+bootstrap();
