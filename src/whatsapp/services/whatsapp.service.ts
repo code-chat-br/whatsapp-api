@@ -399,7 +399,7 @@ export class WAStartupService {
       const chatsRaw: ChatRaw[] = chats.map((chat) => {
         return {
           id: chat.id,
-          owner: this.instance.name,
+          owner: this.instance.wuid,
         };
       });
       await this.sendDataWebhook(Events.CHATS_UPSERT, chatsRaw);
@@ -409,7 +409,7 @@ export class WAStartupService {
       const chatsRaw: ChatRaw[] = chats.map((chat) => {
         return {
           id: chat.id,
-          owner: this.instance.name,
+          owner: this.instance.wuid,
         };
       });
       await this.sendDataWebhook(Events.CHATS_UPDATE, chatsRaw);
@@ -456,12 +456,12 @@ export class WAStartupService {
 
   private messageHandle(ev: BaileysEventEmitter) {
     const database = this.configService.get<Database>('DATABASE');
-    ev.on('messaging-history.set', async ({ messages, chats, contacts, isLatest }) => {
+    ev.on('messaging-history.set', async ({ messages, chats, isLatest }) => {
       if (isLatest) {
         const chatsRaw: ChatRaw[] = chats.map((chat) => {
           return {
             id: chat.id,
-            owner: this.instance.name,
+            owner: this.instance.wuid,
           };
         });
         await this.sendDataWebhook(Events.CHATS_SET, chatsRaw);
