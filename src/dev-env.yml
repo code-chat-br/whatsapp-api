@@ -57,7 +57,7 @@ DATABASE:
     USER: <user>
     PASSWORD: <pass>
     DB_PREFIX_NAME: codechat
-  # Choose the data you want to save in the database
+  # Choose the data you want to save in the application's database or store
   SAVE_DATA:
     OLD_MESSAGE: false
     NEW_MESSAGE: true
