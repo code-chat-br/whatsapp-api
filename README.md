@@ -111,10 +111,8 @@ $ npm run start
 $ yarn start
 
 # In production
-$ npm run build
 $ npm run start:prod
 # or
-$ yarn build
 $ yarn start:prod
 
 # pm2
@@ -214,8 +212,9 @@ curl --location --request GET 'http://localhost:8080/instance/connect/codechat' 
 ```
 
 ### App in Docker
-  - [Dockerfile](./Dockerfile)
-  - [docker-compose](./docker-compose.yaml)
+  - [Dockerfile](./Docker/Dockerfile)
+  - [docker-compose](./Docker/docker-compose.yaml)
+  - [.env for docker](./Docker/dev.env)
 
 After building the application, in the same directory as the files above, run the following command:
 ```sh

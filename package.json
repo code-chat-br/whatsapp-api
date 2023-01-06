@@ -4,9 +4,9 @@
   "description": "Rest api for communication with WhatsApp",
   "main": "index.js",
   "scripts": {
-    "build": "bash ./build",
+    "build": "bash ./build.sh",
     "start": "ts-node --files --transpile-only ./src/main.ts",
-    "start:prod": "cross-env NODE_ENV=PROD node ./dist/src/main.js",
+    "start:prod": "cross-env NODE_ENV=PROD bash ./build.sh",
     "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
   },
