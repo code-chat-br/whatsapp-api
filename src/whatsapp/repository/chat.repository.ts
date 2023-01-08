@@ -43,7 +43,7 @@ export class ChatRepository extends Repository {
     }
   }
 
-  public async find(query: ChattQuery) {
+  public async find(query: ChattQuery): Promise<ChatRaw[]> {
     try {
       if (this.dbSettings.ENABLED) {
         return await this.chatModel.find();
@@ -63,6 +63,8 @@ export class ChatRepository extends Repository {
           );
         }
       }
+
+      return chats;
     } catch (error) {
       return [];
     }
