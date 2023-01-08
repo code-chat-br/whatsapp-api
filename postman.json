@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2022-12-11T12:59:50.000Z"
+      "updatedAt": "2023-01-08T00:34:01.000Z"
     },
     "item": [
       {
@@ -301,7 +301,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"mediaMessage\": {\r\n    \"mediatype\": \"image | document | video\",\r\n    \"fileName\": \"image.png\",\r\n    \"caption\": \"Description\",\r\n    \"media\": \"url or base64\"\r\n  }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"mediaMessage\": {\r\n    \"mediatype\": \"image | document | video | audio\",\r\n    \"fileName\": \"image.png\",\r\n    \"caption\": \"Description\",\r\n    \"media\": \"url or base64\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -333,7 +333,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here 1\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here 2\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    // optional 👇🏼\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image | document | video\",\r\n      \"fileName\": \"image.png\",\r\n      \"media\": \"url or base64\"\r\n    }\r\n  }\r\n}",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"buttonMessage\": {\r\n    \"title\": \"Tutle Button\",\r\n    \"description\": \"Description Button\",\r\n    \"footerText\": \"Footer Button\",\r\n    \"buttons\": [\r\n      {\r\n        \"buttonText\": \"Click here 1\",\r\n        \"buttonId\": \"1\"\r\n      },\r\n      {\r\n        \"buttonText\": \"Click here 2\",\r\n        \"buttonId\": \"2\"\r\n      }\r\n    ],\r\n    \"mediaMessage\": {\r\n      \"mediatype\": \"image\",\r\n      \"fileName\": \"image.png\",\r\n      \"media\": \"https://images.freeimages.com/images/large-previews/31c/red-fox-in-the-wild-1-1624832.jpg\"\r\n    }\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -585,6 +585,38 @@
             "response": []
           },
           {
+            "name": "Delete Message",
+            "id": "98b828cf-6eda-4d9c-afc9-5e27f3f06b21",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "DELETE",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\r\n  \"id\": \"id\",\r\n  \"remoteJid\": \"remoteJid\",\r\n  \"fromMe\": true,\r\n  // optional\r\n  \"paticipant\": \"paticipant\"\r\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/chat/deleteMessageForEveryone/{{instance}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "chat",
+                  "deleteMessageForEveryone",
+                  "{{instance}}"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
             "name": "Fetch Profile Picture",
             "id": "0106583a-2842-432f-88bc-f63df3469e1c",
             "protocolProfileBehavior": {
@@ -738,6 +770,29 @@
                 "path": [
                   "chat",
                   "findStatusMessage",
+                  "{{instance}}"
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Find Chats",
+            "id": "55345816-b322-47bf-9f66-411c8ead9afb",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/chat/findChats/{{instance}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "chat",
+                  "findChats",
                   "{{instance}}"
                 ]
               }
@@ -1023,7 +1078,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMDkxNjc0ZmMtNDYzYS00Y2VjLTg1MWItMGEwMWEwNmJkYWIwIiwiaWF0IjoxNjcwNzE4NTIxLCJleHAiOjE2NzA3MjIxMjEsInN1YiI6ImctdCJ9.hz_EgxvPnYUSb9gdZkp_hpyh05cU_bViuUSbI71FQeY\"\r\n}",
+                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOGYwNTk1MGQtMDMyOS00MWI4LWJjNjktMmI3MzI5ODU3MTM0IiwiaWF0IjoxNjcxMDY3NjA1LCJleHAiOjE2NzEwNzEyMDUsInN1YiI6ImctdCJ9.TIDj1JVPUn7qGxtfYVfSO2IhPnqoY_h5DCMZs7QakXM\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1061,7 +1116,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"enabled\": true,\r\n  \"url\": \"https://webhook.site/347884fb-5f40-4758-80f1-1b80855dd4f0\"\r\n}",
+                "raw": "{\r\n  \"enabled\": true,\r\n  \"url\": \"https://codechat.dev/webhook\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1110,11 +1165,16 @@
       }
     ],
     "auth": {
-      "type": "bearer",
-      "bearer": [
+      "type": "apikey",
+      "apikey": [
         {
-          "key": "token",
-          "value": "{{token}}",
+          "key": "value",
+          "value": "{{apikey}}",
+          "type": "string"
+        },
+        {
+          "key": "key",
+          "value": "apikey",
           "type": "string"
         }
       ]
@@ -1123,7 +1183,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "1162ed68-66bc-4dee-a754-9a3b1b99cb48",
+          "id": "5a80d0a4-3d60-4959-8461-bc8f03ecf757",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1133,7 +1193,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "0b06ce77-63e9-4819-9a03-5a33e3126378",
+          "id": "c2bf60e9-1228-45ae-b5f8-91de6985cc01",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1143,38 +1203,38 @@
     ],
     "variable": [
       {
-        "id": "264576f3-460f-4ac9-a2a6-beab0216dedf",
+        "id": "24cc1837-9880-4937-9667-31e8a69b8402",
         "key": "baseUrl",
         "value": "https://api.codechat.dev",
         "type": "string"
       },
       {
-        "id": "9497e7d6-afd9-48d8-9fcc-34ce4f77a4dd",
+        "id": "40739098-545c-4444-b490-81e124c3ddaa",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "672e1b72-0a03-41c9-8aac-bfd01df5e264",
+        "id": "1c9f757a-62c2-4be0-b3fa-f1013497e333",
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOTFmMWUyMGYtOTU1ZC00YWZkLWExYTUtNmVkMDcyOGYwNDkzIiwiaWF0IjoxNjcwNjI3OTI1LCJleHAiOjE2NzA2MzE1MjUsInN1YiI6ImctdCJ9.kKUYzB6HCnIrDO9yzOOCUDuFeID6uytwKMjzTvppkg4",
-        "type": "string"
-      },
-      {
-        "id": "e6e2c061-ce7a-4e74-8f84-4beaf9272411",
-        "key": "apikey",
-        "value": "7259FC4B-2825-402D-9321-022978061B84",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOGI3ZTc0NDAtMmFiMS00ODk5LWIzNTAtMTliMjNjMmEyZTFiIiwiaWF0IjoxNjcyMjc0Mzc4LCJleHAiOjE2NzIyNzQzNzgsInN1YiI6ImctdCJ9.BmlJMLRjcU_fcZyY-nof44ML6RHN7WfmNiUpLBgFkww",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "1fa9becf-5a0a-4b4f-8b31-f5e01cfbfcdb",
-        "key": "globalApikey",
-        "value": "t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns",
+        "id": "faa5a732-f788-4cff-b82b-32bb12801577",
+        "key": "apikey",
+        "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string"
       },
       {
-        "id": "3ad24a26-e307-4607-8e23-3ac723bb5adb",
+        "id": "86740820-952c-4c01-b79e-4bbf4ad6db07",
+        "key": "globalApikey",
+        "value": "t8OOEeISKzpmc3jjcMqBWYSaJsafdefer",
+        "type": "string"
+      },
+      {
+        "id": "36dd19c7-61bc-4223-b297-59eeade1eb7c",
         "key": "groupJid",
         "value": "120363046555718472@g.us",
         "type": "string"
