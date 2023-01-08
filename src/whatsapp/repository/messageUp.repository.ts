@@ -18,6 +18,10 @@ export class MessageUpRepository extends Repository {
   }
 
   public async insert(data: MessageUpdateRaw[], saveDb?: boolean): Promise<IInsert> {
+    if (data.length === 0) {
+      return;
+    }
+
     try {
       if (this.dbSettings.ENABLED && saveDb) {
         const insert = await this.messageUpModel.insertMany([...data]);

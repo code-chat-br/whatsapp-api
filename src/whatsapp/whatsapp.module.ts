@@ -16,6 +16,7 @@ import { WebhookService } from './services/webhook.service';
 import { WebhookController } from './controllers/webhook.controller';
 import { RepositoryBroker } from './repository/repository.manager';
 import { ChatModel, ContactModel, MessageModel, MessageUpModel } from './models';
+import { dbserver } from '../db/db.connect';
 
 const logger = new Logger('WA MODULE');
 
@@ -29,6 +30,7 @@ export const repository = new RepositoryBroker(
   chatRepository,
   contactRepository,
   messageUpdateRepository,
+  dbserver?.getClient(),
 );
 
 export const waMonitor = new WAMonitoringService(

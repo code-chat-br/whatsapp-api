@@ -2,20 +2,21 @@ import { NextFunction, Request, Response } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { INSTANCE_DIR } from '../../config/path.config';
-import { db, mongoClient } from '../../db/db.connect';
+import { db } from '../../db/db.connect';
 import {
   BadRequestException,
   ForbidenException,
   NotFoundException,
 } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
+import { RepositoryBroker } from '../repository/repository.manager';
 import { waMonitor } from '../whatsapp.module';
 
 async function getInstance(instanceName: string) {
   const exists = waMonitor.waInstances[instanceName];
 
   if (db.ENABLED) {
-    const collection = mongoClient
+    const collection = RepositoryBroker.dbServer
       .db(db.CONNECTION.DB_PREFIX_NAME + '-instances')
       .collection(instanceName);
     return exists || (await collection.find({}).toArray()).length > 0;

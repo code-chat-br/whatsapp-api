@@ -126,19 +126,21 @@ export class ConfigService {
         CREDENTIALS: process.env?.CORS_CREDENTIALS === 'true',
       },
       SSL_CONF: {
-        PRIVKEY: process.env.SSL_CONF_PRIVKEY,
-        FULLCHAIN: process.env.SSL_CONF_FULLCHAIN,
+        PRIVKEY: process.env?.SSL_CONF_PRIVKEY,
+        FULLCHAIN: process.env?.SSL_CONF_FULLCHAIN,
       },
       STORE: {
-        CLEANING_INTARVAL: Number.parseInt(process.env.STORE_CLEANING_TERMINAL),
+        CLEANING_INTARVAL: Number.isInteger(process.env?.STORE_CLEANING_TERMINAL)
+          ? Number.parseInt(process.env.STORE_CLEANING_TERMINAL)
+          : undefined,
         MESSAGES: process.env?.STORE_MESSAGE === 'true',
         CONTACTS: process.env?.STORE_CONTACTS === 'true',
         CHATS: process.env?.STORE_CHATS === 'true',
       },
       DATABASE: {
         CONNECTION: {
-          HOST: process.env.DATABASE_CONNECTION_HOST,
-          PORT: Number.parseInt(process.env.DATABASE_CONNECTION_HOST),
+          HOST: process.env?.DATABASE_CONNECTION_HOST,
+          PORT: Number.parseInt(process.env?.DATABASE_CONNECTION_HOST),
           USER: process.env.DATABASE_CONNECTION_USER,
           PASSWORD: process.env.DATABASE_CONNECTION_PASSWORD,
           DB_PREFIX_NAME: process.env.DATABASE_CONNECTION_DB_PREFIX_NAME,
@@ -152,9 +154,9 @@ export class ConfigService {
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
         },
       },
-      LOG_LEVEL: process.env.LOG_LEVEL.split(',') as LogLevel[],
+      LOG_LEVEL: process.env?.LOG_LEVEL.split(',') as LogLevel[],
       DEL_INSTANCE:
-        typeof process.env.DEL_INSTANCE === 'boolean'
+        typeof process.env?.DEL_INSTANCE === 'boolean'
           ? process.env.DEL_INSTANCE === 'true'
           : Number.parseInt(process.env.DEL_INSTANCE),
       WEBHOOK: {
@@ -181,8 +183,8 @@ export class ConfigService {
         },
       },
       CONFIG_SESSION_PHONE: {
-        CLIENT: process.env.CONFIG_SESSION_PHONE_CLIENST,
-        NAME: process.env.CONFIG_SESSION_PHONE_NAME,
+        CLIENT: process.env?.CONFIG_SESSION_PHONE_CLIENST,
+        NAME: process.env?.CONFIG_SESSION_PHONE_NAME,
       },
       QRCODE: {
         LINIT: Number.parseInt(process.env.QRCODE_LIMIT),
@@ -193,7 +195,9 @@ export class ConfigService {
           KEY: process.env.AUTHENTICATION_API_KEY,
         },
         JWT: {
-          EXPIRIN_IN: Number.parseInt(process.env.AUTHENTICATION_JWT_EXPIRIN_IN),
+          EXPIRIN_IN: Number.isInteger(process.env?.AUTHENTICATION_JWT_EXPIRIN_IN)
+            ? Number.parseInt(process.env.AUTHENTICATION_JWT_EXPIRIN_IN)
+            : 3600,
           SECRET: process.env.AUTHENTICATION_JWT_SECRET,
         },
       },

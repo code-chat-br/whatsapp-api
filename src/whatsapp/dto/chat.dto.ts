@@ -28,3 +28,10 @@ export class ArchiveChatDto {
   lastMessage: LastMessage;
   archive: boolean;
 }
+
+export class DeleteMessge {
+  id: string;
+  fromMe: boolean;
+  remoteJid: string;
+  participant?: string;
+}

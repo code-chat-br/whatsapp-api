@@ -6,7 +6,6 @@ import { join } from 'path';
 import { Logger } from '../../config/logger.config';
 import { ConfigService, Database, DelInstance } from '../../config/env.config';
 import { RepositoryBroker } from '../repository/repository.manager';
-import { mongoClient } from '../../db/db.connect';
 import { NotFoundException } from '../../exceptions';
 
 export class WAMonitoringService {
@@ -22,7 +21,7 @@ export class WAMonitoringService {
 
   private readonly db = this.configService.get<Database>('DATABASE');
   private readonly dbInstance = this.db.ENABLED
-    ? mongoClient.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
+    ? RepositoryBroker.dbServer.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
     : null;
 
   private readonly logger = new Logger(WAMonitoringService.name);
@@ -39,20 +38,20 @@ export class WAMonitoringService {
     }
   }
 
-  public instanceInfo(instanceName?: string) {
+  public async instanceInfo(instanceName?: string) {
     if (instanceName && !this.waInstances[instanceName]) {
       throw new NotFoundException(`Instance "${instanceName}" not found`);
     }
 
     const instances: any[] = [];
 
-    for (const [key, value] of Object.entries(this.waInstances)) {
+    for await (const [key, value] of Object.entries(this.waInstances)) {
       if (value && value.connectionStatus.state === 'open') {
         instances.push({
           instance: {
             instanceName: key,
             owner: value.wuid,
-            profileName: value.profileName,
+            profileName: await value.getProfileName(),
             profilePictureUrl: value.profilePictureUrl,
           },
         });
@@ -110,7 +109,7 @@ export class WAMonitoringService {
 
     try {
       if (this.db.ENABLED) {
-        await mongoClient.connect();
+        await RepositoryBroker.dbServer.connect();
         const collections = await this.dbInstance.collections();
         if (collections.length > 0) {
           collections.forEach(
@@ -148,7 +147,7 @@ export class WAMonitoringService {
 
       try {
         if (this.db.ENABLED) {
-          await mongoClient.connect();
+          await RepositoryBroker.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
         }
         rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
@@ -164,7 +163,7 @@ export class WAMonitoringService {
         delete this.waInstances[instanceName];
 
         if (this.db.ENABLED) {
-          await mongoClient.connect();
+          await RepositoryBroker.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
         }
 

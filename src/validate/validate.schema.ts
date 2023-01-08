@@ -337,6 +337,19 @@ export const archiveChatSchema: JSONSchema7 = {
   required: ['lastMessage', 'archive'],
 };
 
+export const deleteMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    id: { type: 'string' },
+    fromMe: { type: 'boolean', enum: [true, false] },
+    remoteJid: { type: 'string' },
+    participant: { type: 'string' },
+  },
+  required: ['id', 'fromMe', 'remoteJid'],
+  ...isNotEmpty('id', 'remoteJid', 'participant'),
+};
+
 export const contactValidateSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',

@@ -17,6 +17,4 @@ export const dbserver = db.ENABLED
     )
   : null;
 
-export const mongoClient = dbserver?.getClient();
-
 db.ENABLED ? logger.info('ON - dbName: ' + dbserver['$dbName']) : null;

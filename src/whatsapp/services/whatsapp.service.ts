@@ -1,5 +1,6 @@
 import makeWASocket, {
   BaileysEventEmitter,
+  BufferJSON,
   delay,
   DisconnectReason,
   downloadMediaMessage,
@@ -58,6 +59,7 @@ import {
 import { arrayUnique, isBase64, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
+  DeleteMessge,
   OnWhatsAppDto,
   ReadMessageDto,
   WhatsAppNumberDto,
@@ -120,15 +122,29 @@ export class WAStartupService {
     return this.instance.wuid;
   }
 
-  public get profileName() {
+  public async getProfileName() {
     let profileName = this.client.user?.name ?? this.client.user?.verifiedName;
     if (!profileName) {
-      const creds = JSON.parse(
-        readFileSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'), {
-          encoding: 'utf-8',
-        }),
-      );
-      profileName = creds.me?.name ?? creds.me?.verifiedName;
+      if (this.configService.get<Database>('DATABASE').ENABLED) {
+        const collection = RepositoryBroker.dbServer
+          .db(
+            this.configService.get<Database>('DATABASE').CONNECTION.DB_PREFIX_NAME +
+              '-instances',
+          )
+          .collection(this.instanceName);
+        const data = await collection.findOne({ _id: 'creds' });
+        if (data) {
+          const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
+          profileName = creds.me?.name ?? creds.me?.verifiedName;
+        }
+      } else {
+        const creds = JSON.parse(
+          readFileSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'), {
+            encoding: 'utf-8',
+          }),
+        );
+        profileName = creds.me?.name ?? creds.me?.verifiedName;
+      }
     }
     return profileName;
   }
@@ -395,14 +411,26 @@ export class WAStartupService {
   }
 
   private chatHandle(ev: BaileysEventEmitter) {
+    const database = this.configService.get<Database>('DATABASE');
     ev.on('chats.upsert', async (chats) => {
-      const chatsRaw: ChatRaw[] = chats.map((chat) => {
-        return {
+      const chatsRepository = await this.repository.chat.find({
+        where: { owner: this.instance.wuid },
+      });
+
+      const chatsRaw: ChatRaw[] = [];
+      for await (const chat of chats) {
+        if (chatsRepository.find((cr) => cr.id === chat.id)) {
+          continue;
+        }
+
+        chatsRaw.push({
           id: chat.id,
           owner: this.instance.wuid,
-        };
-      });
+        });
+      }
+
       await this.sendDataWebhook(Events.CHATS_UPSERT, chatsRaw);
+      await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
     });
 
     ev.on('chats.update', async (chats) => {
@@ -465,7 +493,7 @@ export class WAStartupService {
           };
         });
         await this.sendDataWebhook(Events.CHATS_SET, chatsRaw);
-        // await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
+        await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
       }
 
       const messagesRaw: MessageRaw[] = [];
@@ -914,6 +942,17 @@ export class WAStartupService {
     }
   }
 
+  public async deleteMessage(del: DeleteMessge) {
+    try {
+      return await this.client.sendMessage(del.remoteJid, { delete: del });
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error while deleting message for everyone',
+        error?.toString(),
+      );
+    }
+  }
+
   public async getBase64FromMediaMessage(m: proto.IWebMessageInfo) {
     try {
       const typeMessage = [
@@ -998,7 +1037,7 @@ export class WAStartupService {
     return await this.repository.message.find(query);
   }
 
-  public async findStatusMessage(query: MessageUpQuery) {
+  public async fetchStatusMessage(query: MessageUpQuery) {
     if (query?.where) {
       query.where.owner = this.instance.wuid;
     } else {
@@ -1010,6 +1049,10 @@ export class WAStartupService {
       };
     }
     return await this.repository.messageUpdate.find(query);
+  }
+
+  public async fetchChats() {
+    return await this.repository.chat.find({ where: { owner: this.instance.wuid } });
   }
 
   // Group

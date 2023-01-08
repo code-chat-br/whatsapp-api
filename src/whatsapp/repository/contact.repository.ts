@@ -17,8 +17,12 @@ export class ContactRepository extends Repository {
   }
 
   public async insert(data: ContactRaw[], saveDb = false): Promise<IInsert> {
+    if (data.length === 0) {
+      return;
+    }
+
     try {
-      if (this.dbSettings.ENABLED) {
+      if (this.dbSettings.ENABLED && saveDb) {
         const insert = await this.contactModel.insertMany([...data]);
         return { insertCount: insert.length };
       }
