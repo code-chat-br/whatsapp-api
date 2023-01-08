@@ -55,6 +55,7 @@ export type EventsWebhook = {
   PRESENCE_UPDATE: boolean;
   CHATS_SET: boolean;
   CHATS_UPDATE: boolean;
+  CHATS_DELETE: boolean;
   CHATS_UPSERT: boolean;
   CONNECTION_UPDATE: boolean;
   NEW_JWT_TOKEN: boolean;
@@ -178,6 +179,7 @@ export class ConfigService {
           CHATS_SET: process.env?.WEBHOOK_EVENTS_CHATS_SET === 'true',
           CHATS_UPDATE: process.env?.WEBHOOK_EVENTS_CHATS_UPDATE === 'true',
           CHATS_UPSERT: process.env?.WEBHOOK_EVENTS_CHATS_UPSERT === 'true',
+          CHATS_DELETE: process.env?.WEBHOOK_EVENTS_CHATS_DELETE === 'true',
           CONNECTION_UPDATE: process.env?.WEBHOOK_EVENTS_CONNECTION_UPDATE === 'true',
           NEW_JWT_TOKEN: process.env?.WEBHOOK_EVENTS_NEW_JWT_TOKEN === 'true',
         },

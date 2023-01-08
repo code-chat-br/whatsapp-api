@@ -327,13 +327,10 @@ export class WAStartupService {
 
   private async getMessage(key: proto.IMessageKey): Promise<proto.IMessage> {
     try {
-      const webMessageInfo: proto.IWebMessageInfo = JSON.parse(
-        readFileSync(
-          join(this.storePath, 'messages', this.instance.wuid, key.id + '.json'),
-          { encoding: 'utf-8' },
-        ),
-      );
-      return webMessageInfo.message;
+      const webMessageInfo = (await this.repository.message.find({
+        where: { owner: this.instance.wuid, key: { id: key.id } },
+      })) as unknown as proto.IWebMessageInfo[];
+      return webMessageInfo[0].message;
     } catch (error) {
       return { conversation: '' };
     }
@@ -441,6 +438,16 @@ export class WAStartupService {
         };
       });
       await this.sendDataWebhook(Events.CHATS_UPDATE, chatsRaw);
+    });
+
+    ev.on('chats.delete', async (chats) => {
+      chats.forEach(
+        async (chat) =>
+          await this.repository.chat.delete({
+            where: { owner: this.instance.wuid, id: chat },
+          }),
+      );
+      await this.sendDataWebhook(Events.CHATS_DELETE, [...chats]);
     });
   }
 
@@ -953,8 +960,10 @@ export class WAStartupService {
     }
   }
 
-  public async getBase64FromMediaMessage(m: proto.IWebMessageInfo) {
+  public async getBase64FromMediaMessage(key: proto.IMessageKey) {
     try {
+      const message = await this.getMessage(key);
+
       const typeMessage = [
         'imageMessage',
         'documentMessage',
@@ -967,7 +976,7 @@ export class WAStartupService {
       let mediaType: string;
 
       for (const type of typeMessage) {
-        mediaMessage = m.message[type];
+        mediaMessage = message[type];
         if (mediaMessage) {
           mediaType = type;
           break;
@@ -979,7 +988,7 @@ export class WAStartupService {
       }
 
       const buffer = await downloadMediaMessage(
-        m,
+        { key, message },
         'buffer',
         {},
         {

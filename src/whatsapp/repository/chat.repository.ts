@@ -2,7 +2,10 @@ import { join } from 'path';
 import { ConfigService } from '../../config/env.config';
 import { ChatRaw, IChatModel } from '../models/chat.model';
 import { IInsert, Repository } from '../abstract/abstract.repository';
-import { opendirSync, readFileSync } from 'fs';
+import { opendirSync, readFileSync, rmSync } from 'fs';
+import { exec, ExecException } from 'child_process';
+import { Logger } from '../../config/logger.config';
+import { rm } from 'fs/promises';
 
 export class ChattQuery {
   where: ChatRaw;
@@ -15,6 +18,8 @@ export class ChatRepository extends Repository {
   ) {
     super(configService);
   }
+
+  private readonly logger = new Logger(ChatRepository.name);
 
   public async insert(data: ChatRaw[], saveDb = false): Promise<IInsert> {
     if (data.length === 0) {
@@ -67,6 +72,23 @@ export class ChatRepository extends Repository {
       return chats;
     } catch (error) {
       return [];
+    }
+  }
+
+  public async delete(query: ChattQuery) {
+    try {
+      if (this.dbSettings.ENABLED) {
+        return await this.chatModel.deleteOne({ ...query.where });
+      }
+
+      rmSync(join(this.storePath, 'chats', query.where.owner, query.where.id + '.josn'), {
+        force: true,
+        recursive: true,
+      });
+
+      return { deleted: { chatId: query.where.id } };
+    } catch (error) {
+      return { error: error?.toString() };
     }
   }
 }

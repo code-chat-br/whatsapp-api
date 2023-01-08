@@ -86,6 +86,7 @@ WEBHOOK:
     CHATS_SET: true
     CHATS_UPSERT: true
     CHATS_UPDATE: true
+    CHATS_DELETE: true
     CONNECTION_UPDATE: true
     # This event fires every time a new token is requested via the refresh route
     NEW_JWT_TOKEN: true
