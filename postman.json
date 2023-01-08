@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2023-01-08T00:34:01.000Z"
+      "updatedAt": "2023-01-08T13:25:53.000Z"
     },
     "item": [
       {
@@ -691,7 +691,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"message\": {\r\n    \"stickerMessage\": {\r\n      \"url\": \"https://mmg.whatsapp.net/d/f/AmvxPG6xNw2Ai9qagf7_vgraMkzeZWTheyMIK2zZeuej.enc\",\r\n      \"fileSha256\": \"HDX23KW0ltT1p+iHbjHYJVRCIM/gX1lF5ddPMWazgNU=\",\r\n      \"fileEncSha256\": \"u0gm7SUxq3O6Z00CAX2QYl9MqGnrnxWuD3l5cAm/sOE=\",\r\n      \"mediaKey\": \"oDmXkvTfcWJUSnDaKhpXyQ3hqGoPTtb+vV6DSmZ3iNQ=\",\r\n      \"mimetype\": \"image/webp\",\r\n      \"height\": 64,\r\n      \"width\": 64,\r\n      \"directPath\": \"/v/t62.15575-24/40263354_136676265603823_2280650996642024039_n.enc?ccb=11-4&oh=01_AdTMerq4YIageb7KWKGvnek42oGD7NuF_Q4NP9lb_VI5vw&oe=63ACA995&_nc_hot=1669681753\",\r\n      \"fileLength\": \"160582\",\r\n      \"mediaKeyTimestamp\": \"1669678127\",\r\n      \"firstFrameLength\": 14884,\r\n      \"firstFrameSidecar\": \"yfPV5ra4PpVc9g==\",\r\n      \"isAnimated\": true\r\n    }\r\n  },\r\n  \"messageTimestamp\": 1669681753,\r\n  \"instanceName\": \"codechat\",\r\n  \"source\": \"android\"\r\n}",
+                "raw": "{\r\n  \"key\": {\r\n    \"id\": \"D127FA44C2175101F35497CF2ED66D64\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1183,7 +1183,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "5a80d0a4-3d60-4959-8461-bc8f03ecf757",
+          "id": "a9f85365-056b-408d-9960-c4e98001eac2",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1193,7 +1193,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "c2bf60e9-1228-45ae-b5f8-91de6985cc01",
+          "id": "d9f58527-8b9f-47ea-9ecf-9abd09d3330d",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1203,38 +1203,38 @@
     ],
     "variable": [
       {
-        "id": "24cc1837-9880-4937-9667-31e8a69b8402",
+        "id": "0371dd98-1f8d-4ed7-9a34-7e856d0d6b2f",
         "key": "baseUrl",
         "value": "https://api.codechat.dev",
         "type": "string"
       },
       {
-        "id": "40739098-545c-4444-b490-81e124c3ddaa",
+        "id": "85fcadf2-2e59-45d9-a3e4-69f6bedd7a13",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "1c9f757a-62c2-4be0-b3fa-f1013497e333",
+        "id": "96bf96bb-648a-4303-a23d-b7172c1f0a93",
         "key": "token",
         "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOGI3ZTc0NDAtMmFiMS00ODk5LWIzNTAtMTliMjNjMmEyZTFiIiwiaWF0IjoxNjcyMjc0Mzc4LCJleHAiOjE2NzIyNzQzNzgsInN1YiI6ImctdCJ9.BmlJMLRjcU_fcZyY-nof44ML6RHN7WfmNiUpLBgFkww",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "faa5a732-f788-4cff-b82b-32bb12801577",
+        "id": "c0a6a55a-e1a5-4863-a4bc-b17299e0e003",
         "key": "apikey",
         "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string"
       },
       {
-        "id": "86740820-952c-4c01-b79e-4bbf4ad6db07",
+        "id": "41746ed3-9c97-4e25-a5c6-5a0a574bce34",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJsafdefer",
         "type": "string"
       },
       {
-        "id": "36dd19c7-61bc-4223-b297-59eeade1eb7c",
+        "id": "a27d8acd-4e0e-470f-96eb-66f4478f01f8",
         "key": "groupJid",
         "value": "120363046555718472@g.us",
         "type": "string"
