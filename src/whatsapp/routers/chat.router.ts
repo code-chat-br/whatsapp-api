@@ -2,6 +2,7 @@ import { RequestHandler, Router } from 'express';
 import {
   archiveChatSchema,
   contactValidateSchema,
+  deleteMessageSchema,
   messageUpSchema,
   messaseValidateSchema,
   profilePictureSchema,
@@ -10,6 +11,7 @@ import {
 } from '../../validate/validate.schema';
 import {
   ArchiveChatDto,
+  DeleteMessge,
   NumberDto,
   ReadMessageDto,
   WhatsAppNumberDto,
@@ -21,6 +23,7 @@ import { RouterBroker } from '../abstract/abstract.router';
 import { HttpStatus } from './index.router';
 import { MessageUpQuery } from '../repository/messageUp.repository';
 import { proto } from '@adiwajshing/baileys';
+import { InstanceDto } from '../dto/instance.dto';
 
 export class ChatRouter extends RouterBroker {
   constructor(...guards: RequestHandler[]) {
@@ -56,6 +59,20 @@ export class ChatRouter extends RouterBroker {
 
         return res.status(HttpStatus.CREATED).json(response);
       })
+      .delete(
+        this.routerPath('deleteMessageForEveryone'),
+        ...guards,
+        async (req, res) => {
+          const response = await this.dataValidate<DeleteMessge>({
+            request: req,
+            schema: deleteMessageSchema,
+            ClassRef: DeleteMessge,
+            execute: (instance, data) => chatController.deleteMessage(instance, data),
+          });
+
+          return res.status(HttpStatus.CREATED).json(response);
+        },
+      )
       .post(this.routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
         const response = await this.dataValidate<NumberDto>({
           request: req,
@@ -103,6 +120,16 @@ export class ChatRouter extends RouterBroker {
           schema: messageUpSchema,
           ClassRef: MessageUpQuery,
           execute: (instance, data) => chatController.fetchStatusMessage(instance, data),
+        });
+
+        return res.status(HttpStatus.OK).json(response);
+      })
+      .get(this.routerPath('findChats'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<InstanceDto>({
+          request: req,
+          schema: null,
+          ClassRef: InstanceDto,
+          execute: (instance) => chatController.fetchChats(instance),
         });
 
         return res.status(HttpStatus.OK).json(response);

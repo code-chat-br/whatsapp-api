@@ -1,6 +1,7 @@
 import { proto } from '@adiwajshing/baileys';
 import {
   ArchiveChatDto,
+  DeleteMessge,
   NumberDto,
   ReadMessageDto,
   WhatsAppNumberDto,
@@ -26,6 +27,10 @@ export class ChatController {
     return await this.waMonitor.waInstances[instanceName].archiveChat(data);
   }
 
+  public async deleteMessage({ instanceName }: InstanceDto, data: DeleteMessge) {
+    return await this.waMonitor.waInstances[instanceName].deleteMessage(data);
+  }
+
   public async fetchProfilePicture({ instanceName }: InstanceDto, data: NumberDto) {
     return await this.waMonitor.waInstances[instanceName].profilePicture(data.number);
   }
@@ -48,6 +53,10 @@ export class ChatController {
   }
 
   public async fetchStatusMessage({ instanceName }: InstanceDto, query: MessageUpQuery) {
-    return await this.waMonitor.waInstances[instanceName].findStatusMessage(query);
+    return await this.waMonitor.waInstances[instanceName].fetchStatusMessage(query);
+  }
+
+  public async fetchChats({ instanceName }: InstanceDto) {
+    return await this.waMonitor.waInstances[instanceName].fetchChats();
   }
 }
