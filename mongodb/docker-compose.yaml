@@ -10,7 +10,7 @@ services:
     container_name: mongodb
 
     # This image already has a single replica set
-    image: bitnami/mongodb:latest
+    image: mongo
 
     restart: always
     volumes:
@@ -19,12 +19,9 @@ services:
     ports:
       - 26712:27017
     environment:
-      - MONGODB_ADVERTISED_HOSTNAME=localhost
-      - MONGODB_REPLICA_SET_MODE=primary
       - MONGODB_ROOT_USER=root
       # Set a password to access the bank
       - MONGODB_ROOT_PASSWORD=<password>
-      - MONGODB_REPLICA_SET_KEY=9glkjQlr855kU
     networks:
       - api-net
     expose:
