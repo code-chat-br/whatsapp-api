@@ -19,7 +19,7 @@ cp ./src/env.yml ./dist/src
 stop_spinner $?
 
 echo
-echo -en "\x1b[1m\x1b[34m > Successfully built \x1b[0m "
+echo -en "\x1b[1m\x1b[34m > Successfully build \x1b[0m "
 echo
 
 echo
