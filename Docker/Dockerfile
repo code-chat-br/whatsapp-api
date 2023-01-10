@@ -11,10 +11,10 @@ WORKDIR /~/Projects
 
 COPY . .
 
+# Set this value to "true" to enable environment variables for the container
 ENV DOCKER_ENV=true
 
 RUN npm i
-RUN npm run build
 
 EXPOSE 8080
 
