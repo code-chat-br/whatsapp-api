@@ -1,7 +1,7 @@
-import { existsSync, opendirSync, readFileSync } from 'fs';
+import { opendirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { ConfigService } from '../../config/env.config';
-import { ContactRaw, IContactModel } from '../models/contact.model';
+import { ContactRaw, IContactModel } from '../models';
 import { IInsert, Repository } from '../abstract/abstract.repository';
 
 export class ContactQuery {

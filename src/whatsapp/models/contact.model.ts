@@ -9,7 +9,8 @@ export class ContactRaw {
   owner: string;
 }
 
-const contactSchema = new Schema({
+const contactSchema = new Schema<ContactRaw>({
+  _id: { type: String, _id: true },
   pushName: { type: String, minlength: 1 },
   id: { type: String, required: true, minlength: 1 },
   profilePictureUrl: { type: String, minlength: 1 },

@@ -7,7 +7,8 @@ export class ChatRaw {
   owner: string;
 }
 
-const chatSchema = new Schema({
+const chatSchema = new Schema<ChatRaw>({
+  _id: { type: String, _id: true },
   id: { type: String, required: true, minlength: 1 },
   owner: { type: String, required: true, minlength: 1 },
 });

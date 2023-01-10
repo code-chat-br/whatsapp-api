@@ -20,6 +20,7 @@ export class MessageRaw {
 }
 
 const messageSchema = new Schema<MessageRaw>({
+  _id: { type: String, _id: true },
   key: {
     id: { type: String, required: true, minlength: 1 },
     remoteJid: { type: String, required: true, minlength: 1 },
@@ -47,11 +48,12 @@ export class MessageUpdateRaw {
   owner: string;
 }
 
-const messageUpdateSchema = new Schema({
+const messageUpdateSchema = new Schema<MessageUpdateRaw>({
+  _id: { type: String, _id: true },
   remoteJid: { type: String, required: true, min: 1 },
   id: { type: String, required: true, min: 1 },
   fromMe: { type: Boolean, required: true },
-  participante: { type: String, min: 1 },
+  participant: { type: String, min: 1 },
   datetime: { type: Number, required: true, min: 1 },
   status: { type: String, required: true },
   owner: { type: String, required: true, min: 1 },

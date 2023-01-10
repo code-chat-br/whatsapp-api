@@ -1,5 +1,5 @@
 import { ConfigService } from '../../config/env.config';
-import { IMessageUpModel, MessageUpdateRaw } from '../models/message.model';
+import { IMessageUpModel, MessageUpdateRaw } from '../models';
 import { IInsert, Repository } from '../abstract/abstract.repository';
 import { join } from 'path';
 import { opendirSync, readFileSync } from 'fs';
