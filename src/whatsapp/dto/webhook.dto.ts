@@ -1,4 +1,4 @@
 export class WebhookDto {
-  enabled: boolean;
-  url: string;
+  enabled?: boolean;
+  url?: string;
 }

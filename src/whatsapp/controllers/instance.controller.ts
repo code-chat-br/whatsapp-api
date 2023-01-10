@@ -27,7 +27,9 @@ export class InstanceController {
     this.waMonitor.waInstances[instance.instanceName] = instance;
     this.waMonitor.delInstanceTime(instance.instanceName);
 
-    const hash = this.authService.generateHash({ instanceName: instance.instanceName });
+    const hash = await this.authService.generateHash({
+      instanceName: instance.instanceName,
+    });
 
     return {
       instance: {

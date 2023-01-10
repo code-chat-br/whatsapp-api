@@ -7,14 +7,15 @@ import { name } from '../../../package.json';
 import { InstanceDto } from '../dto/instance.dto';
 import { JwtPayload } from '../services/auth.service';
 import { ForbidenException, UnauthorizedException } from '../../exceptions';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { AUTH_DIR } from '../../config/path.config';
+import { repository } from '../whatsapp.module';
 
 const logger = new Logger('GUARD');
 
-function jwtGuard(req: Request, res: Response, next: NextFunction) {
+async function jwtGuard(req: Request, res: Response, next: NextFunction) {
   const key = req.get('apikey');
+
+  const param = req.params as unknown as InstanceDto;
+  const instanceKey = await repository.auth.find(param.instanceName);
 
   if (key && configService.get<Auth>('AUTHENTICATION').API_KEY.KEY !== key) {
     throw new UnauthorizedException();
@@ -63,7 +64,7 @@ function jwtGuard(req: Request, res: Response, next: NextFunction) {
   }
 }
 
-function apikey(req: Request, res: Response, next: NextFunction) {
+async function apikey(req: Request, res: Response, next: NextFunction) {
   const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
   const key = req.get('apikey');
 
@@ -84,12 +85,8 @@ function apikey(req: Request, res: Response, next: NextFunction) {
 
   try {
     const param = req.params as unknown as InstanceDto;
-    const storeKey = JSON.parse(
-      readFileSync(join(AUTH_DIR, 'apikey', param.instanceName + '.json'), {
-        encoding: 'utf-8',
-      }),
-    ) as Pick<JwtPayload, 'instanceName' | 'apikey'>;
-    if (storeKey.apikey === key) {
+    const instanceKey = await repository.auth.find(param.instanceName);
+    if (instanceKey.apikey === key) {
       return next();
     }
   } catch (error) {}

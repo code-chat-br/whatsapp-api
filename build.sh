@@ -20,5 +20,3 @@ echo
 echo "> Starting application..."
 echo
 node ./dist/src/main.js
-
-

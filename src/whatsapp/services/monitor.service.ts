@@ -51,7 +51,7 @@ export class WAMonitoringService {
           instance: {
             instanceName: key,
             owner: value.wuid,
-            profileName: await value.getProfileName(),
+            profileName: (await value.getProfileName()) || 'not loaded',
             profilePictureUrl: value.profilePictureUrl,
           },
         });

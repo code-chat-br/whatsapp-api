@@ -2,7 +2,7 @@ import { Auth, ConfigService, Webhook } from '../../config/env.config';
 import { InstanceDto } from '../dto/instance.dto';
 import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
-import { readFileSync, writeFile } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import { AUTH_DIR, ROOT_DIR } from '../../config/path.config';
 import { Logger } from '../../config/logger.config';
@@ -12,6 +12,7 @@ import { BadRequestException } from '../../exceptions';
 import axios from 'axios';
 import { wa } from '../types/wa.types';
 import { WAMonitoringService } from './monitor.service';
+import { RepositoryBroker } from '../repository/repository.manager';
 
 export type JwtPayload = {
   instanceName: string;
@@ -29,11 +30,12 @@ export class AuthService {
   constructor(
     private readonly configService: ConfigService,
     private readonly waMonitor: WAMonitoringService,
+    private readonly repository: RepositoryBroker,
   ) {}
 
   private readonly logger = new Logger(AuthService.name);
 
-  private jwt(instance: InstanceDto) {
+  private async jwt(instance: InstanceDto) {
     const jwtOpts = this.configService.get<Auth>('AUTHENTICATION').JWT;
     const token = sign(
       {
@@ -45,44 +47,38 @@ export class AuthService {
       { expiresIn: jwtOpts.EXPIRIN_IN, encoding: 'utf8', subject: 'g-t' },
     );
 
-    writeFile(
-      join(AUTH_DIR, 'jwt', instance.instanceName + '.json'),
-      JSON.stringify({ instance: instance.instanceName, jwt: token }),
-      (error) => {
-        if (error) {
-          this.logger.error({
-            localError: AuthService.name + '.jwt',
-            error,
-          });
-        }
-      },
-    );
+    const auth = await this.repository.auth.create({ jwt: token }, instance.instanceName);
+
+    if (auth['error']) {
+      this.logger.error({
+        localError: AuthService.name + '.jwt',
+        error: auth['error'],
+      });
+      throw new BadRequestException('Authentication error', auth['error']?.toString());
+    }
 
     return { jwt: token };
   }
 
-  private apikey(instance: InstanceDto) {
+  private async apikey(instance: InstanceDto) {
     const apikey = v4().toUpperCase();
 
-    writeFile(
-      join(AUTH_DIR, 'apikey', instance.instanceName + '.json'),
-      JSON.stringify({ instance: instance.instanceName, apikey }),
-      (error) => {
-        if (error) {
-          this.logger.error({
-            localError: AuthService.name + '.jwt',
-            error,
-          });
-        }
-      },
-    );
+    const auth = await this.repository.auth.create({ apikey }, instance.instanceName);
+
+    if (auth['error']) {
+      this.logger.error({
+        localError: AuthService.name + '.jwt',
+        error: auth['error'],
+      });
+      throw new BadRequestException('Authentication error', auth['error']?.toString());
+    }
 
     return { apikey };
   }
 
-  public generateHash(instance: InstanceDto) {
+  public async generateHash(instance: InstanceDto) {
     const options = this.configService.get<Auth>('AUTHENTICATION');
-    return this[options.TYPE](instance) as { jwt: string } | { apikey: string };
+    return (await this[options.TYPE](instance)) as { jwt: string } | { apikey: string };
   }
 
   public async refreshToken({ oldToken }: OldToken) {
@@ -111,17 +107,12 @@ export class AuthService {
       }
 
       const token = {
-        jwt: this.jwt({ instanceName: decode.instanceName }).jwt,
+        jwt: (await this.jwt({ instanceName: decode.instanceName })).jwt,
         instanceName: decode.instanceName,
       };
 
       try {
-        const webhook: wa.LocalWebHook = JSON.parse(
-          readFileSync(
-            join(ROOT_DIR, 'store', 'webhook', decode.instanceName + '.json'),
-            { encoding: 'utf-8' },
-          ),
-        );
+        const webhook = await this.repository.webhook.find(decode.instanceName);
         if (
           webhook.enabled &&
           this.configService.get<Webhook>('WEBHOOK').EVENTS.NEW_JWT_TOKEN

@@ -77,10 +77,10 @@ import {
   GroupPictureDto,
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
-import { WebhookDto } from '../dto/webhook.dto';
 import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
 import Long from 'long';
+import { WebhookRaw } from '../models/webhook.model';
 
 export class WAStartupService {
   constructor(
@@ -135,15 +135,15 @@ export class WAStartupService {
         const data = await collection.findOne({ _id: 'creds' });
         if (data) {
           const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
-          profileName = creds.me?.name ?? creds.me?.verifiedName;
+          profileName = creds.me?.name || creds.me?.verifiedName;
         }
-      } else {
+      } else if (existsSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'))) {
         const creds = JSON.parse(
           readFileSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'), {
             encoding: 'utf-8',
           }),
         );
-        profileName = creds.me?.name ?? creds.me?.verifiedName;
+        profileName = creds.me?.name || creds.me?.verifiedName;
       }
     }
     return profileName;
@@ -161,19 +161,18 @@ export class WAStartupService {
   }
 
   private async loadWebhook() {
-    const path = join(ROOT_DIR, 'store', 'webhook', this.instance.name + '.json');
-    if (existsSync(path)) {
-      try {
-        const data = JSON.parse(
-          readFileSync(path, { encoding: 'utf-8' }),
-        ) as wa.LocalWebHook;
-        Object.assign(this.localWebhook, data);
-      } catch (error) {}
-    }
+    const data = await this.repository.webhook.find(this.instanceName);
+    this.localWebhook.url = data.url;
+    this.localWebhook.enabled = data.enabled;
   }
 
-  public setWebhook(data: WebhookDto) {
+  public async setWebhook(data: WebhookRaw) {
+    await this.repository.webhook.create(data, this.instanceName);
     Object.assign(this.localWebhook, data);
+  }
+
+  public async findWebhook() {
+    return await this.repository.webhook.find(this.instanceName);
   }
 
   private async sendDataWebhook<T = any>(event: Events, data: T) {
