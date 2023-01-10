@@ -212,8 +212,8 @@ curl --location --request GET 'http://localhost:8080/instance/connect/codechat' 
 ```
 
 ### App in Docker
-  - [Dockerfile](./Docker/Dockerfile)
-  - [docker-compose](./Docker/docker-compose.yaml)
+  - [Dockerfile](./Dockerfile)
+  - [docker-compose](./docker-compose.yaml)
   - [.env for docker](./Docker/dev.env)
 
 After building the application, in the same directory as the files above, run the following command:
