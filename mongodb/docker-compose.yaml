@@ -19,9 +19,9 @@ services:
     ports:
       - 26712:27017
     environment:
-      - MONGODB_ROOT_USER=root
+      MONGO_INITDB_ROOT_USERNAME: root
       # Set a password to access the bank
-      - MONGODB_ROOT_PASSWORD=<password>
+      MONGO_INITDB_ROOT_PASSWORD: <password>
     networks:
       - api-net
     expose:

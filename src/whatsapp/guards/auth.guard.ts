@@ -14,9 +14,6 @@ const logger = new Logger('GUARD');
 async function jwtGuard(req: Request, res: Response, next: NextFunction) {
   const key = req.get('apikey');
 
-  const param = req.params as unknown as InstanceDto;
-  const instanceKey = await repository.auth.find(param.instanceName);
-
   if (key && configService.get<Auth>('AUTHENTICATION').API_KEY.KEY !== key) {
     throw new UnauthorizedException();
   }

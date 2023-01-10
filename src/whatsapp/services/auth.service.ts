@@ -2,15 +2,11 @@ import { Auth, ConfigService, Webhook } from '../../config/env.config';
 import { InstanceDto } from '../dto/instance.dto';
 import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { AUTH_DIR, ROOT_DIR } from '../../config/path.config';
 import { Logger } from '../../config/logger.config';
 import { v4 } from 'uuid';
 import { isJWT } from 'class-validator';
 import { BadRequestException } from '../../exceptions';
 import axios from 'axios';
-import { wa } from '../types/wa.types';
 import { WAMonitoringService } from './monitor.service';
 import { RepositoryBroker } from '../repository/repository.manager';
 
@@ -92,11 +88,7 @@ export class AuthService {
         ignoreExpiration: true,
       }) as Pick<JwtPayload, 'apiName' | 'instanceName' | 'tokenId'>;
 
-      const tokenStore = JSON.parse(
-        readFileSync(join(AUTH_DIR, 'jwt', decode.instanceName + '.json'), {
-          encoding: 'utf-8',
-        }),
-      ) as Pick<JwtPayload, 'instanceName' | 'jwt'>;
+      const tokenStore = await this.repository.auth.find(decode.instanceName);
 
       const decodeTokenStore = verify(tokenStore.jwt, jwtOpts.SECRET, {
         ignoreExpiration: true,

@@ -162,8 +162,8 @@ export class WAStartupService {
 
   private async loadWebhook() {
     const data = await this.repository.webhook.find(this.instanceName);
-    this.localWebhook.url = data.url;
-    this.localWebhook.enabled = data.enabled;
+    this.localWebhook.url = data?.url;
+    this.localWebhook.enabled = data?.enabled;
   }
 
   public async setWebhook(data: WebhookRaw) {
