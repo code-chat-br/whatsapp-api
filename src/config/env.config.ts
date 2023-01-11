@@ -13,6 +13,10 @@ export type Cors = {
 };
 
 export type LogLevel = 'ERROR' | 'WARN' | 'DEBUG' | 'INFO' | 'LOG' | 'VERBOSE' | 'DARK';
+export type Log = {
+  LEVEL: LogLevel[];
+  COLOR: boolean;
+};
 
 export type SaveData = {
   OLD_MESSAGE: boolean;
@@ -80,7 +84,7 @@ export interface Env {
   SSL_CONF: SslConf;
   STORE: StoreConf;
   DATABASE: Database;
-  LOG_LEVEL: LogLevel[];
+  LOG: Log;
   DEL_INSTANCE: DelInstance;
   WEBHOOK: Webhook;
   CONFIG_SESSION_PHONE: ConfigSessionPhone;
@@ -155,7 +159,10 @@ export class ConfigService {
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
         },
       },
-      LOG_LEVEL: process.env?.LOG_LEVEL.split(',') as LogLevel[],
+      LOG: {
+        LEVEL: process.env?.LOG_LEVEL.split(',') as LogLevel[],
+        COLOR: process.env?.LOG_COLOR === 'true',
+      },
       DEL_INSTANCE:
         typeof process.env?.DEL_INSTANCE === 'boolean'
           ? process.env.DEL_INSTANCE === 'true'

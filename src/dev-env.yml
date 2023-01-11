@@ -27,14 +27,16 @@ SSL_CONF:
   FULLCHAIN: /etc/letsencrypt/live/<domain>/fullchain.pem
 
 # Determine the logs to be displayed
-LOG_LEVEL:
-  - ERROR
-  - WARN
-  - DEBUG
-  - INFO
-  - LOG
-  - VERBOSE
-  - DARK
+LOG:
+  LEVEL:
+    - ERROR
+    - WARN
+    - DEBUG
+    - INFO
+    - LOG
+    - VERBOSE
+    - DARK
+  COLOR: true
 
 # Determine how long the instance should be deleted from memory in case of no connection.
 # Default time: 5 minutes

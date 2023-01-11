@@ -1,4 +1,4 @@
-import { configService, LogLevel } from './env.config';
+import { configService, Log, LogLevel } from './env.config';
 import dayjs from 'dayjs';
 
 export const formatDateLog = (timestamp: number) =>
@@ -64,35 +64,46 @@ export class Logger {
   private console(value: any, type: Type) {
     const types: Type[] = [];
 
-    this.configService
-      .get<LogLevel[]>('LOG_LEVEL')
-      .forEach((level) => types.push(Type[level]));
+    this.configService.get<Log>('LOG').LEVEL.forEach((level) => types.push(Type[level]));
 
     const typeValue = typeof value;
 
     if (types.includes(type)) {
-      console.log(
-        /*Command.UNDERSCORE +*/ Command.BRIGTH + Level[type],
-        '[CodeChat]',
-        Command.BRIGTH + Color[type],
-        process.pid.toString(),
-        Command.RESET,
-        Command.BRIGTH + Color[type],
-        '-',
-        Command.BRIGTH + Color.VERBOSE,
-        `${formatDateLog(Date.now())}  `,
-        Command.RESET,
-        Color[type] + Background[type] + Command.BRIGTH,
-        `${type} ` + Command.RESET,
-        Color.WARN + Command.BRIGTH,
-        `[${this.context}]` + Command.RESET,
-        Color[type] + Command.BRIGTH,
-        `[${typeValue}]` + Command.RESET,
-        Color[type],
-        typeValue !== 'object' ? value : '',
-        Command.RESET,
-      );
-      typeValue === 'object' ? console.log(/*Level.DARK,*/ value, '\n') : '';
+      if (configService.get<Log>('LOG').COLOR) {
+        console.log(
+          /*Command.UNDERSCORE +*/ Command.BRIGTH + Level[type],
+          '[CodeChat]',
+          Command.BRIGTH + Color[type],
+          process.pid.toString(),
+          Command.RESET,
+          Command.BRIGTH + Color[type],
+          '-',
+          Command.BRIGTH + Color.VERBOSE,
+          `${formatDateLog(Date.now())}  `,
+          Command.RESET,
+          Color[type] + Background[type] + Command.BRIGTH,
+          `${type} ` + Command.RESET,
+          Color.WARN + Command.BRIGTH,
+          `[${this.context}]` + Command.RESET,
+          Color[type] + Command.BRIGTH,
+          `[${typeValue}]` + Command.RESET,
+          Color[type],
+          typeValue !== 'object' ? value : '',
+          Command.RESET,
+        );
+        typeValue === 'object' ? console.log(/*Level.DARK,*/ value, '\n') : '';
+      } else {
+        console.log(
+          '[CodeChat]',
+          process.pid.toString(),
+          '-',
+          `${formatDateLog(Date.now())}  `,
+          `${type} `,
+          `[${this.context}]`,
+          `[${typeValue}]`,
+          value,
+        );
+      }
     }
   }
 
