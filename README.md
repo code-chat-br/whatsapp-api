@@ -99,26 +99,18 @@ Go to the project directory and install all dependencies.</br>
 $ cd whatsapp-api
 
 $ npm i
-// or
-$ yarn install
 ```
 
 Finally, run the command below to start the application:
 ```sh
 # Under development
 $ npm run start
-// or
-$ yarn start
 
 # In production
 $ npm run start:prod
-# or
-$ yarn start:prod
 
 # pm2
 $ pm2 start 'npm run start:prod' --name ApiCodechat
-# or
-$ pm2 start 'yarn start:prod' -- name ApiCodechat
 ```
 ## Authentication
 
