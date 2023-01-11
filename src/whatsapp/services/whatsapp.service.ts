@@ -192,7 +192,20 @@ export class WAStartupService {
             { params: { owner: this.instance.wuid } },
           );
         }
+      } catch (error) {
+        this.logger.error({
+          local: WAStartupService.name + '.sendDataWebhook-local',
+          message: error?.message,
+          hostName: error?.hostname,
+          syscall: error?.syscall,
+          code: error?.code,
+          error: error?.errno,
+          stack: error?.stack,
+          name: error?.name,
+        });
+      }
 
+      try {
         const globalWebhhok = this.configService.get<Webhook>('WEBHOOK').GLOBAL;
         if (globalWebhhok && globalWebhhok?.ENABLED && isURL(globalWebhhok.URL)) {
           const httpService = axios.create({ baseURL: globalWebhhok.URL });
@@ -208,8 +221,7 @@ export class WAStartupService {
         }
       } catch (error) {
         this.logger.error({
-          local:
-            WAStartupService.name + '.' + WAStartupService.prototype.sendDataWebhook.name,
+          local: WAStartupService.name + '.sendDataWebhook-global',
           message: error?.message,
           hostName: error?.hostname,
           syscall: error?.syscall,
@@ -218,8 +230,6 @@ export class WAStartupService {
           stack: error?.stack,
           name: error?.name,
         });
-      } finally {
-        data = undefined;
       }
     }
   }
@@ -660,8 +670,13 @@ export class WAStartupService {
     message: proto.IMessage,
     options?: Options,
   ) {
+    const jid = this.createJid(number);
+    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+    if (!isWA.exists) {
+      throw new BadRequestException(isWA);
+    }
+
     try {
-      const jid = this.createJid(number);
       if (options?.delay) {
         await this.client.presenceSubscribe(jid);
         await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
