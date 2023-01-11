@@ -137,9 +137,9 @@ export class WAStartupService {
           const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
           profileName = creds.me?.name || creds.me?.verifiedName;
         }
-      } else if (existsSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'))) {
+      } else if (existsSync(join(INSTANCE_DIR, this.instanceName, 'creds.json'))) {
         const creds = JSON.parse(
-          readFileSync(join(INSTANCE_DIR, this.instanceName, 'cred.json'), {
+          readFileSync(join(INSTANCE_DIR, this.instanceName, 'creds.json'), {
             encoding: 'utf-8',
           }),
         );
