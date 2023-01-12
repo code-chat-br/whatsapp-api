@@ -974,9 +974,9 @@ export class WAStartupService {
     }
   }
 
-  public async getBase64FromMediaMessage(key: proto.IMessageKey) {
+  public async getBase64FromMediaMessage(msg: proto.IWebMessageInfo) {
     try {
-      const message = await this.getMessage(key);
+      const message = await this.getMessage(msg.key);
 
       const typeMessage = [
         'imageMessage',
@@ -1002,7 +1002,7 @@ export class WAStartupService {
       }
 
       const buffer = await downloadMediaMessage(
-        { key, message },
+        { key: msg.key, message },
         'buffer',
         {},
         {

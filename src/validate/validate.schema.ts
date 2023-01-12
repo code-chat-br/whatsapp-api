@@ -46,7 +46,6 @@ const optionsSchema: JSONSchema7 = {
     delay: {
       type: 'integer',
       description: 'Enter a value in milliseconds',
-      title: 'Delay',
     },
     presence: {
       type: 'string',
