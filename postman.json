@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2023-01-08T13:25:53.000Z"
+      "updatedAt": "2023-01-14T11:42:17.000Z"
     },
     "item": [
       {
@@ -217,14 +217,14 @@
               "method": "DELETE",
               "header": [],
               "url": {
-                "raw": "{{baseUrl}}/instance/delete/codedrop",
+                "raw": "{{baseUrl}}/instance/delete/{{instance}}",
                 "host": [
                   "{{baseUrl}}"
                 ],
                 "path": [
                   "instance",
                   "delete",
-                  "codedrop"
+                  "{{instance}}"
                 ]
               }
             },
@@ -659,7 +659,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n\r\n{\r\n  \"where\": {\r\n    \"_id\": \"\",\r\n    \"pusName\": \"\",\r\n    \"id\": \"\"\r\n  }\r\n}",
+                "raw": "",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1078,7 +1078,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOGYwNTk1MGQtMDMyOS00MWI4LWJjNjktMmI3MzI5ODU3MTM0IiwiaWF0IjoxNjcxMDY3NjA1LCJleHAiOjE2NzEwNzEyMDUsInN1YiI6ImctdCJ9.TIDj1JVPUn7qGxtfYVfSO2IhPnqoY_h5DCMZs7QakXM\"\r\n}",
+                "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiYmYyYTQ1MjQtNzY2Mi00YjBlLTkzNDMtODEwNjNmNmU3MjgwIiwiaWF0IjoxNjczNTI5MDcwLCJleHAiOjE2NzM1MjkwNzAsInN1YiI6ImctdCJ9.RGWWXW_dSQO8yXAeP-UJRLlHR5bSPbGSm3yvcyl5KhE\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1116,7 +1116,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"enabled\": true,\r\n  \"url\": \"https://codechat.dev/webhook\"\r\n}",
+                "raw": "{\r\n  \"enabled\": true,\r\n  \"url\": \"https://webhook.site/67b563b0-92ad-4c83-b622-7cdb52cd3d2b\"\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1165,16 +1165,11 @@
       }
     ],
     "auth": {
-      "type": "apikey",
-      "apikey": [
+      "type": "bearer",
+      "bearer": [
         {
-          "key": "value",
-          "value": "{{apikey}}",
-          "type": "string"
-        },
-        {
-          "key": "key",
-          "value": "apikey",
+          "key": "token",
+          "value": "{{token}}",
           "type": "string"
         }
       ]
@@ -1183,7 +1178,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "a9f85365-056b-408d-9960-c4e98001eac2",
+          "id": "7f99d758-0e16-4995-aa3d-bcf521bb0fe9",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1193,7 +1188,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "d9f58527-8b9f-47ea-9ecf-9abd09d3330d",
+          "id": "e490d494-9daa-4e83-9f2b-15db698afaf1",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1203,41 +1198,42 @@
     ],
     "variable": [
       {
-        "id": "0371dd98-1f8d-4ed7-9a34-7e856d0d6b2f",
+        "id": "f1cc87c5-1c86-476d-8bac-8507b9049087",
         "key": "baseUrl",
-        "value": "https://api.codechat.dev",
+        "value": "https://your-domain",
         "type": "string"
       },
       {
-        "id": "85fcadf2-2e59-45d9-a3e4-69f6bedd7a13",
+        "id": "b513bac3-8840-4302-9426-8833bd7889b5",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "96bf96bb-648a-4303-a23d-b7172c1f0a93",
+        "id": "2b457be1-8b6d-4dcb-92ab-ed5cd6e03913",
         "key": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiOGI3ZTc0NDAtMmFiMS00ODk5LWIzNTAtMTliMjNjMmEyZTFiIiwiaWF0IjoxNjcyMjc0Mzc4LCJleHAiOjE2NzIyNzQzNzgsInN1YiI6ImctdCJ9.BmlJMLRjcU_fcZyY-nof44ML6RHN7WfmNiUpLBgFkww",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMjgyYjQxZmQtOWQ3OC00YzEwLWI0YTAtMGYzZWYyYzFmYjA5IiwiaWF0IjoxNjczNjk1NjAyLCJleHAiOjE2NzM2OTU2MDIsInN1YiI6ImctdCJ9.TVhYtPJmZfIl4YljfNX9I07B-Gu_VUgj7tUWQxxnLJE",
+        "type": "string"
+      },
+      {
+        "id": "02f8c6d3-55da-42e3-8f12-477e354c7cb6",
+        "key": "apikey",
+        "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "c0a6a55a-e1a5-4863-a4bc-b17299e0e003",
-        "key": "apikey",
-        "value": "7259FC4B-2825-402D-9321-022978061B84",
-        "type": "string"
-      },
-      {
-        "id": "41746ed3-9c97-4e25-a5c6-5a0a574bce34",
+        "id": "ac1c6166-7fae-495d-ba2f-57de87f42956",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJsafdefer",
         "type": "string"
       },
       {
-        "id": "a27d8acd-4e0e-470f-96eb-66f4478f01f8",
+        "id": "64083d05-ef86-43e7-ad5b-6596fa2d6c91",
         "key": "groupJid",
         "value": "120363046555718472@g.us",
-        "type": "string"
+        "type": "string",
+        "disabled": true
       }
     ]
   }
