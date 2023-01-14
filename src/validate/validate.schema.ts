@@ -56,8 +56,8 @@ const optionsSchema: JSONSchema7 = {
 
 const numberDefinition: JSONSchema7Definition = {
   type: 'string',
-  pattern: '^\\d+$',
-  description: 'The number property must be a numeric string',
+  pattern: '^[\\d@g.us]+$',
+  description: 'Invalid format',
 };
 
 export const textMessageSchema: JSONSchema7 = {
