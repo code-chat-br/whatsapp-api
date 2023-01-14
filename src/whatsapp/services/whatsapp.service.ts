@@ -370,9 +370,11 @@ export class WAStartupService {
   public async connectToWhatsapp() {
     this.loadWebhook();
 
-    this.instance.authState = this.configService.get<Database>('DATABASE').ENABLED
-      ? await useMultiFileAuthStateDb(this.instance.name)
-      : await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
+    const db = this.configService.get<Database>('DATABASE');
+    this.instance.authState =
+      db.ENABLED && db.SAVE_DATA.INSTANCE
+        ? await useMultiFileAuthStateDb(this.instance.name)
+        : await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
 
     const { version } = await fetchLatestBaileysVersion();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
@@ -672,7 +674,7 @@ export class WAStartupService {
   ) {
     const jid = this.createJid(number);
     const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists) {
+    if (!isWA.exists && !isJidGroup(jid)) {
       throw new BadRequestException(isWA);
     }
 

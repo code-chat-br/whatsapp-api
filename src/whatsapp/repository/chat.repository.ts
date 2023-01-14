@@ -46,7 +46,7 @@ export class ChatRepository extends Repository {
   public async find(query: ChatQuery): Promise<ChatRaw[]> {
     try {
       if (this.dbSettings.ENABLED) {
-        return await this.chatModel.find();
+        return await this.chatModel.find({ owner: query.where.owner });
       }
 
       const chats: ChatRaw[] = [];

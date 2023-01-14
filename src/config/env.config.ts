@@ -19,6 +19,7 @@ export type Log = {
 };
 
 export type SaveData = {
+  INSTANCE: boolean;
   OLD_MESSAGE: boolean;
   NEW_MESSAGE: boolean;
   MESSAGE_UPDATE: boolean;
@@ -152,6 +153,7 @@ export class ConfigService {
         },
         ENABLED: process.env?.DATABASE_ENABLED === 'true',
         SAVE_DATA: {
+          INSTANCE: process.env?.DATABASE_SAVE_DATA_INSTANCE === 'true',
           OLD_MESSAGE: process.env?.DATABASE_SAVE_DATA_OLD_MESSAGE === 'true',
           NEW_MESSAGE: process.env?.DATABASE_SAVE_DATA_NEW_MESSAGE === 'true',
           MESSAGE_UPDATE: process.env?.DATABASE_SAVE_MESSAGE_UPDATE === 'true',

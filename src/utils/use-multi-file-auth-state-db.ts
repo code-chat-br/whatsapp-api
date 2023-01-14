@@ -34,13 +34,8 @@ export async function useMultiFileAuthStateDb(
     try {
       await RepositoryBroker.dbServer.connect();
       const data = await collection.findOne({ _id: key });
-      if (data) {
-        const creds = JSON.stringify(data);
-        if (creds) {
-          return JSON.parse(creds, BufferJSON.reviver);
-        }
-      }
-      return;
+      const creds = JSON.stringify(data);
+      return JSON.parse(creds, BufferJSON.reviver);
     } catch {}
   };
 
@@ -80,7 +75,7 @@ export async function useMultiFileAuthStateDb(
             for (const id in data[category]) {
               const value = data[category][id];
               const key = `${category}-${id}`;
-              tasks.push(value ? await writeData(value, key) : await removeData(key));
+              tasks.push(value ? writeData(value, key) : removeData(key));
             }
           }
 
@@ -89,7 +84,7 @@ export async function useMultiFileAuthStateDb(
       },
     },
     saveCreds: async () => {
-      return await writeData(creds, 'creds');
+      return writeData(creds, 'creds');
     },
   };
 }

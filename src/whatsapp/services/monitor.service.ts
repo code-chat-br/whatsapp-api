@@ -108,7 +108,7 @@ export class WAMonitoringService {
     };
 
     try {
-      if (this.db.ENABLED) {
+      if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
         await RepositoryBroker.dbServer.connect();
         const collections = await this.dbInstance.collections();
         if (collections.length > 0) {
@@ -146,7 +146,7 @@ export class WAMonitoringService {
       } catch {}
 
       try {
-        if (this.db.ENABLED) {
+        if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
           await RepositoryBroker.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
         }
@@ -162,7 +162,7 @@ export class WAMonitoringService {
       try {
         delete this.waInstances[instanceName];
 
-        if (this.db.ENABLED) {
+        if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
           await RepositoryBroker.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
         }
