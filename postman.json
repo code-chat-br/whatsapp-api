@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2023-01-14T11:42:17.000Z"
+      "updatedAt": "2023-01-20T16:56:04.000Z"
     },
     "item": [
       {
@@ -659,7 +659,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "",
+                "raw": "{\r\n  \"where\": {\r\n    \"id\": \"5531900000000@s.whatsapp.net\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -691,7 +691,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "{\r\n  \"key\": {\r\n    \"id\": \"D127FA44C2175101F35497CF2ED66D64\"\r\n  }\r\n}",
+                "raw": "// Remove all comments\r\n\r\n// Inform the id or the complete object of the received message.\r\n\r\n{\r\n  \"key\": {\r\n    \"id\": \"D127FA44C2175101F35497CF2ED66D64\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1165,11 +1165,16 @@
       }
     ],
     "auth": {
-      "type": "bearer",
-      "bearer": [
+      "type": "apikey",
+      "apikey": [
         {
-          "key": "token",
-          "value": "{{token}}",
+          "key": "value",
+          "value": "{{apikey}}",
+          "type": "string"
+        },
+        {
+          "key": "key",
+          "value": "apikey",
           "type": "string"
         }
       ]
@@ -1178,7 +1183,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "7f99d758-0e16-4995-aa3d-bcf521bb0fe9",
+          "id": "b57b9352-96a8-4268-a03f-793aba94ae80",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1188,7 +1193,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "e490d494-9daa-4e83-9f2b-15db698afaf1",
+          "id": "b889cb8c-daf1-49c0-9367-baf67a8510bd",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1198,38 +1203,38 @@
     ],
     "variable": [
       {
-        "id": "f1cc87c5-1c86-476d-8bac-8507b9049087",
+        "id": "2f780592-0588-41a3-89d7-4786594f4a9d",
         "key": "baseUrl",
-        "value": "https://your-domain",
+        "value": "https://api.codechat.dev",
         "type": "string"
       },
       {
-        "id": "b513bac3-8840-4302-9426-8833bd7889b5",
+        "id": "2a3dff04-70e1-4849-90d1-42902fc61b75",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "2b457be1-8b6d-4dcb-92ab-ed5cd6e03913",
+        "id": "1b693bdf-4a7f-464e-a6fb-3a1d050c1759",
         "key": "token",
         "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMjgyYjQxZmQtOWQ3OC00YzEwLWI0YTAtMGYzZWYyYzFmYjA5IiwiaWF0IjoxNjczNjk1NjAyLCJleHAiOjE2NzM2OTU2MDIsInN1YiI6ImctdCJ9.TVhYtPJmZfIl4YljfNX9I07B-Gu_VUgj7tUWQxxnLJE",
-        "type": "string"
-      },
-      {
-        "id": "02f8c6d3-55da-42e3-8f12-477e354c7cb6",
-        "key": "apikey",
-        "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "ac1c6166-7fae-495d-ba2f-57de87f42956",
+        "id": "5b365acd-f76e-4166-9626-15419b3eb49a",
+        "key": "apikey",
+        "value": "7259FC4B-2825-402D-9321-022978061B84",
+        "type": "string"
+      },
+      {
+        "id": "b3668dc1-d62c-4ca3-8c96-888d6c4876f1",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJsafdefer",
         "type": "string"
       },
       {
-        "id": "64083d05-ef86-43e7-ad5b-6596fa2d6c91",
+        "id": "7a938ce2-b710-49bc-9764-ae64d75da56a",
         "key": "groupJid",
         "value": "120363046555718472@g.us",
         "type": "string",
