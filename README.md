@@ -13,8 +13,8 @@ It is a version of this API with advanced features like message queue management
 
 <div align="center">
 
-[![Telegram](https://img.shields.io/badge/Group-Telegram-%2333C1FF)](https://t.me/codechatBR)
-[![Whatsapp](https://img.shields.io/badge/WhatsApp-message-%2322BC18)](https://api.whatsapp.com/send?phone=5531995918699)
+[![Telegram Group](https://img.shields.io/badge/Group-Telegram-%2333C1FF)](https://t.me/codechatBR)
+[![Whatsapp Group](https://img.shields.io/badge/WhatsApp-message-%2322BC18)](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange)](./LICENSE)
 
 </div>
@@ -227,15 +227,13 @@ $ docker-compose up
 | Send Contact | ✔ |
 | Send Reaction - emoji | ✔ |
 
-## Routes
+## Postman collections
   - [Postman Json](./postman.json)
-  - [Url Json](https://docs.codechat.dev/postman)
 
 ## Webhook Events
 
 | Name | Event | TypeData | Description |
 |------|-------|-----------|------------|
-| STATUS_INSTANCE | status.instance | json | Reports any modifications to the instance |
 | QRCODE_UPDATED | qrcode.updated | json | Sends the base64 of the qrcode for reading |
 | CONNECTION_UPDATE | connection.update | json | Informs the status of the connection with whatsapp |
 | INSTANCE | instance | json | Informs instance loading |
@@ -250,6 +248,10 @@ $ docker-compose up
 | CHATS_SET | chats.set | json | Send a list of all loaded chats |
 | CHATS_UPDATE | chats.update | json | Informs you when the chat is updated |
 | CHATS_UPSERT | chats.upsert | json | Sends any new chat information |
+| GROUPS_UPSERT | groups.upsert | JSON | Notifies when a group is created |
+| GROUPS_UPDATE | groups.update | JSON | Notifies when a group has its information updated |
+| GROUP_PARTICIPANTS_UPDATE | group-participants.update | JSON | Notifies when an action occurs involving a participant</br>'add' | 'remove' | 'promote' | 'demote' |
+| NEW_TOKEN | new.jwt | JSON | Notifies when the token (jwt) is updated
 
 ## Env File
 
