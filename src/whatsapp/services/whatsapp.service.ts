@@ -334,11 +334,14 @@ export class WAStartupService {
     });
   }
 
-  private async getMessage(key: proto.IMessageKey): Promise<proto.IMessage> {
+  private async getMessage(key: proto.IMessageKey, full = false) {
     try {
       const webMessageInfo = (await this.repository.message.find({
         where: { owner: this.instance.wuid, key: { id: key.id } },
       })) as unknown as proto.IWebMessageInfo[];
+      if (full) {
+        return webMessageInfo[0];
+      }
       return webMessageInfo[0].message;
     } catch (error) {
       return { conversation: '' };
@@ -348,7 +351,7 @@ export class WAStartupService {
   private cleanStore() {
     const store = this.configService.get<StoreConf>('STORE');
     const database = this.configService.get<Database>('DATABASE');
-    if (store?.CLEANING_INTARVAL && !database.ENABLED) {
+    if (store?.CLEANING_INTERVAL && !database.ENABLED) {
       setInterval(() => {
         try {
           for (const [key, value] of Object.entries(store)) {
@@ -363,7 +366,7 @@ export class WAStartupService {
             }
           }
         } catch (error) {}
-      }, (store?.CLEANING_INTARVAL ?? 3600) * 1000);
+      }, (store?.CLEANING_INTERVAL ?? 3600) * 1000);
     }
   }
 
@@ -389,7 +392,7 @@ export class WAStartupService {
       version,
       connectTimeoutMs: 60_000,
       emitOwnEvents: false,
-      getMessage: this.getMessage,
+      getMessage: this.getMessage as any,
       patchMessageBeforeSending: (message) => {
         const requiresPatch = !!(message.buttonsMessage || message.listMessage);
         if (requiresPatch) {
@@ -618,11 +621,27 @@ export class WAStartupService {
     });
   }
 
+  private groupHandler(ev: BaileysEventEmitter) {
+    ev.on('groups.upsert', (groupMetadata) => {
+      this.sendDataWebhook(Events.GROUPS_UPSERT, groupMetadata);
+    });
+
+    ev.on('groups.update', (groupMetadataUpdate) => {
+      this.sendDataWebhook(Events.GROUPS_UPDATE, groupMetadataUpdate);
+    });
+
+    ev.on('group-participants.update', (participantsUpdate) => {
+      participantsUpdate.action;
+      this.sendDataWebhook(Events.GROUP_PARTICIPANTS_UPDATE, participantsUpdate);
+    });
+  }
+
   private setHandles(ev: BaileysEventEmitter) {
     this.chatHandle(ev);
     this.contactHandle(ev);
     this.messageHandle(ev);
     this.presenceHandle(ev);
+    this.groupHandler(ev);
   }
 
   private createJid(number: string) {
@@ -976,9 +995,11 @@ export class WAStartupService {
     }
   }
 
-  public async getBase64FromMediaMessage(msg: proto.IWebMessageInfo) {
+  public async getBase64FromMediaMessage(m: proto.IWebMessageInfo) {
     try {
-      const message = await this.getMessage(msg.key);
+      const msg = m?.message
+        ? m
+        : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
 
       const typeMessage = [
         'imageMessage',
@@ -992,7 +1013,7 @@ export class WAStartupService {
       let mediaType: string;
 
       for (const type of typeMessage) {
-        mediaMessage = message[type];
+        mediaMessage = msg.message[type];
         if (mediaMessage) {
           mediaType = type;
           break;
@@ -1003,8 +1024,12 @@ export class WAStartupService {
         throw 'The message is not of the media type';
       }
 
+      if (typeof mediaMessage['mediaKey'] === 'object') {
+        msg.message = JSON.parse(JSON.stringify(msg.message));
+      }
+
       const buffer = await downloadMediaMessage(
-        { key: msg.key, message },
+        { key: msg?.key, message: msg?.message },
         'buffer',
         {},
         {
@@ -1053,11 +1078,6 @@ export class WAStartupService {
         },
         limit: query?.limit,
       };
-    }
-    if (query?.where?.key) {
-      for (const [k, v] of Object.entries(query.where.key)) {
-        query.where['key.' + k] = v;
-      }
     }
     return await this.repository.message.find(query);
   }

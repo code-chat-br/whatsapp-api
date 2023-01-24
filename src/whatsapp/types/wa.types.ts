@@ -17,6 +17,9 @@ export enum Events {
   CHATS_UPDATE = 'chats.update',
   CHATS_UPSERT = 'chats.upsert',
   CHATS_DELETE = 'chats.delete',
+  GROUPS_UPSERT = 'groups.upsert',
+  GROUPS_UPDATE = 'groups.update',
+  GROUP_PARTICIPANTS_UPDATE = 'group-participants.update',
 }
 
 export declare namespace wa {

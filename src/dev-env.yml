@@ -45,7 +45,7 @@ DEL_INSTANCE: 5 # or false
 
 # Temporary data storage
 STORE:
-  CLEANING_INTARVAL: 7200 # seconds === 2h
+  CLEANING_INTERVAL: 7200 # seconds === 2h
   MESSAGE: true
   CONTACTS: false
   CHATS: false
@@ -74,9 +74,9 @@ WEBHOOK:
   GLOBAL:
     URL: <url>
     ENABLED: false
+  # Automatically maps webhook paths
   # Set the events you want to hear  
   EVENTS:
-    STATUS_INSTANCE: true
     QRCODE_UPDATED: true
     MESSAGES_SET: true
     MESSAGES_UPSERT: true
@@ -90,10 +90,12 @@ WEBHOOK:
     CHATS_UPSERT: true
     CHATS_UPDATE: true
     CHATS_DELETE: true
+    GROUPS_UPSERT: true
+    GROUP_UPDATE: true
+    GRUOP_UPDATE_PARTICIPANT: true
     CONNECTION_UPDATE: true
     # This event fires every time a new token is requested via the refresh route
     NEW_JWT_TOKEN: true
-
 
 CONFIG_SESSION_PHONE:
   # Name that will be displayed on smartphone connection

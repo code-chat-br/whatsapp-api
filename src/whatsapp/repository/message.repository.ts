@@ -52,7 +52,12 @@ export class MessageRepository extends Repository {
   public async find(query: MessageQuery) {
     try {
       if (this.dbSettings.ENABLED) {
-        delete query?.where?.key;
+        if (query?.where?.key) {
+          for (const [k, v] of Object.entries(query.where.key)) {
+            query.where['key.' + k] = v;
+          }
+          delete query?.where?.key;
+        }
         return await this.messageModel
           .find({ ...query.where })
           .sort({ messageTimestamp: -1 })

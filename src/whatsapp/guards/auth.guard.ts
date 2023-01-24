@@ -65,7 +65,7 @@ async function apikey(req: Request, res: Response, next: NextFunction) {
   const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
   const key = req.get('apikey');
 
-  if (configService.get<Auth>('AUTHENTICATION').API_KEY.KEY === key) {
+  if (env.KEY === key) {
     return next();
   }
 
@@ -88,9 +88,6 @@ async function apikey(req: Request, res: Response, next: NextFunction) {
     }
   } catch (error) {}
 
-  if (key === env.KEY) {
-    return next();
-  }
   throw new UnauthorizedException();
 }
 

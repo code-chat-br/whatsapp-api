@@ -28,7 +28,7 @@ export type SaveData = {
 };
 
 export type StoreConf = {
-  CLEANING_INTARVAL: number;
+  CLEANING_INTERVAL: number;
   MESSAGES: boolean;
   CONTACTS: boolean;
   CHATS: boolean;
@@ -63,6 +63,9 @@ export type EventsWebhook = {
   CHATS_DELETE: boolean;
   CHATS_UPSERT: boolean;
   CONNECTION_UPDATE: boolean;
+  GROUPS_UPSERT: boolean;
+  GROUP_UPDATE: boolean;
+  GRUOP_UPDATE_PARTICIPANT: boolean;
   NEW_JWT_TOKEN: boolean;
 };
 
@@ -136,7 +139,7 @@ export class ConfigService {
         FULLCHAIN: process.env?.SSL_CONF_FULLCHAIN,
       },
       STORE: {
-        CLEANING_INTARVAL: Number.isInteger(process.env?.STORE_CLEANING_TERMINAL)
+        CLEANING_INTERVAL: Number.isInteger(process.env?.STORE_CLEANING_TERMINAL)
           ? Number.parseInt(process.env.STORE_CLEANING_TERMINAL)
           : undefined,
         MESSAGES: process.env?.STORE_MESSAGE === 'true',
@@ -190,6 +193,10 @@ export class ConfigService {
           CHATS_UPSERT: process.env?.WEBHOOK_EVENTS_CHATS_UPSERT === 'true',
           CHATS_DELETE: process.env?.WEBHOOK_EVENTS_CHATS_DELETE === 'true',
           CONNECTION_UPDATE: process.env?.WEBHOOK_EVENTS_CONNECTION_UPDATE === 'true',
+          GROUPS_UPSERT: process.env?.WEBHOOK_EVENTS_GROUPS_UPSERT === 'true',
+          GROUP_UPDATE: process.env?.WEBHOOK_EVENTS_GROUPS_UPDATE === 'true',
+          GRUOP_UPDATE_PARTICIPANT:
+            process.env?.WEBHOOK_EVENTS_GROUP_PARTICIPANTS_UPDATE === 'true',
           NEW_JWT_TOKEN: process.env?.WEBHOOK_EVENTS_NEW_JWT_TOKEN === 'true',
         },
       },
