@@ -14,8 +14,10 @@ It is a version of this API with advanced features like message queue management
 <div align="center">
 
 [![Telegram Group](https://img.shields.io/badge/Group-Telegram-%2333C1FF)](https://t.me/codechatBR)
-[![Whatsapp Group](https://img.shields.io/badge/WhatsApp-message-%2322BC18)](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5)
+[![Whatsapp Group](https://img.shields.io/badge/Group-WhatsApp-%2322BC18)](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5)
 [![License](https://img.shields.io/badge/license-GPL--3.0-orange)](./LICENSE)
+[![Support](https://img.shields.io/badge/Buy%20me-coffe-orange)](https://app.picpay.com/user/cleber.wilson.oliveira)
+[![Support](https://img.shields.io/badge/Buy%20me%20coffe-pix-blue)](#pix-2b526ada-4ef4-4db4-bbeb-f60da2421fce)
 
 </div>
   
@@ -268,4 +270,17 @@ To install the SSL certificate, follow the **[instructions](https://certbot.eff.
 This code is in no way affiliated with WhatsApp. Use at your own discretion. Don't spam this.
 
 This code was produced based on the baileys library and it is still under development.
+
+# Support the project
+
+## Pix: 2b526ada-4ef4-4db4-bbeb-f60da2421fce
+
+## PicPay
+
+<div align="center">
+  <a href="https://app.picpay.com/user/cleber.wilson.oliveira" target="_blank" rel="noopener noreferrer">
+    <img src="./public/images/picpay-image.png" style="width: 50% !important;">
+  </a>
+</div>
+
 </br>
