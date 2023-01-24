@@ -1,10 +1,10 @@
 {
   "name": "whatsapp-api",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Rest api for communication with WhatsApp",
   "main": "index.js",
   "scripts": {
-    "build": "bash ./build.sh",
+    "build": "tsc",
     "start": "ts-node --files --transpile-only ./src/main.ts",
     "start:prod": "cross-env NODE_ENV=PROD bash ./build.sh",
     "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
