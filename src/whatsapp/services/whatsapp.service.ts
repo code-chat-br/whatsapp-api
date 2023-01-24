@@ -1001,6 +1001,14 @@ export class WAStartupService {
         ? m
         : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
 
+      if (m.message?.ephemeralMessage) {
+        m.message = m.message.ephemeralMessage.message;
+      }
+
+      if (m.message.documentWithCaptionMessage) {
+        m.message = m.message.documentWithCaptionMessage.message;
+      }
+
       const typeMessage = [
         'imageMessage',
         'documentMessage',

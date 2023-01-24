@@ -63,7 +63,7 @@ export class WAMonitoringService {
 
   private delInstanceFiles() {
     setInterval(async () => {
-      if (this.db.ENABLED) {
+      if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
         const collections = await this.dbInstance.collections();
         collections.forEach(async (collection) => {
           const name = collection.namespace.replace(/^[\w-]+./, '');
