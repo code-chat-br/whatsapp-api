@@ -1005,7 +1005,7 @@ export class WAStartupService {
         m.message = m.message.ephemeralMessage.message;
       }
 
-      if (m.message.documentWithCaptionMessage) {
+      if (m.message?.documentWithCaptionMessage) {
         m.message = m.message.documentWithCaptionMessage.message;
       }
 
