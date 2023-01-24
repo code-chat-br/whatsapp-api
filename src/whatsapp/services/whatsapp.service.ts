@@ -1001,12 +1001,12 @@ export class WAStartupService {
         ? m
         : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
 
-      if (m.message?.ephemeralMessage) {
-        m.message = m.message.ephemeralMessage.message;
+      if (msg.message?.ephemeralMessage) {
+        msg.message = msg.message.ephemeralMessage.message;
       }
 
-      if (m.message?.documentWithCaptionMessage) {
-        m.message = m.message.documentWithCaptionMessage.message;
+      if (msg.message?.documentWithCaptionMessage) {
+        msg.message = msg.message.documentWithCaptionMessage.message;
       }
 
       const typeMessage = [
@@ -1059,6 +1059,7 @@ export class WAStartupService {
         base64: buffer.toString('base64'),
       };
     } catch (error) {
+      this.logger.error(error);
       throw new BadRequestException(error.toString());
     }
   }
