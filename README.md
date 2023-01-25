@@ -271,11 +271,11 @@ This code is in no way affiliated with WhatsApp. Use at your own discretion. Don
 
 This code was produced based on the baileys library and it is still under development.
 
-# Support the project
+# Donate to the project.
 
-## Pix: 2b526ada-4ef4-4db4-bbeb-f60da2421fce
+#### Pix: 2b526ada-4ef4-4db4-bbeb-f60da2421fce
 
-## PicPay
+#### PicPay
 
 <div align="center">
   <a href="https://app.picpay.com/user/cleber.wilson.oliveira" target="_blank" rel="noopener noreferrer">
