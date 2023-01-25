@@ -222,7 +222,7 @@ $ docker-compose up
 | Send Template | ❌ |
 | Send Media: audio - video - image - documet - gif <br></br>base64: ```true``` | ✔ |
 | Send Media File | ❌ |
-| Send Audio type WhatsApp | ❌ |
+| Send Audio type WhatsApp | ✔ |
 | Send Location | ✔ |
 | Send List | ✔ |
 | Send Link Preview | ❌ |
