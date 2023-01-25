@@ -2,6 +2,7 @@ import { isBase64, isURL } from 'class-validator';
 import { BadRequestException } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
 import {
+  SendAudioDto,
   SendButtonDto,
   SendContactDto,
   SendListDto,
@@ -25,6 +26,13 @@ export class SendMessageController {
     }
     if (isURL(data?.mediaMessage?.media) || isBase64(data?.mediaMessage?.media)) {
       return await this.waMonitor.waInstances[instanceName].mediaMessage(data);
+    }
+    throw new BadRequestException('Owned media must be a url or base64');
+  }
+
+  public async sendWhatsAppAudio({ instanceName }: InstanceDto, data: SendAudioDto) {
+    if (isURL(data.audioMessage.audio) || isBase64(data.audioMessage.audio)) {
+      return await this.waMonitor.waInstances[instanceName].audioWhatsapp(data);
     }
     throw new BadRequestException('Owned media must be a url or base64');
   }

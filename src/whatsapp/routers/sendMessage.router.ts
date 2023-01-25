@@ -1,5 +1,6 @@
 import { RequestHandler, Router } from 'express';
 import {
+  audioMessageSchema,
   buttonMessageSchema,
   contactMessageSchema,
   listMessageSchema,
@@ -9,6 +10,7 @@ import {
   textMessageSchema,
 } from '../../validate/validate.schema';
 import {
+  SendAudioDto,
   SendButtonDto,
   SendContactDto,
   SendListDto,
@@ -41,6 +43,17 @@ export class MessageRouter extends RouterBroker {
           schema: mediaMessageSchema,
           ClassRef: SendMediaDto,
           execute: (instance, data) => sendMessageController.sendMedia(instance, data),
+        });
+
+        return res.status(HttpStatus.CREATED).json(response);
+      })
+      .post(this.routerPath('sendWhatsAppAudio'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<SendAudioDto>({
+          request: req,
+          schema: audioMessageSchema,
+          ClassRef: SendMediaDto,
+          execute: (instance, data) =>
+            sendMessageController.sendWhatsAppAudio(instance, data),
         });
 
         return res.status(HttpStatus.CREATED).json(response);

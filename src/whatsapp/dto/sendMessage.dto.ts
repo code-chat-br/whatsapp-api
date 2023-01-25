@@ -32,6 +32,13 @@ export class SendMediaDto extends Metadata {
   mediaMessage: MediaMessage;
 }
 
+class Audio {
+  audio: string;
+}
+export class SendAudioDto extends Metadata {
+  audioMessage: Audio;
+}
+
 class Button {
   buttonText: string;
   buttonId: string;

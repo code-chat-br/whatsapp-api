@@ -99,6 +99,24 @@ export const mediaMessageSchema: JSONSchema7 = {
   required: ['mediaMessage', 'number'],
 };
 
+export const audioMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    audioMessage: {
+      type: 'object',
+      properties: {
+        audio: { type: 'string' },
+      },
+      required: ['audio'],
+      ...isNotEmpty('audio'),
+    },
+  },
+  required: ['audioMessage', 'number'],
+};
+
 export const buttonMessageSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',

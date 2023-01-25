@@ -48,6 +48,7 @@ import {
   ContactMessage,
   MediaMessage,
   Options,
+  SendAudioDto,
   SendButtonDto,
   SendContactDto,
   SendListDto,
@@ -791,6 +792,32 @@ export class WAStartupService {
       { ...generate.message },
       data?.options,
     );
+  }
+
+  public async audioWhatsapp(data: SendAudioDto) {
+    const jid = this.createJid(data.number);
+    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+    if (!isWA.exists && !isJidGroup(jid)) {
+      throw new BadRequestException(isWA);
+    }
+
+    if (data?.options?.delay) {
+      await this.client.presenceSubscribe(jid);
+      await this.client.sendPresenceUpdate(data?.options?.presence ?? 'composing', jid);
+      await delay(data?.options.delay);
+    }
+
+    const audio = await this.client.sendMessage(jid, {
+      audio: isURL(data.audioMessage.audio)
+        ? { url: data.audioMessage.audio }
+        : Buffer.from(data.audioMessage.audio, 'base64'),
+      ptt: true,
+      mimetype: 'audio/ogg; codecs=opus',
+    });
+
+    await this.client.sendPresenceUpdate('paused', jid);
+
+    return audio;
   }
 
   public async buttonMessage(data: SendButtonDto) {

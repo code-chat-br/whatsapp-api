@@ -4,7 +4,7 @@
       "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
       "name": "Api Whatsapp",
       "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-      "updatedAt": "2023-01-20T16:56:04.000Z"
+      "updatedAt": "2023-01-24T22:42:53.000Z"
     },
     "item": [
       {
@@ -481,6 +481,38 @@
               }
             },
             "response": []
+          },
+          {
+            "name": "Send Audio WhatsApp",
+            "id": "bb6b9445-7f29-42c7-b1b2-b9b9b9bfa121",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"audioMessage\": {\r\n    \"audio\": \"https://lp.naturefarm.site/wp-content/uploads/2023/01/WhatsApp-Ptt-2022-12-05-at-13.00.53.ogg\"\r\n  }\r\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/message/sendWhatsAppAudio/{{instance}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "message",
+                  "sendWhatsAppAudio",
+                  "{{instance}}"
+                ]
+              }
+            },
+            "response": []
           }
         ],
         "id": "254b8181-a775-4f4c-b9f8-e7b61d77fed1"
@@ -691,7 +723,7 @@
               "header": [],
               "body": {
                 "mode": "raw",
-                "raw": "// Remove all comments\r\n\r\n// Inform the id or the complete object of the received message.\r\n\r\n{\r\n  \"key\": {\r\n    \"id\": \"D127FA44C2175101F35497CF2ED66D64\"\r\n  }\r\n}",
+                "raw": "\r\n{\r\n  \"key\": {\r\n    \"id\": \"3EB0AB73CDA6834B7C72\"\r\n  }\r\n}",
                 "options": {
                   "raw": {
                     "language": "json"
@@ -1183,7 +1215,7 @@
       {
         "listen": "prerequest",
         "script": {
-          "id": "b57b9352-96a8-4268-a03f-793aba94ae80",
+          "id": "e8ad8234-cff6-4f20-87cd-228621878f96",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1193,7 +1225,7 @@
       {
         "listen": "test",
         "script": {
-          "id": "b889cb8c-daf1-49c0-9367-baf67a8510bd",
+          "id": "5b48e3ff-0ad5-4c2c-9060-edf1d55ad2dd",
           "type": "text/javascript",
           "exec": [
             ""
@@ -1203,38 +1235,38 @@
     ],
     "variable": [
       {
-        "id": "2f780592-0588-41a3-89d7-4786594f4a9d",
+        "id": "66679b73-9e2b-4527-860c-1244be03ee55",
         "key": "baseUrl",
         "value": "https://api.codechat.dev",
         "type": "string"
       },
       {
-        "id": "2a3dff04-70e1-4849-90d1-42902fc61b75",
+        "id": "86676c38-18a7-4ece-b063-694c995364d2",
         "key": "instance",
         "value": "codechat",
         "type": "string"
       },
       {
-        "id": "1b693bdf-4a7f-464e-a6fb-3a1d050c1759",
+        "id": "0737402e-02d7-412b-ba91-8751a59c4253",
         "key": "token",
         "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMjgyYjQxZmQtOWQ3OC00YzEwLWI0YTAtMGYzZWYyYzFmYjA5IiwiaWF0IjoxNjczNjk1NjAyLCJleHAiOjE2NzM2OTU2MDIsInN1YiI6ImctdCJ9.TVhYtPJmZfIl4YljfNX9I07B-Gu_VUgj7tUWQxxnLJE",
         "type": "string",
         "disabled": true
       },
       {
-        "id": "5b365acd-f76e-4166-9626-15419b3eb49a",
+        "id": "8f404ede-6427-4163-9c51-2f220b841a2e",
         "key": "apikey",
         "value": "7259FC4B-2825-402D-9321-022978061B84",
         "type": "string"
       },
       {
-        "id": "b3668dc1-d62c-4ca3-8c96-888d6c4876f1",
+        "id": "4a072016-743f-488b-b990-c0bac04d67f4",
         "key": "globalApikey",
         "value": "t8OOEeISKzpmc3jjcMqBWYSaJsafdefer",
         "type": "string"
       },
       {
-        "id": "7a938ce2-b710-49bc-9764-ae64d75da56a",
+        "id": "f8e70ac8-b445-4dae-8614-d1bb9eddb05f",
         "key": "groupJid",
         "value": "120363046555718472@g.us",
         "type": "string",
