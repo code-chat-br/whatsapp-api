@@ -92,7 +92,7 @@ WEBHOOK:
     CHATS_DELETE: true
     GROUPS_UPSERT: true
     GROUP_UPDATE: true
-    GRUOP_UPDATE_PARTICIPANT: true
+    GROUP_PARTICIPANTS_UPDATE: true
     CONNECTION_UPDATE: true
     # This event fires every time a new token is requested via the refresh route
     NEW_JWT_TOKEN: true

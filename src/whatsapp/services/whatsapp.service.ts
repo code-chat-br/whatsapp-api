@@ -178,7 +178,7 @@ export class WAStartupService {
 
   private async sendDataWebhook<T = any>(event: Events, data: T) {
     const webhook = this.configService.get<Webhook>('WEBHOOK');
-    const we = event.replace('.', '_').toUpperCase();
+    const we = event.replace(/[\.-]/gm, '_').toUpperCase();
     if (webhook.EVENTS[we]) {
       try {
         if (this.localWebhook.enabled && isURL(this.localWebhook.url)) {
@@ -632,7 +632,7 @@ export class WAStartupService {
     });
 
     ev.on('group-participants.update', (participantsUpdate) => {
-      participantsUpdate.action;
+      this.logger.log(participantsUpdate);
       this.sendDataWebhook(Events.GROUP_PARTICIPANTS_UPDATE, participantsUpdate);
     });
   }

@@ -65,7 +65,7 @@ export type EventsWebhook = {
   CONNECTION_UPDATE: boolean;
   GROUPS_UPSERT: boolean;
   GROUP_UPDATE: boolean;
-  GRUOP_UPDATE_PARTICIPANT: boolean;
+  GROUP_PARTICIPANTS_UPDATE: boolean;
   NEW_JWT_TOKEN: boolean;
 };
 
@@ -195,7 +195,7 @@ export class ConfigService {
           CONNECTION_UPDATE: process.env?.WEBHOOK_EVENTS_CONNECTION_UPDATE === 'true',
           GROUPS_UPSERT: process.env?.WEBHOOK_EVENTS_GROUPS_UPSERT === 'true',
           GROUP_UPDATE: process.env?.WEBHOOK_EVENTS_GROUPS_UPDATE === 'true',
-          GRUOP_UPDATE_PARTICIPANT:
+          GROUP_PARTICIPANTS_UPDATE:
             process.env?.WEBHOOK_EVENTS_GROUP_PARTICIPANTS_UPDATE === 'true',
           NEW_JWT_TOKEN: process.env?.WEBHOOK_EVENTS_NEW_JWT_TOKEN === 'true',
         },
