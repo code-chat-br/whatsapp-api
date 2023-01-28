@@ -955,15 +955,14 @@ export class WAStartupService {
       const jid = this.createJid(number);
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
-        if (group?.id) {
-          onWhatsapp.push(new OnWhatsAppDto(group.id, !!group.id, group.subject));
+        onWhatsapp.push(new OnWhatsAppDto(group.id, !!group?.id, group?.subject));
+      } else {
+        try {
+          const result = (await this.client.onWhatsApp(jid))[0];
+          onWhatsapp.push(new OnWhatsAppDto(result.jid, result.exists));
+        } catch (error) {
+          onWhatsapp.push(new OnWhatsAppDto(number, false));
         }
-      }
-      try {
-        const result = (await this.client.onWhatsApp(jid))[0];
-        onWhatsapp.push(new OnWhatsAppDto(result.jid, result.exists));
-      } catch (error) {
-        onWhatsapp.push(new OnWhatsAppDto(number, false));
       }
     }
 
