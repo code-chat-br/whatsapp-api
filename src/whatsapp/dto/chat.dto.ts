@@ -1,5 +1,9 @@
 export class OnWhatsAppDto {
-  constructor(public readonly jid: string, public readonly exists: boolean) {}
+  constructor(
+    public readonly jid: string,
+    public readonly exists: boolean,
+    public readonly name?: string,
+  ) {}
 }
 
 export class WhatsAppNumberDto {

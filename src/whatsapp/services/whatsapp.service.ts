@@ -659,13 +659,12 @@ export class WAStartupService {
     const regexp = new RegExp(/^(\d{2})(\d{2})\d{1}(\d{8})$/);
     if (regexp.test(jid)) {
       const match = regexp.exec(jid);
-      if (match && match[1] === '55' && Number.isInteger(Number.parseInt(match[2]))) {
-        const ddd = Number.parseInt(match[2]);
-        if (ddd < 31) {
+      if (match && match[1] === '55') {
+        const joker = Number.parseInt(match[3][0]);
+        if (joker < 7) {
           return match[0];
-        } else if (ddd >= 31) {
-          return match[1] + match[2] + match[3];
         }
+        return match[1] + match[2] + match[3];
       }
     } else {
       return jid;
@@ -694,7 +693,7 @@ export class WAStartupService {
   ) {
     const jid = this.createJid(number);
     const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists && !isJidGroup(jid)) {
+    if (!isWA.exists) {
       throw new BadRequestException(isWA);
     }
 
@@ -911,7 +910,7 @@ export class WAStartupService {
         contact.fullName +
         '\n' +
         'item1.TEL;waid=' +
-        this.formatBRNumber(contact.wuid) +
+        contact.wuid +
         ':' +
         contact.phoneNumber +
         '\n' +
@@ -954,9 +953,15 @@ export class WAStartupService {
     const onWhatsapp: OnWhatsAppDto[] = [];
     for await (const number of data.numbers) {
       const jid = this.createJid(number);
+      if (isJidGroup(jid)) {
+        const group = await this.findGroup({ groupJid: jid }, 'inner');
+        if (group?.id) {
+          onWhatsapp.push(new OnWhatsAppDto(group.id, !!group.id, group.subject));
+        }
+      }
       try {
-        const result = await this.client.onWhatsApp(jid);
-        onWhatsapp.push(new OnWhatsAppDto(result[0].jid, result[0].exists));
+        const result = (await this.client.onWhatsApp(jid))[0];
+        onWhatsapp.push(new OnWhatsAppDto(result.jid, result.exists));
       } catch (error) {
         onWhatsapp.push(new OnWhatsAppDto(number, false));
       }
@@ -1172,10 +1177,13 @@ export class WAStartupService {
     }
   }
 
-  public async findGroup(id: GroupJid) {
+  public async findGroup(id: GroupJid, reply: 'inner' | 'out' = 'out') {
     try {
       return await this.client.groupMetadata(id.groupJid);
     } catch (error) {
+      if (reply === 'inner') {
+        return;
+      }
       throw new NotFoundException('Error fetching group', error.toString());
     }
   }
