@@ -661,7 +661,8 @@ export class WAStartupService {
       const match = regexp.exec(jid);
       if (match && match[1] === '55') {
         const joker = Number.parseInt(match[3][0]);
-        if (joker < 7) {
+        const ddd = Number.parseInt(match[2]);
+        if (joker < 7 || ddd < 31) {
           return match[0];
         }
         return match[1] + match[2] + match[3];
