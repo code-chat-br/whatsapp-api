@@ -82,13 +82,13 @@ export class MessageUpRepository extends Repository {
             );
           }
         }
-
-        return messageUpdate
-          .sort((x, y) => {
-            return y.datetime - x.datetime;
-          })
-          .splice(0, query?.limit ?? messageUpdate.length);
       }
+
+      return messageUpdate
+        .sort((x, y) => {
+          return y.datetime - x.datetime;
+        })
+        .splice(0, query?.limit ?? messageUpdate.length);
     } catch (error) {
       return [];
     }
