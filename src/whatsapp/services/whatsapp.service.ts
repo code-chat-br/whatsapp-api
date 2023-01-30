@@ -647,7 +647,7 @@ export class WAStartupService {
 
   private createJid(number: string) {
     if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
-      return this.formatBRNumber(number) as string;
+      return number;
     }
     return number.includes('-')
       ? `${number}@g.us`
