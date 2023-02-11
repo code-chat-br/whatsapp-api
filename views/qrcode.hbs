@@ -28,6 +28,7 @@
       <div id="display-qrcode">
          <h2 class="mb-3 text-secondary">Connect to whatsapp</h2>
          <div class="input-group mb-3">
+            <input id="input-auth" type="text" class="form-control" aria-describedby="btn-qr-g" value="" placeholder="{{type}}">
             <input id="input-session" type="text" class="form-control" aria-describedby="btn-qr-g" disabled
                value="{{instanceName}}">
             <button id="gen-qrcode" class="btn btn-success" type="submit">Generate qrcode</button>
@@ -47,13 +48,12 @@
 
       $('#gen-qrcode').click(() => {
 
-         const header = {
-            ['{{type}}' === 'jwt'? 'authorization': 'apikey']: '{{hash}}',
-         };
+         const keyAuth = '{{type}}' === 'jwt'? 'authorization': 'apikey';
+         const valueAuth = '{{type}}' === 'jwt'? `Bearer ${$('#input-auth').val()}`: $('#input-auth').val()
 
          $.ajax({
             url: `/instance/connect/{{instanceName}}`,
-            headers: { ...header }, 
+            headers: { [keyAuth]: valueAuth }, 
             type: 'GET',
             success: (qrcode, status) => {
                $(`#update-qrcode`).remove();
