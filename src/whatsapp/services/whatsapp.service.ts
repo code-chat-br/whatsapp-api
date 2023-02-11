@@ -1,4 +1,5 @@
 import makeWASocket, {
+  AnyMessageContent,
   BaileysEventEmitter,
   BufferJSON,
   delay,
@@ -22,6 +23,7 @@ import {
   ConfigService,
   ConfigSessionPhone,
   Database,
+  QrCode,
   StoreConf,
   Webhook,
 } from '../../config/env.config';
@@ -238,7 +240,9 @@ export class WAStartupService {
   private async connectionUpdate(ev: BaileysEventEmitter) {
     ev.on('connection.update', async ({ qr, connection, lastDisconnect }) => {
       if (qr) {
-        if (this.instance.qrcode.count === 6) {
+        if (
+          this.instance.qrcode.count === this.configService.get<QrCode>('QRCODE').LINIT
+        ) {
           this.sendDataWebhook(Events.QRCODE_UPDATED, {
             message: 'QR code limit reached, please login again',
             statusCode: DisconnectReason.badSession,
@@ -687,31 +691,42 @@ export class WAStartupService {
     }
   }
 
-  private async sendMessageWithTyping(
+  private async sendMessageWithTyping<T = proto.IMessage>(
     number: string,
-    message: proto.IMessage,
+    message: T,
     options?: Options,
   ) {
     const jid = this.createJid(number);
     const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists) {
+    if (!isWA.exists && !isJidGroup(jid)) {
       throw new BadRequestException(isWA);
     }
 
+    const sender = isJidGroup(jid) ? jid : isWA.jid;
+
     try {
       if (options?.delay) {
-        await this.client.presenceSubscribe(jid);
+        await this.client.presenceSubscribe(sender);
         await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
         await delay(options.delay);
-        await this.client.sendPresenceUpdate('paused', jid);
+        await this.client.sendPresenceUpdate('paused', sender);
       }
 
-      const messageSent = await this.client.sendMessage(jid, {
-        forward: {
-          key: { remoteJid: this.instance.wuid, fromMe: true },
-          message,
-        },
-      });
+      const messageSent = await (async () => {
+        if (!message['audio']) {
+          return await this.client.sendMessage(sender, {
+            forward: {
+              key: { remoteJid: this.instance.wuid, fromMe: true },
+              message,
+            },
+          });
+        }
+
+        return await this.client.sendMessage(
+          sender,
+          message as unknown as AnyMessageContent,
+        );
+      })();
 
       this.sendDataWebhook(Events.SEND_MESSAGE, messageSent).catch((error) =>
         this.logger.error(error),
@@ -795,29 +810,17 @@ export class WAStartupService {
   }
 
   public async audioWhatsapp(data: SendAudioDto) {
-    const jid = this.createJid(data.number);
-    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists && !isJidGroup(jid)) {
-      throw new BadRequestException(isWA);
-    }
-
-    if (data?.options?.delay) {
-      await this.client.presenceSubscribe(jid);
-      await this.client.sendPresenceUpdate(data?.options?.presence ?? 'composing', jid);
-      await delay(data?.options.delay);
-    }
-
-    const audio = await this.client.sendMessage(jid, {
-      audio: isURL(data.audioMessage.audio)
-        ? { url: data.audioMessage.audio }
-        : Buffer.from(data.audioMessage.audio, 'base64'),
-      ptt: true,
-      mimetype: 'audio/ogg; codecs=opus',
-    });
-
-    await this.client.sendPresenceUpdate('paused', jid);
-
-    return audio;
+    return this.sendMessageWithTyping<AnyMessageContent>(
+      data.number,
+      {
+        audio: isURL(data.audioMessage.audio)
+          ? { url: data.audioMessage.audio }
+          : Buffer.from(data.audioMessage.audio, 'base64'),
+        ptt: true,
+        mimetype: 'audio/ogg; codecs=opus',
+      },
+      { presence: 'recording', delay: data?.options?.delay },
+    );
   }
 
   public async buttonMessage(data: SendButtonDto) {

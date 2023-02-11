@@ -65,7 +65,7 @@ export const instanceController = new InstanceController(
   eventeEmitter,
   authService,
 );
-export const viewsController = new ViewsController(waMonitor, configService, repository);
+export const viewsController = new ViewsController(waMonitor, configService);
 export const sendMessageController = new SendMessageController(waMonitor);
 export const chatController = new ChatController(waMonitor);
 export const groupController = new GroupController(waMonitor);
