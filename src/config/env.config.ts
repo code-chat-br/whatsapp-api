@@ -79,7 +79,7 @@ export type GlobalWebhook = { URL: string; ENABLED: boolean };
 export type SslConf = { PRIVKEY: string; FULLCHAIN: string };
 export type Webhook = { GLOBAL?: GlobalWebhook; EVENTS: EventsWebhook };
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
-export type QrCode = { LINIT: number };
+export type QrCode = { LIMIT: number };
 export type Production = boolean;
 
 export interface Env {
@@ -205,7 +205,7 @@ export class ConfigService {
         NAME: process.env?.CONFIG_SESSION_PHONE_NAME,
       },
       QRCODE: {
-        LINIT: Number.parseInt(process.env.QRCODE_LIMIT),
+        LIMIT: Number.parseInt(process.env.QRCODE_LIMIT),
       },
       AUTHENTICATION: {
         TYPE: process.env.AUTHENTICATION_TYPE as 'jwt',

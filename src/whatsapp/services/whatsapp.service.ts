@@ -241,7 +241,7 @@ export class WAStartupService {
     ev.on('connection.update', async ({ qr, connection, lastDisconnect }) => {
       if (qr) {
         if (
-          this.instance.qrcode.count === this.configService.get<QrCode>('QRCODE').LINIT
+          this.instance.qrcode.count === this.configService.get<QrCode>('QRCODE').LIMIT
         ) {
           this.sendDataWebhook(Events.QRCODE_UPDATED, {
             message: 'QR code limit reached, please login again',
