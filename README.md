@@ -41,9 +41,9 @@ With this one you can create multiservice chats, service bots or any other syste
 ### Nvm installation
 
 ```sh
-$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | bash
 # or
-$ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | bash
 ```
 >
 > After finishing, restart the terminal to load the new information.
@@ -52,31 +52,31 @@ $ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.34.0/install.sh | ba
 ### Docker installation \[optional\]
 
 ```sh
-$ curl -fsSL https://get.docker.com -o get-docker.sh
+curl -fsSL https://get.docker.com -o get-docker.sh
 
-$ sudo sh get-docker.sh
+sudo sh get-docker.sh
 
-$ sudo usermod -aG docker ${USER}
+sudo usermod -aG docker ${USER}
 
-$ sudo apt-get install docker-compose
+sudo apt-get install docker-compose
 ```
 ### Nodejs installation
 
 ```sh
-$ nvm install 16.17.0
+nvm install 16.17.0
 ```
 
 ### pm2 installation
 ```sh
-$ npm i -g pm2
+npm i -g pm2
 ```
 
 ```sh
-$ docker --version
+docker --version
 
-$ node --version
+node --version
 
-$ docker-compose --version
+docker-compose --version
 ```
 ## MongoDb [optional]
 
@@ -85,7 +85,7 @@ After installing docker and docker-compose, up the container.
 
 In the same directory where the file is located, run the following command:
 ```sh
-$ docker-compose up -d
+docker-compose up -d
 ```
 Using the database is optional.
 
@@ -93,26 +93,26 @@ Using the database is optional.
 
 Cloning the Repository
 ```
-$ git clone https://github.com/code-chat-br/whatsapp-api.git
+git clone https://github.com/code-chat-br/whatsapp-api.git
 ```
 
 Go to the project directory and install all dependencies.</br>
 ```sh
-$ cd whatsapp-api
+cd whatsapp-api
 
-$ npm i
+npm i
 ```
 
 Finally, run the command below to start the application:
 ```sh
 # Under development
-$ npm run start
+npm run start
 
 # In production
-$ npm run start:prod
+npm run start:prod
 
 # pm2
-$ pm2 start 'npm run start:prod' --name ApiCodechat
+pm2 start 'npm run start:prod' --name ApiCodechat
 ```
 ## Authentication
 
@@ -212,7 +212,7 @@ curl --location --request GET 'http://localhost:8080/instance/connect/codechat' 
 
 After building the application, in the same directory as the files above, run the following command:
 ```sh
-$ docker-compose up
+docker-compose up
 ```
 ## Send Messages
 |     |   |
