@@ -238,7 +238,6 @@ docker-compose up
 |------|-------|-----------|------------|
 | QRCODE_UPDATED | qrcode.updated | json | Sends the base64 of the qrcode for reading |
 | CONNECTION_UPDATE | connection.update | json | Informs the status of the connection with whatsapp |
-| INSTANCE | instance | json | Informs instance loading |
 | MESSAGES_SET | message.set | json | Sends a list of all your messages uploaded on whatsapp</br>This event occurs only once |
 | MESSAGES_UPSERT | message.upsert | json |  Notifies you when a message is received |
 | MESSAGES_UPDATE | message.update | json | Tells you when a message is updated |

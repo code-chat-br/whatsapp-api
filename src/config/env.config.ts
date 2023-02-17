@@ -48,7 +48,6 @@ export type Database = {
 };
 
 export type EventsWebhook = {
-  STATUS_INSTANCE: boolean;
   QRCODE_UPDATED: boolean;
   MESSAGES_SET: boolean;
   MESSAGES_UPSERT: boolean;
@@ -178,7 +177,6 @@ export class ConfigService {
           ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',
         },
         EVENTS: {
-          STATUS_INSTANCE: process.env?.WEBHOOK_EVENTS_STATUS_INSTANCE === 'true',
           QRCODE_UPDATED: process.env?.WEBHOOK_EVENTS_QRCODE_UPDATED === 'true',
           MESSAGES_SET: process.env?.WEBHOOK_EVENTS_MESSAGES_SET === 'true',
           MESSAGES_UPSERT: process.env?.WEBHOOK_EVENTS_MESSAGES_UPSERT === 'true',
