@@ -549,6 +549,7 @@ export class WAStartupService {
         messagesRaw.push({
           key: m.key,
           pushName: m.pushName,
+		  participant: m.participant,
           message: { ...m.message },
           messageTimestamp: m.messageTimestamp as number,
           owner: this.instance.wuid,
