@@ -13,6 +13,7 @@ export class MessageRaw {
   _id?: string;
   key?: Key;
   pushName?: string;
+  participant?: string;
   message?: object;
   messageTimestamp?: number | Long.Long;
   owner: string;
@@ -28,6 +29,7 @@ const messageSchema = new Schema<MessageRaw>({
     participant: { type: String, minlength: 1 },
   },
   pushName: { type: String },
+  participant: { type: String },
   message: { type: Object },
   source: { type: String, minlength: 3, enum: ['android', 'web', 'ios'] },
   messageTimestamp: { type: Number, required: true },
