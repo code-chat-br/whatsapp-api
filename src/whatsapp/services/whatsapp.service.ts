@@ -1044,7 +1044,15 @@ export class WAStartupService {
       if (msg.message?.documentWithCaptionMessage) {
         msg.message = msg.message.documentWithCaptionMessage.message;
       }
-
+	  
+	  if (msg.message?.viewOnceMessage) {
+        msg.message = msg.message.viewOnceMessage.message;
+      }
+      
+      if (msg.message?.viewOnceMessageV2) {
+        msg.message = msg.message.viewOnceMessageV2.message;
+      }
+	  
       const typeMessage = [
         'imageMessage',
         'documentMessage',
