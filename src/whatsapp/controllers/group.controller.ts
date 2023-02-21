@@ -25,7 +25,7 @@ export class GroupController {
   }
 
   public async inviteCode(instance: InstanceDto, groupJid: GroupJid) {
-    return await this.waMonitor.waInstances[instance.instanceName].invitCode(groupJid);
+    return await this.waMonitor.waInstances[instance.instanceName].inviteCode(groupJid);
   }
 
   public async revokeInviteCode(instance: InstanceDto, groupJid: GroupJid) {
@@ -34,13 +34,13 @@ export class GroupController {
     );
   }
 
-  public async findParticipnats(instance: InstanceDto, groupJid: GroupJid) {
+  public async findParticipants(instance: InstanceDto, groupJid: GroupJid) {
     return await this.waMonitor.waInstances[instance.instanceName].findParticipants(
       groupJid,
     );
   }
 
-  public async updateGParticipat(
+  public async updateGParticipate(
     instance: InstanceDto,
     update: GroupUpdateParticipantDto,
   ) {

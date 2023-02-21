@@ -5,7 +5,7 @@ import { INSTANCE_DIR } from '../../config/path.config';
 import { db } from '../../db/db.connect';
 import {
   BadRequestException,
-  ForbidenException,
+  ForbiddenException,
   NotFoundException,
 } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
@@ -49,7 +49,7 @@ export async function instanceLoggedGuard(req: Request, _: Response, next: NextF
   if (req.originalUrl.includes('/instance/create')) {
     const instance = req.body as InstanceDto;
     if (await getInstance(instance.instanceName)) {
-      throw new ForbidenException(
+      throw new ForbiddenException(
         `This name "${instance.instanceName}" is already in use.`,
       );
     }

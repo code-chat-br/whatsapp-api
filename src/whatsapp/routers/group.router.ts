@@ -2,7 +2,7 @@ import { RequestHandler, Router } from 'express';
 import {
   createGroupSchema,
   groupJidSchema,
-  updateGparticipantsSchema,
+  updateParticipantsSchema,
   updateGroupPicture,
 } from '../../validate/validate.schema';
 import { RouterBroker } from '../abstract/abstract.router';
@@ -54,7 +54,7 @@ export class GroupRouter extends RouterBroker {
           request: req,
           schema: groupJidSchema,
           ClassRef: GroupJid,
-          execute: (instance, data) => groupController.findParticipnats(instance, data),
+          execute: (instance, data) => groupController.findParticipants(instance, data),
         });
 
         res.status(HttpStatus.OK).json(response);
@@ -83,9 +83,9 @@ export class GroupRouter extends RouterBroker {
       .put(this.routerPath('updateParticipant'), ...guards, async (req, res) => {
         const response = await this.groupValidate<GroupUpdateParticipantDto>({
           request: req,
-          schema: updateGparticipantsSchema,
+          schema: updateParticipantsSchema,
           ClassRef: GroupUpdateParticipantDto,
-          execute: (instance, data) => groupController.updateGParticipat(instance, data),
+          execute: (instance, data) => groupController.updateGParticipate(instance, data),
         });
 
         res.status(HttpStatus.CREATED).json(response);

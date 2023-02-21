@@ -43,7 +43,7 @@ class Button {
   buttonText: string;
   buttonId: string;
 }
-class ButtonMessaqge {
+class ButtonMessage {
   title: string;
   description: string;
   footerText?: string;
@@ -51,7 +51,7 @@ class ButtonMessaqge {
   mediaMessage?: MediaMessage;
 }
 export class SendButtonDto extends Metadata {
-  buttonMessage: ButtonMessaqge;
+  buttonMessage: ButtonMessage;
 }
 
 class LocationMessage {
@@ -66,7 +66,7 @@ export class SendLocationDto extends Metadata {
 
 class Row {
   title: string;
-  desctiption: string;
+  description: string;
   rowId: string;
 }
 class Section {

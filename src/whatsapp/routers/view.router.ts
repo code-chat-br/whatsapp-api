@@ -3,7 +3,7 @@ import { ConfigService, Production } from '../../config/env.config';
 import { RouterBroker } from '../abstract/abstract.router';
 import { viewsController } from '../whatsapp.module';
 
-export class ViewslRouter extends RouterBroker {
+export class ViewsRouter extends RouterBroker {
   constructor(configService: ConfigService, ...guards: RequestHandler[]) {
     super();
     if (!configService.get<Production>('PRODUCTION')) {

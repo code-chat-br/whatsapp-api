@@ -1,7 +1,7 @@
 import { proto } from '@adiwajshing/baileys';
 import {
   ArchiveChatDto,
-  DeleteMessge,
+  DeleteMessage,
   NumberDto,
   ReadMessageDto,
   WhatsAppNumberDto,
@@ -27,7 +27,7 @@ export class ChatController {
     return await this.waMonitor.waInstances[instanceName].archiveChat(data);
   }
 
-  public async deleteMessage({ instanceName }: InstanceDto, data: DeleteMessge) {
+  public async deleteMessage({ instanceName }: InstanceDto, data: DeleteMessage) {
     return await this.waMonitor.waInstances[instanceName].deleteMessage(data);
   }
 

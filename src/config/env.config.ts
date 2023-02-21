@@ -199,7 +199,7 @@ export class ConfigService {
         },
       },
       CONFIG_SESSION_PHONE: {
-        CLIENT: process.env?.CONFIG_SESSION_PHONE_CLIENST,
+        CLIENT: process.env?.CONFIG_SESSION_PHONE_CLIENT,
         NAME: process.env?.CONFIG_SESSION_PHONE_NAME,
       },
       QRCODE: {

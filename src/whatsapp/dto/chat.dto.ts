@@ -33,7 +33,7 @@ export class ArchiveChatDto {
   archive: boolean;
 }
 
-export class DeleteMessge {
+export class DeleteMessage {
   id: string;
   fromMe: boolean;
   remoteJid: string;

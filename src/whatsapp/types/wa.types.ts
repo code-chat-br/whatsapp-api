@@ -49,3 +49,18 @@ export declare namespace wa {
     | 'READ'
     | 'PLAYED';
 }
+
+export const TypeMediaMessage = [
+  'imageMessage',
+  'documentMessage',
+  'audioMessage',
+  'videoMessage',
+  'stickerMessage',
+];
+
+export const MessageSubtype = [
+  'ephemeralMessage',
+  'documentWithCaptionMessage',
+  'viewOnceMessage',
+  'viewOnceMessageV2',
+];

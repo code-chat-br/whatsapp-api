@@ -1,6 +1,6 @@
 import { configService } from '../config/env.config';
 import { Logger } from '../config/logger.config';
-import { eventeEmitter } from '../config/event.config';
+import { eventEmitter } from '../config/event.config';
 import { MessageRepository } from './repository/message.repository';
 import { WAMonitoringService } from './services/monitor.service';
 import { ChatRepository } from './repository/chat.repository';
@@ -46,11 +46,7 @@ export const repository = new RepositoryBroker(
   dbserver?.getClient(),
 );
 
-export const waMonitor = new WAMonitoringService(
-  eventeEmitter,
-  configService,
-  repository,
-);
+export const waMonitor = new WAMonitoringService(eventEmitter, configService, repository);
 
 const authService = new AuthService(configService, waMonitor, repository);
 
@@ -62,7 +58,7 @@ export const instanceController = new InstanceController(
   waMonitor,
   configService,
   repository,
-  eventeEmitter,
+  eventEmitter,
   authService,
 );
 export const viewsController = new ViewsController(waMonitor, configService);

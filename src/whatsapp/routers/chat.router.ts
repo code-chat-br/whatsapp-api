@@ -4,14 +4,14 @@ import {
   contactValidateSchema,
   deleteMessageSchema,
   messageUpSchema,
-  messaseValidateSchema,
+  messageValidateSchema,
   profilePictureSchema,
   readMessageSchema,
   whatsappNumberSchema,
 } from '../../validate/validate.schema';
 import {
   ArchiveChatDto,
-  DeleteMessge,
+  DeleteMessage,
   NumberDto,
   ReadMessageDto,
   WhatsAppNumberDto,
@@ -63,10 +63,10 @@ export class ChatRouter extends RouterBroker {
         this.routerPath('deleteMessageForEveryone'),
         ...guards,
         async (req, res) => {
-          const response = await this.dataValidate<DeleteMessge>({
+          const response = await this.dataValidate<DeleteMessage>({
             request: req,
             schema: deleteMessageSchema,
-            ClassRef: DeleteMessge,
+            ClassRef: DeleteMessage,
             execute: (instance, data) => chatController.deleteMessage(instance, data),
           });
 
@@ -107,7 +107,7 @@ export class ChatRouter extends RouterBroker {
       .post(this.routerPath('findMessages'), ...guards, async (req, res) => {
         const response = await this.dataValidate<MessageQuery>({
           request: req,
-          schema: messaseValidateSchema,
+          schema: messageValidateSchema,
           ClassRef: MessageQuery,
           execute: (instance, data) => chatController.fetchMessages(instance, data),
         });

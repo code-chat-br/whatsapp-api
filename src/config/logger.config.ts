@@ -19,7 +19,7 @@ enum Color {
 
 enum Command {
   RESET = '\x1b[0m',
-  BRIGTH = '\x1b[1m',
+  BRIGHT = '\x1b[1m',
   UNDERSCORE = '\x1b[4m',
 }
 
@@ -71,21 +71,21 @@ export class Logger {
     if (types.includes(type)) {
       if (configService.get<Log>('LOG').COLOR) {
         console.log(
-          /*Command.UNDERSCORE +*/ Command.BRIGTH + Level[type],
+          /*Command.UNDERSCORE +*/ Command.BRIGHT + Level[type],
           '[CodeChat]',
-          Command.BRIGTH + Color[type],
+          Command.BRIGHT + Color[type],
           process.pid.toString(),
           Command.RESET,
-          Command.BRIGTH + Color[type],
+          Command.BRIGHT + Color[type],
           '-',
-          Command.BRIGTH + Color.VERBOSE,
+          Command.BRIGHT + Color.VERBOSE,
           `${formatDateLog(Date.now())}  `,
           Command.RESET,
-          Color[type] + Background[type] + Command.BRIGTH,
+          Color[type] + Background[type] + Command.BRIGHT,
           `${type} ` + Command.RESET,
-          Color.WARN + Command.BRIGTH,
+          Color.WARN + Command.BRIGHT,
           `[${this.context}]` + Command.RESET,
-          Color[type] + Command.BRIGTH,
+          Color[type] + Command.BRIGHT,
           `[${typeValue}]` + Command.RESET,
           Color[type],
           typeValue !== 'object' ? value : '',

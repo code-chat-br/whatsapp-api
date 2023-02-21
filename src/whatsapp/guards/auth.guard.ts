@@ -6,7 +6,7 @@ import { Logger } from '../../config/logger.config';
 import { name } from '../../../package.json';
 import { InstanceDto } from '../dto/instance.dto';
 import { JwtPayload } from '../services/auth.service';
-import { ForbidenException, UnauthorizedException } from '../../exceptions';
+import { ForbiddenException, UnauthorizedException } from '../../exceptions';
 import { repository } from '../whatsapp.module';
 
 const logger = new Logger('GUARD');
@@ -27,7 +27,7 @@ async function jwtGuard(req: Request, res: Response, next: NextFunction) {
       req.originalUrl.includes('/instance/fetchInstances')) &&
     !key
   ) {
-    throw new ForbidenException(
+    throw new ForbiddenException(
       'Missing global api key',
       'The global api key must be set',
     );
@@ -74,7 +74,7 @@ async function apikey(req: Request, res: Response, next: NextFunction) {
       req.originalUrl.includes('/instance/fetchInstances')) &&
     !key
   ) {
-    throw new ForbidenException(
+    throw new ForbiddenException(
       'Missing global api key',
       'The global api key must be set',
     );

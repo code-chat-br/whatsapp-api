@@ -6,7 +6,7 @@ import { ChatRouter } from './chat.router';
 import { GroupRouter } from './group.router';
 import { InstanceRouter } from './instance.router';
 import { MessageRouter } from './sendMessage.router';
-import { ViewslRouter } from './view.router';
+import { ViewsRouter } from './view.router';
 import { WebhookRouter } from './webhook.router';
 
 enum HttpStatus {
@@ -27,7 +27,7 @@ router
   .use(
     '/instance',
     new InstanceRouter(configService, ...guards).router,
-    new ViewslRouter(configService, instanceExistsGuard).router,
+    new ViewsRouter(configService, instanceExistsGuard).router,
   )
   .use('/message', new MessageRouter(...guards).router)
   .use('/chat', new ChatRouter(...guards).router)

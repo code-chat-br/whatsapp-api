@@ -117,7 +117,7 @@ export class AuthService {
               instance: decode.instanceName,
               data: token,
             },
-            { params: { ownre: this.waMonitor.waInstances[decode.instanceName].wuid } },
+            { params: { owner: this.waMonitor.waInstances[decode.instanceName].wuid } },
           );
         }
       } catch (error) {

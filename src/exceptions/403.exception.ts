@@ -1,10 +1,10 @@
 import { HttpStatus } from '../whatsapp/routers/index.router';
 
-export class ForbidenException {
+export class ForbiddenException {
   constructor(...objectError: any[]) {
     throw {
       status: HttpStatus.FORBIDDEN,
-      error: 'Forbiden',
+      error: 'Forbidden',
       message: objectError.length > 0 ? objectError : undefined,
     };
   }

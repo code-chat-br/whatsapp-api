@@ -392,7 +392,7 @@ export const profilePictureSchema: JSONSchema7 = {
   ...isNotEmpty('number'),
 };
 
-export const messaseValidateSchema: JSONSchema7 = {
+export const messageValidateSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
@@ -488,7 +488,7 @@ export const groupJidSchema: JSONSchema7 = {
   ...isNotEmpty('groupJid'),
 };
 
-export const updateGparticipantsSchema: JSONSchema7 = {
+export const updateParticipantsSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
