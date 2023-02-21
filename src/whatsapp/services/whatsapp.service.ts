@@ -35,7 +35,7 @@ import axios from 'axios';
 import { v4 } from 'uuid';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
-import { Events, wa } from '../types/wa.types';
+import { Events, TypeMediaMessage, wa, MessageSubtype } from '../types/wa.types';
 import { Boom } from '@hapi/boom';
 import EventEmitter2 from 'eventemitter2';
 import { release } from 'os';
@@ -62,7 +62,7 @@ import {
 import { arrayUnique, isBase64, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
-  DeleteMessge,
+  DeleteMessage,
   OnWhatsAppDto,
   ReadMessageDto,
   WhatsAppNumberDto,
@@ -209,9 +209,9 @@ export class WAStartupService {
       }
 
       try {
-        const globalWebhhok = this.configService.get<Webhook>('WEBHOOK').GLOBAL;
-        if (globalWebhhok && globalWebhhok?.ENABLED && isURL(globalWebhhok.URL)) {
-          const httpService = axios.create({ baseURL: globalWebhhok.URL });
+        const globalWebhook = this.configService.get<Webhook>('WEBHOOK').GLOBAL;
+        if (globalWebhook && globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
+          const httpService = axios.create({ baseURL: globalWebhook.URL });
           await httpService.post(
             '',
             {
@@ -277,7 +277,7 @@ export class WAStartupService {
 
         qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
           if (error) {
-            this.logger.error('Qrcode generare failed:' + error.toString());
+            this.logger.error('Qrcode generate failed:' + error.toString());
             return;
           }
 
@@ -309,10 +309,10 @@ export class WAStartupService {
       }
 
       if (connection === 'close') {
-        const shouldRecnnect =
+        const shouldReconnect =
           (lastDisconnect.error as Boom)?.output?.statusCode !==
           DisconnectReason.loggedOut;
-        if (shouldRecnnect) {
+        if (shouldReconnect) {
           await this.connectToWhatsapp();
         } else {
           this.sendDataWebhook(Events.STATUS_INSTANCE, {
@@ -549,7 +549,7 @@ export class WAStartupService {
         messagesRaw.push({
           key: m.key,
           pushName: m.pushName,
-		  participant: m.participant,
+          participant: m.participant,
           message: { ...m.message },
           messageTimestamp: m.messageTimestamp as number,
           owner: this.instance.wuid,
@@ -777,8 +777,8 @@ export class WAStartupService {
 
     if (mediaMessage.mediatype === 'document' && !mediaMessage.fileName) {
       const regex = new RegExp(/.*\/(.+?)\./);
-      const arryMatch = regex.exec(mediaMessage.media);
-      mediaMessage.fileName = arryMatch[1];
+      const arrayMatch = regex.exec(mediaMessage.media);
+      mediaMessage.fileName = arrayMatch[1];
     }
 
     let mimetype: string;
@@ -825,23 +825,23 @@ export class WAStartupService {
   }
 
   public async buttonMessage(data: SendButtonDto) {
-    const embeddMedia: any = {};
+    const embeddedMedia: any = {};
     let mediatype = 'TEXT';
 
     if (data.buttonMessage?.mediaMessage) {
       mediatype = data.buttonMessage.mediaMessage?.mediatype.toUpperCase() ?? 'TEXT';
-      embeddMedia.mediaKey = mediatype.toLowerCase() + 'Message';
+      embeddedMedia.mediaKey = mediatype.toLowerCase() + 'Message';
       const generate = await this.prepareMediaMessage(data.buttonMessage.mediaMessage);
-      embeddMedia.message = generate.message[embeddMedia.mediaKey];
-      embeddMedia.contentText = `*${data.buttonMessage.title}*\n\n${data.buttonMessage.description}`;
+      embeddedMedia.message = generate.message[embeddedMedia.mediaKey];
+      embeddedMedia.contentText = `*${data.buttonMessage.title}*\n\n${data.buttonMessage.description}`;
     }
 
-    const btnItens = {
+    const btnItems = {
       text: data.buttonMessage.buttons.map((btn) => btn.buttonText),
       ids: data.buttonMessage.buttons.map((btn) => btn.buttonId),
     };
 
-    if (!arrayUnique(btnItens.text) || !arrayUnique(btnItens.ids)) {
+    if (!arrayUnique(btnItems.text) || !arrayUnique(btnItems.ids)) {
       throw new BadRequestException(
         'Button texts cannot be repeated',
         'Button IDs cannot be repeated.',
@@ -852,8 +852,8 @@ export class WAStartupService {
       data.number,
       {
         buttonsMessage: {
-          text: !embeddMedia?.mediaKey ? data.buttonMessage.title : undefined,
-          contentText: embeddMedia?.contentText ?? data.buttonMessage.description,
+          text: !embeddedMedia?.mediaKey ? data.buttonMessage.title : undefined,
+          contentText: embeddedMedia?.contentText ?? data.buttonMessage.description,
           footerText: data.buttonMessage?.footerText,
           buttons: data.buttonMessage.buttons.map((button) => {
             return {
@@ -865,7 +865,7 @@ export class WAStartupService {
             };
           }),
           headerType: proto.Message.ButtonsMessage.HeaderType[mediatype],
-          [embeddMedia?.mediaKey]: embeddMedia?.message,
+          [embeddedMedia?.mediaKey]: embeddedMedia?.message,
         },
       },
       data?.options,
@@ -905,7 +905,7 @@ export class WAStartupService {
   }
 
   public async contactMessage(data: SendContactDto) {
-    const messsage: proto.IMessage = {};
+    const message: proto.IMessage = {};
 
     const vcard = (contact: ContactMessage) => {
       return (
@@ -925,12 +925,12 @@ export class WAStartupService {
     };
 
     if (data.contactMessage.length === 1) {
-      messsage.contactMessage = {
+      message.contactMessage = {
         displayName: data.contactMessage[0].fullName,
         vcard: vcard(data.contactMessage[0]),
       };
     } else {
-      messsage.contactsArrayMessage = {
+      message.contactsArrayMessage = {
         displayName: `${data.contactMessage.length} contacts`,
         contacts: data.contactMessage.map((contact) => {
           return {
@@ -941,7 +941,7 @@ export class WAStartupService {
       };
     }
 
-    return await this.sendMessageWithTyping(data.number, { ...messsage }, data?.options);
+    return await this.sendMessageWithTyping(data.number, { ...message }, data?.options);
   }
 
   public async reactionMessage(data: SendReactionDto) {
@@ -1020,7 +1020,7 @@ export class WAStartupService {
     }
   }
 
-  public async deleteMessage(del: DeleteMessge) {
+  public async deleteMessage(del: DeleteMessage) {
     try {
       return await this.client.sendMessage(del.remoteJid, { delete: del });
     } catch (error) {
@@ -1037,26 +1037,16 @@ export class WAStartupService {
         ? m
         : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
 
-      if (msg.message?.ephemeralMessage) {
-        msg.message = msg.message.ephemeralMessage.message;
+      for (const subtype of MessageSubtype) {
+        if (msg.message[subtype]) {
+          msg.message = msg.message[subtype].message;
+        }
       }
-
-      if (msg.message?.documentWithCaptionMessage) {
-        msg.message = msg.message.documentWithCaptionMessage.message;
-      }
-
-      const typeMessage = [
-        'imageMessage',
-        'documentMessage',
-        'audioMessage',
-        'videoMessage',
-        'stickerMessage',
-      ];
 
       let mediaMessage: any;
       let mediaType: string;
 
-      for (const type of typeMessage) {
+      for (const type of TypeMediaMessage) {
         mediaMessage = msg.message[type];
         if (mediaMessage) {
           mediaType = type;
@@ -1192,7 +1182,7 @@ export class WAStartupService {
     }
   }
 
-  public async invitCode(id: GroupJid) {
+  public async inviteCode(id: GroupJid) {
     try {
       const code = await this.client.groupInviteCode(id.groupJid);
       return { inviteUrl: `https://chat.whatsapp.com/${code}`, inviteCode: code };
@@ -1222,12 +1212,12 @@ export class WAStartupService {
   public async updateGParticipant(update: GroupUpdateParticipantDto) {
     try {
       const participants = update.participants.map((p) => this.createJid(p));
-      const updatePaticipants = await this.client.groupParticipantsUpdate(
+      const updateParticipants = await this.client.groupParticipantsUpdate(
         update.groupJid,
         participants,
         update.action,
       );
-      return { updatePaticipants };
+      return { updateParticipants: updateParticipants };
     } catch (error) {
       throw new BadRequestException('Error updating participants', error.toString());
     }
