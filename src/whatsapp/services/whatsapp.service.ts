@@ -10,7 +10,6 @@ import makeWASocket, {
   getDevice,
   isJidGroup,
   isJidUser,
-  MessageRetryMap,
   prepareWAMessageMedia,
   proto,
   useMultiFileAuthState,
@@ -99,7 +98,6 @@ export class WAStartupService {
   private readonly instance: wa.Instance = {};
   public client: WASocket;
   private readonly localWebhook: wa.LocalWebHook = {};
-  private readonly msgRetryCounterMap: MessageRetryMap = {};
   private stateConnection: wa.StateConnection = {
     state: 'close',
   };
@@ -391,7 +389,6 @@ export class WAStartupService {
     const socketConfig: UserFacingSocketConfig = {
       auth: this.instance.authState.state,
       logger: P({ level: 'error' }),
-      msgRetryCounterMap: this.msgRetryCounterMap,
       printQRInTerminal: false,
       browser,
       version,
