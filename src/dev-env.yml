@@ -68,6 +68,9 @@ DATABASE:
     CONTACTS: true
     CHATS: true
 
+# Resend MESSAGES_SET, CONTACTS_UPSERT and CHATS_SET when reconnect from a new QR-Code
+RESEND_RECONNECT: false
+
 # Webhook Settings
 WEBHOOK:
   # Define a global webhook that will listen for enabled events from all instances

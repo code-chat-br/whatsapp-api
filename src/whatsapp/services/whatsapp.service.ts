@@ -25,6 +25,7 @@ import {
   QrCode,
   StoreConf,
   Webhook,
+  Resend,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
@@ -469,6 +470,7 @@ export class WAStartupService {
 
   private contactHandle(ev: BaileysEventEmitter) {
     const database = this.configService.get<Database>('DATABASE');
+    const send_reconnect = this.configService.get<Resend>('RESEND_RECONNECT');
     ev.on('contacts.upsert', async (contacts) => {
       const contactsRepository = await this.repository.contact.find({
         where: { owner: this.instance.wuid },
@@ -476,7 +478,7 @@ export class WAStartupService {
 
       const contactsRaw: ContactRaw[] = [];
       for await (const contact of contacts) {
-        if (contactsRepository.find((cr) => cr.id === contact.id)) {
+        if ((send_reconnect === false) && (contactsRepository.find((cr) => cr.id === contact.id))) {
           continue;
         }
 
@@ -507,8 +509,9 @@ export class WAStartupService {
 
   private messageHandle(ev: BaileysEventEmitter) {
     const database = this.configService.get<Database>('DATABASE');
+    const send_reconnect = this.configService.get<Resend>('RESEND_RECONNECT');
     ev.on('messaging-history.set', async ({ messages, chats, isLatest }) => {
-      if (isLatest) {
+      if ((isLatest) || (send_reconnect === false)) {
         const chatsRaw: ChatRaw[] = chats.map((chat) => {
           return {
             id: chat.id,
@@ -531,11 +534,7 @@ export class WAStartupService {
         ) {
           continue;
         }
-        if (
-          messagesRepository.find(
-            (mr) => mr.owner === this.instance.wuid && mr.key.id === m.key.id,
-          )
-        ) {
+        if ((send_reconnect === false) && (messagesRepository.find((mr) => mr.owner === this.instance.wuid && mr.key.id === m.key.id))){
           continue;
         }
 

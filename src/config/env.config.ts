@@ -77,6 +77,7 @@ export type DelInstance = number | boolean;
 export type GlobalWebhook = { URL: string; ENABLED: boolean };
 export type SslConf = { PRIVKEY: string; FULLCHAIN: string };
 export type Webhook = { GLOBAL?: GlobalWebhook; EVENTS: EventsWebhook };
+export type Resend = boolean;
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
 export type QrCode = { LIMIT: number };
 export type Production = boolean;
@@ -89,6 +90,7 @@ export interface Env {
   DATABASE: Database;
   LOG: Log;
   DEL_INSTANCE: DelInstance;
+  RESEND_RECONNECT: Resend;
   WEBHOOK: Webhook;
   CONFIG_SESSION_PHONE: ConfigSessionPhone;
   QRCODE: QrCode;
@@ -171,6 +173,8 @@ export class ConfigService {
         typeof process.env?.DEL_INSTANCE === 'boolean'
           ? process.env.DEL_INSTANCE === 'true'
           : Number.parseInt(process.env.DEL_INSTANCE),
+      RESEND_RECONNECT:
+        process.env?.WEBHOOK_RESEND_RECONNECT === 'true',
       WEBHOOK: {
         GLOBAL: {
           URL: process.env?.WEBHOOK_GLOBAL_URL,
