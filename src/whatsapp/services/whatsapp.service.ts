@@ -786,11 +786,19 @@ export class WAStartupService {
   ) {
     const jid = this.createJid(number);
     const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists && !isJidGroup(jid)) {
+    if (!isWA.exists && !isJidGroup(isWA.jid)) {
       throw new BadRequestException(isWA);
     }
 
     const sender = isJidGroup(jid) ? jid : isWA.jid;
+
+    if (isJidGroup(sender)) {
+      try {
+        await this.client.groupMetadata(sender);
+      } catch (error) {
+        throw new NotFoundException('Group not found');
+      }
+    }
 
     try {
       if (options?.delay) {
