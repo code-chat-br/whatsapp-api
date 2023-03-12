@@ -1,21 +1,29 @@
 import makeWASocket, {
   AnyMessageContent,
   BaileysEventEmitter,
+  BufferedEventData,
   BufferJSON,
+  Chat,
+  ConnectionState,
+  Contact,
   delay,
   DisconnectReason,
   downloadMediaMessage,
   fetchLatestBaileysVersion,
   generateWAMessageFromContent,
   getDevice,
+  GroupMetadata,
   isJidGroup,
   isJidUser,
+  MessageUpsertType,
+  ParticipantAction,
   prepareWAMessageMedia,
   proto,
   useMultiFileAuthState,
   UserFacingSocketConfig,
   WABrowserDescription,
   WAMediaUpload,
+  WAMessageUpdate,
   WASocket,
 } from '@adiwajshing/baileys';
 import {
@@ -83,6 +91,7 @@ import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
 import Long from 'long';
 import { WebhookRaw } from '../models/webhook.model';
+import NodeCache from 'node-cache';
 
 export class WAStartupService {
   constructor(
@@ -98,10 +107,9 @@ export class WAStartupService {
   private readonly instance: wa.Instance = {};
   public client: WASocket;
   private readonly localWebhook: wa.LocalWebHook = {};
-  private stateConnection: wa.StateConnection = {
-    state: 'close',
-  };
+  private stateConnection: wa.StateConnection = { state: 'close' };
   private readonly storePath = join(ROOT_DIR, 'store');
+  private readonly msgRetryCounterCache = new NodeCache();
 
   public set instanceName(name: string) {
     if (!name) {
@@ -235,106 +243,104 @@ export class WAStartupService {
     }
   }
 
-  private async connectionUpdate(ev: BaileysEventEmitter) {
-    ev.on('connection.update', async ({ qr, connection, lastDisconnect }) => {
-      if (qr) {
-        if (
-          this.instance.qrcode.count === this.configService.get<QrCode>('QRCODE').LIMIT
-        ) {
-          this.sendDataWebhook(Events.QRCODE_UPDATED, {
-            message: 'QR code limit reached, please login again',
-            statusCode: DisconnectReason.badSession,
-          });
-
-          this.sendDataWebhook(Events.CONNECTION_UPDATE, {
-            instance: this.instance.name,
-            state: 'refused',
-            statusReason: DisconnectReason.connectionClosed,
-          });
-
-          this.sendDataWebhook(Events.STATUS_INSTANCE, {
-            instance: this.instance.name,
-            status: 'removed',
-          });
-
-          this.client.ev.removeAllListeners('connection.update');
-
-          delete this.client.ev.on;
-
-          return this.eventEmitter.emit('no.connection', this.instance.name);
-        }
-
-        this.instance.qrcode.count++;
-
-        const optsQrcode: QRCodeToDataURLOptions = {
-          margin: 3,
-          scale: 4,
-          errorCorrectionLevel: 'H',
-          color: { light: '#ffffff', dark: '#198754' },
-        };
-
-        qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
-          if (error) {
-            this.logger.error('Qrcode generate failed:' + error.toString());
-            return;
-          }
-
-          this.instance.qrcode.base64 = base64;
-          this.instance.qrcode.code = qr;
-
-          this.sendDataWebhook(Events.QRCODE_UPDATED, {
-            qrcode: { instance: this.instance.name, code: qr, base64 },
-          });
+  private async connectionUpdate({
+    qr,
+    connection,
+    lastDisconnect,
+  }: Partial<ConnectionState>) {
+    if (qr) {
+      if (this.instance.qrcode.count === this.configService.get<QrCode>('QRCODE').LIMIT) {
+        this.sendDataWebhook(Events.QRCODE_UPDATED, {
+          message: 'QR code limit reached, please login again',
+          statusCode: DisconnectReason.badSession,
         });
 
-        qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
-          this.logger.log(
-            `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
-              qrcode,
-          ),
-        );
-      }
-
-      if (connection) {
-        this.stateConnection = {
-          state: connection,
-          statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200,
-        };
         this.sendDataWebhook(Events.CONNECTION_UPDATE, {
           instance: this.instance.name,
-          ...this.stateConnection,
+          state: 'refused',
+          statusReason: DisconnectReason.connectionClosed,
         });
+
+        this.sendDataWebhook(Events.STATUS_INSTANCE, {
+          instance: this.instance.name,
+          status: 'removed',
+        });
+
+        this.client.ev.removeAllListeners('connection.update');
+
+        delete this.client.ev.on;
+
+        return this.eventEmitter.emit('no.connection', this.instance.name);
       }
 
-      if (connection === 'close') {
-        const shouldReconnect =
-          (lastDisconnect.error as Boom)?.output?.statusCode !==
-          DisconnectReason.loggedOut;
-        if (shouldReconnect) {
-          await this.connectToWhatsapp();
-        } else {
-          this.sendDataWebhook(Events.STATUS_INSTANCE, {
-            instance: this.instance.name,
-            status: 'removed',
-          });
-          return this.eventEmitter.emit('remove.instance', this.instance.name);
+      this.instance.qrcode.count++;
+
+      const optsQrcode: QRCodeToDataURLOptions = {
+        margin: 3,
+        scale: 4,
+        errorCorrectionLevel: 'H',
+        color: { light: '#ffffff', dark: '#198754' },
+      };
+
+      qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
+        if (error) {
+          this.logger.error('Qrcode generate failed:' + error.toString());
+          return;
         }
-      }
 
-      if (connection === 'open') {
-        this.setHandles(this.client.ev);
-        this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
-        this.instance.profilePictureUrl = (
-          await this.profilePicture(this.instance.wuid)
-        ).profilePictureUrl;
-        this.logger.info(
-          `
-          ┌──────────────────────────────┐
-          │    CONNECTED TO WHATSAPP     │
-          └──────────────────────────────┘`.replace(/^ +/gm, '  '),
-        );
+        this.instance.qrcode.base64 = base64;
+        this.instance.qrcode.code = qr;
+
+        this.sendDataWebhook(Events.QRCODE_UPDATED, {
+          qrcode: { instance: this.instance.name, code: qr, base64 },
+        });
+      });
+
+      qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
+        this.logger.log(
+          `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
+            qrcode,
+        ),
+      );
+    }
+
+    if (connection) {
+      this.stateConnection = {
+        state: connection,
+        statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200,
+      };
+      this.sendDataWebhook(Events.CONNECTION_UPDATE, {
+        instance: this.instance.name,
+        ...this.stateConnection,
+      });
+    }
+
+    if (connection === 'close') {
+      const shouldReconnect =
+        (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      if (shouldReconnect) {
+        await this.connectToWhatsapp();
+      } else {
+        this.sendDataWebhook(Events.STATUS_INSTANCE, {
+          instance: this.instance.name,
+          status: 'removed',
+        });
+        return this.eventEmitter.emit('remove.instance', this.instance.name);
       }
-    });
+    }
+
+    if (connection === 'open') {
+      this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
+      this.instance.profilePictureUrl = (
+        await this.profilePicture(this.instance.wuid)
+      ).profilePictureUrl;
+      this.logger.info(
+        `
+        ┌──────────────────────────────┐
+        │    CONNECTED TO WHATSAPP     │
+        └──────────────────────────────┘`.replace(/^ +/gm, '  '),
+      );
+    }
   }
 
   private async getMessage(key: proto.IMessageKey, full = false) {
@@ -394,7 +400,9 @@ export class WAStartupService {
       version,
       connectTimeoutMs: 60_000,
       emitOwnEvents: false,
+      msgRetryCounterCache: this.msgRetryCounterCache,
       getMessage: this.getMessage as any,
+      generateHighQualityLinkPreview: true,
       patchMessageBeforeSending: (message) => {
         const requiresPatch = !!(message.buttonsMessage || message.listMessage);
         if (requiresPatch) {
@@ -416,16 +424,14 @@ export class WAStartupService {
     };
 
     this.client = makeWASocket(socketConfig);
-    this.connectionUpdate(this.client.ev);
 
-    this.client.ev.on('creds.update', this.instance.authState.saveCreds);
+    this.eventHandler();
 
-    return this;
+    return this.client;
   }
 
-  private chatHandle(ev: BaileysEventEmitter) {
-    const database = this.configService.get<Database>('DATABASE');
-    ev.on('chats.upsert', async (chats) => {
+  private readonly chatHandle = {
+    'chats.upsert': async (chats: Chat[], database: Database) => {
       const chatsRepository = await this.repository.chat.find({
         where: { owner: this.instance.wuid },
       });
@@ -436,27 +442,29 @@ export class WAStartupService {
           continue;
         }
 
-        chatsRaw.push({
-          id: chat.id,
-          owner: this.instance.wuid,
-        });
+        chatsRaw.push({ id: chat.id, owner: this.instance.wuid });
       }
 
       await this.sendDataWebhook(Events.CHATS_UPSERT, chatsRaw);
       await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
-    });
+    },
 
-    ev.on('chats.update', async (chats) => {
+    'chats.update': async (
+      chats: Partial<
+        proto.IConversation & {
+          lastMessageRecvTimestamp?: number;
+        } & {
+          conditional: (bufferedData: BufferedEventData) => boolean;
+        }
+      >[],
+    ) => {
       const chatsRaw: ChatRaw[] = chats.map((chat) => {
-        return {
-          id: chat.id,
-          owner: this.instance.wuid,
-        };
+        return { id: chat.id, owner: this.instance.wuid };
       });
       await this.sendDataWebhook(Events.CHATS_UPDATE, chatsRaw);
-    });
+    },
 
-    ev.on('chats.delete', async (chats) => {
+    'chats.delete': async (chats: string[]) => {
       chats.forEach(
         async (chat) =>
           await this.repository.chat.delete({
@@ -464,12 +472,11 @@ export class WAStartupService {
           }),
       );
       await this.sendDataWebhook(Events.CHATS_DELETE, [...chats]);
-    });
-  }
+    },
+  };
 
-  private contactHandle(ev: BaileysEventEmitter) {
-    const database = this.configService.get<Database>('DATABASE');
-    ev.on('contacts.upsert', async (contacts) => {
+  private readonly contactHandle = {
+    'contacts.upsert': async (contacts: Contact[], database: Database) => {
       const contactsRepository = await this.repository.contact.find({
         where: { owner: this.instance.wuid },
       });
@@ -489,9 +496,9 @@ export class WAStartupService {
       }
       await this.sendDataWebhook(Events.CONTACTS_UPSERT, contactsRaw);
       await this.repository.contact.insert(contactsRaw, database.SAVE_DATA.CONTACTS);
-    });
+    },
 
-    ev.on('contacts.update', async (contacts) => {
+    'contacts.update': async (contacts: Partial<Contact>[]) => {
       const contactsRaw: ContactRaw[] = [];
       for await (const contact of contacts) {
         contactsRaw.push({
@@ -502,12 +509,23 @@ export class WAStartupService {
         });
       }
       await this.sendDataWebhook(Events.CONTACTS_UPDATE, contactsRaw);
-    });
-  }
+    },
+  };
 
-  private messageHandle(ev: BaileysEventEmitter) {
-    const database = this.configService.get<Database>('DATABASE');
-    ev.on('messaging-history.set', async ({ messages, chats, isLatest }) => {
+  private readonly messageHandle = {
+    'messaging-history.set': async (
+      {
+        messages,
+        chats,
+        isLatest,
+      }: {
+        chats: Chat[];
+        contacts: Contact[];
+        messages: proto.IWebMessageInfo[];
+        isLatest: boolean;
+      },
+      database: Database,
+    ) => {
       if (isLatest) {
         const chatsRaw: ChatRaw[] = chats.map((chat) => {
           return {
@@ -559,9 +577,18 @@ export class WAStartupService {
       );
       this.sendDataWebhook(Events.MESSAGES_SET, [...messagesRaw]);
       messages = undefined;
-    });
+    },
 
-    ev.on('messages.upsert', async ({ messages, type }) => {
+    'messages.upsert': async (
+      {
+        messages,
+        type,
+      }: {
+        messages: proto.IWebMessageInfo[];
+        type: MessageUpsertType;
+      },
+      database: Database,
+    ) => {
       const received = messages[0];
       if (
         type !== 'notify' ||
@@ -589,9 +616,9 @@ export class WAStartupService {
 
       await this.repository.message.insert([messageRaw], database.SAVE_DATA.NEW_MESSAGE);
       await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
-    });
+    },
 
-    ev.on('messages.update', async (args) => {
+    'messages.update': async (args: WAMessageUpdate[], database: Database) => {
       const status: Record<number, wa.StatusMessage> = {
         0: 'ERROR',
         1: 'PENDING',
@@ -615,36 +642,99 @@ export class WAStartupService {
           );
         }
       }
-    });
-  }
+    },
+  };
 
-  private presenceHandle(ev: BaileysEventEmitter) {
-    ev.on('presence.update', async (presence) => {
-      await this.sendDataWebhook(Events.PRESENCE_UPDATE, presence);
-    });
-  }
-
-  private groupHandler(ev: BaileysEventEmitter) {
-    ev.on('groups.upsert', (groupMetadata) => {
+  private readonly groupHandler = {
+    'groups.upsert': (groupMetadata: GroupMetadata[]) => {
       this.sendDataWebhook(Events.GROUPS_UPSERT, groupMetadata);
-    });
+    },
 
-    ev.on('groups.update', (groupMetadataUpdate) => {
+    'groups.update': (groupMetadataUpdate: Partial<GroupMetadata>[]) => {
       this.sendDataWebhook(Events.GROUPS_UPDATE, groupMetadataUpdate);
-    });
+    },
 
-    ev.on('group-participants.update', (participantsUpdate) => {
-      this.logger.log(participantsUpdate);
+    'group-participants.update': (participantsUpdate: {
+      id: string;
+      participants: string[];
+      action: ParticipantAction;
+    }) => {
       this.sendDataWebhook(Events.GROUP_PARTICIPANTS_UPDATE, participantsUpdate);
-    });
-  }
+    },
+  };
 
-  private setHandles(ev: BaileysEventEmitter) {
-    this.chatHandle(ev);
-    this.contactHandle(ev);
-    this.messageHandle(ev);
-    this.presenceHandle(ev);
-    this.groupHandler(ev);
+  private eventHandler() {
+    this.client.ev.process((events) => {
+      const database = this.configService.get<Database>('DATABASE');
+
+      if (events['connection.update']) {
+        this.connectionUpdate(events['connection.update']);
+      }
+
+      if (events['creds.update']) {
+        this.instance.authState.saveCreds();
+      }
+
+      if (events['messaging-history.set']) {
+        const payload = events['messaging-history.set'];
+        this.messageHandle['messaging-history.set'](payload, database);
+      }
+
+      if (events['messages.upsert']) {
+        const payload = events['messages.upsert'];
+        this.messageHandle['messages.upsert'](payload, database);
+      }
+
+      if (events['messages.update']) {
+        const payload = events['messages.update'];
+        this.messageHandle['messages.update'](payload, database);
+      }
+
+      if (events['presence.update']) {
+        const payload = events['presence.update'];
+        this.sendDataWebhook(Events.PRESENCE_UPDATE, payload);
+      }
+
+      if (events['groups.upsert']) {
+        const payload = events['groups.upsert'];
+        this.groupHandler['groups.upsert'](payload);
+      }
+
+      if (events['groups.update']) {
+        const payload = events['groups.update'];
+        this.groupHandler['groups.update'](payload);
+      }
+
+      if (events['group-participants.update']) {
+        const payload = events['group-participants.update'];
+        this.groupHandler['group-participants.update'](payload);
+      }
+
+      if (events['chats.upsert']) {
+        const payload = events['chats.upsert'];
+        this.chatHandle['chats.upsert'](payload, database);
+      }
+
+      if (events['chats.update']) {
+        const payload = events['chats.update'];
+        this.chatHandle['chats.update'](payload);
+      }
+
+      if (events['chats.delete']) {
+        const payload = events['chats.delete'];
+        this.chatHandle['chats.delete'](payload);
+      }
+
+      if (events['contacts.upsert']) {
+        const payload = events['contacts.upsert'];
+        this.contactHandle['contacts.upsert'](payload, database);
+      }
+
+      if (events['contacts.update']) {
+        const payload = events['contacts.update'];
+        this.contactHandle['contacts.update'](payload);
+      }
+    });
   }
 
   private createJid(number: string) {
@@ -761,40 +851,52 @@ export class WAStartupService {
   }
 
   private async prepareMediaMessage(mediaMessage: MediaMessage) {
-    const prepareMedia = await prepareWAMessageMedia(
-      {
-        [mediaMessage.mediatype]: isURL(mediaMessage.media)
-          ? { url: mediaMessage.media }
-          : Buffer.from(mediaMessage.media, 'base64'),
-      } as any,
-      { upload: this.client.waUploadToServer },
-    );
+    try {
+      const prepareMedia = await prepareWAMessageMedia(
+        {
+          [mediaMessage.mediatype]: isURL(mediaMessage.media)
+            ? { url: mediaMessage.media }
+            : Buffer.from(mediaMessage.media, 'base64'),
+        } as any,
+        { upload: this.client.waUploadToServer },
+      );
 
-    const type = mediaMessage.mediatype + 'Message';
+      const mediaType = mediaMessage.mediatype + 'Message';
 
-    if (mediaMessage.mediatype === 'document' && !mediaMessage.fileName) {
-      const regex = new RegExp(/.*\/(.+?)\./);
-      const arrayMatch = regex.exec(mediaMessage.media);
-      mediaMessage.fileName = arrayMatch[1];
+      if (mediaMessage.mediatype === 'document' && !mediaMessage.fileName) {
+        const regex = new RegExp(/.*\/(.+?)\./);
+        const arrayMatch = regex.exec(mediaMessage.media);
+        mediaMessage.fileName = arrayMatch[1];
+      }
+
+      let mimetype: string;
+
+      if (isURL(mediaMessage.media)) {
+        mimetype = getMIMEType(mediaMessage.media);
+      } else {
+        mimetype = getMIMEType(mediaMessage.fileName);
+      }
+
+      prepareMedia[mediaType].caption = mediaMessage?.caption;
+      prepareMedia[mediaType].mimetype = mimetype;
+      prepareMedia[mediaType].fileName = mediaMessage.fileName;
+
+      if (mediaMessage.mediatype === 'video') {
+        prepareMedia[mediaType].jpegThumbnail = Uint8Array.from(
+          readFileSync(join(process.cwd(), 'public', 'images', 'video-cover.png')),
+        );
+        prepareMedia[mediaType].gifPlayback = false;
+      }
+
+      return generateWAMessageFromContent(
+        '',
+        { [mediaType]: { ...prepareMedia[mediaType] } },
+        { userJid: this.instance.wuid },
+      );
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error?.toString() || error);
     }
-
-    let mimetype: string;
-
-    if (isURL(mediaMessage.media)) {
-      mimetype = getMIMEType(mediaMessage.media);
-    } else {
-      mimetype = getMIMEType(mediaMessage.fileName);
-    }
-
-    prepareMedia[type].caption = mediaMessage?.caption;
-    prepareMedia[type].mimetype = mimetype;
-    prepareMedia[type].fileName = mediaMessage.fileName;
-
-    return generateWAMessageFromContent(
-      '',
-      { [type]: { ...prepareMedia[type] } },
-      { userJid: this.instance.wuid },
-    );
   }
 
   public async mediaMessage(data: SendMediaDto) {
