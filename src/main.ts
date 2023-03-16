@@ -29,7 +29,7 @@ function bootstrap() {
         if (ORIGIN.indexOf(requestOrigin) !== -1) {
           return callback(null, true);
         }
-        return callback(new Error('Not allowed by CORS'));
+        return callback(null, true);
       },
       methods: [...configService.get<Cors>('CORS').METHODS],
       credentials: configService.get<Cors>('CORS').CREDENTIALS,

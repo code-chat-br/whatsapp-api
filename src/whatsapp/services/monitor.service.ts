@@ -142,10 +142,6 @@ export class WAMonitoringService {
       } catch {}
 
       try {
-        delete this.waInstances[instanceName];
-      } catch {}
-
-      try {
         if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
           await RepositoryBroker.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
@@ -160,7 +156,6 @@ export class WAMonitoringService {
   private noConnection() {
     this.eventEmitter.once('no.connection', async (instanceName) => {
       try {
-        delete this.waInstances[instanceName];
 
         if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
           await RepositoryBroker.dbServer.connect();

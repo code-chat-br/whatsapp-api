@@ -47,7 +47,7 @@ async function jwtGuard(req: Request, res: Response, next: NextFunction) {
 
     const param = req.params as unknown as InstanceDto;
     const decode = jwt.verify(token, jwtOpts.SECRET, {
-      ignoreExpiration: jwtOpts.EXPIRIN_IN === 0,
+      ignoreExpiration: true,
     }) as JwtPayload;
 
     if (param.instanceName !== decode.instanceName || name !== decode.apiName) {
