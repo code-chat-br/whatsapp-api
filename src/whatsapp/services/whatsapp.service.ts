@@ -1,6 +1,5 @@
 import makeWASocket, {
   AnyMessageContent,
-  BaileysEventEmitter,
   BufferedEventData,
   BufferJSON,
   Chat,
@@ -15,6 +14,7 @@ import makeWASocket, {
   GroupMetadata,
   isJidGroup,
   isJidUser,
+  MessageRetryMap,
   MessageUpsertType,
   ParticipantAction,
   prepareWAMessageMedia,
@@ -91,7 +91,6 @@ import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
 import Long from 'long';
 import { WebhookRaw } from '../models/webhook.model';
-import NodeCache from 'node-cache';
 
 export class WAStartupService {
   constructor(
@@ -109,7 +108,7 @@ export class WAStartupService {
   private readonly localWebhook: wa.LocalWebHook = {};
   private stateConnection: wa.StateConnection = { state: 'close' };
   private readonly storePath = join(ROOT_DIR, 'store');
-  private readonly msgRetryCounterCache = new NodeCache();
+  private readonly msgRetryCounterCache: MessageRetryMap = {};
 
   public set instanceName(name: string) {
     if (!name) {
@@ -379,7 +378,7 @@ export class WAStartupService {
     }
   }
 
-  public async connectToWhatsapp() {
+  public async connectToWhatsapp(): Promise<WASocket> {
     this.loadWebhook();
 
     const db = this.configService.get<Database>('DATABASE');
@@ -400,7 +399,7 @@ export class WAStartupService {
       version,
       connectTimeoutMs: 60_000,
       emitOwnEvents: false,
-      msgRetryCounterCache: this.msgRetryCounterCache,
+      msgRetryCounterMap: this.msgRetryCounterCache,
       getMessage: this.getMessage as any,
       generateHighQualityLinkPreview: true,
       patchMessageBeforeSending: (message) => {
@@ -836,6 +835,7 @@ export class WAStartupService {
 
       return messageSent;
     } catch (error) {
+      this.logger.error(error);
       throw new BadRequestException(error.toString());
     }
   }
