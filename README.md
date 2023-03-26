@@ -57,8 +57,6 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 sudo usermod -aG docker ${USER}
-
-sudo apt-get install docker-compose
 ```
 ### Nodejs installation
 
@@ -75,8 +73,6 @@ npm i -g pm2
 docker --version
 
 node --version
-
-docker-compose --version
 ```
 ## MongoDb [optional]
 
@@ -85,7 +81,7 @@ After installing docker and docker-compose, up the container.
 
 In the same directory where the file is located, run the following command:
 ```sh
-docker-compose up -d
+bash docker.sh
 ```
 Using the database is optional.
 

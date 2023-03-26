@@ -17,12 +17,16 @@ export class WAMonitoringService {
     this.removeInstance();
     this.noConnection();
     this.delInstanceFiles();
+
+    this.dbInstance = this.db.ENABLED
+      ? this.repository.dbServer.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
+      : null;
+
+    Object.assign(this.db, configService.get<Database>('DATABASE'));
   }
 
-  private readonly db = this.configService.get<Database>('DATABASE');
-  private readonly dbInstance = this.db.ENABLED
-    ? RepositoryBroker.dbServer.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
-    : null;
+  private readonly db: Partial<Database> = {};
+  private dbInstance: any;
 
   private readonly logger = new Logger(WAMonitoringService.name);
   public readonly waInstances: Record<string, WAStartupService> = {};
@@ -109,7 +113,7 @@ export class WAMonitoringService {
 
     try {
       if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-        await RepositoryBroker.dbServer.connect();
+        await this.repository.dbServer.connect();
         const collections = await this.dbInstance.collections();
         if (collections.length > 0) {
           collections.forEach(
@@ -147,7 +151,7 @@ export class WAMonitoringService {
 
       try {
         if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-          await RepositoryBroker.dbServer.connect();
+          await this.repository.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
         }
         rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
@@ -163,7 +167,7 @@ export class WAMonitoringService {
         delete this.waInstances[instanceName];
 
         if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-          await RepositoryBroker.dbServer.connect();
+          await this.repository.dbServer.connect();
           return await this.dbInstance.dropCollection(instanceName);
         }
 

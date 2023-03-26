@@ -8,20 +8,22 @@ import {
 } from '@adiwajshing/baileys';
 import { configService, Database } from '../config/env.config';
 import { Logger } from '../config/logger.config';
-import { RepositoryBroker } from '../whatsapp/repository/repository.manager';
+import { dbserver } from '../db/db.connect';
 
 export async function useMultiFileAuthStateDb(
   coll: string,
 ): Promise<{ state: AuthenticationState; saveCreds: () => Promise<void> }> {
   const logger = new Logger(useMultiFileAuthStateDb.name);
 
-  const collection = RepositoryBroker.dbServer
+  const client = dbserver.getClient();
+
+  const collection = client
     .db(configService.get<Database>('DATABASE').CONNECTION.DB_PREFIX_NAME + '-instances')
     .collection(coll);
 
   const writeData = async (data: any, key: string): Promise<any> => {
     try {
-      await RepositoryBroker.dbServer.connect();
+      await client.connect();
       return await collection.replaceOne(
         { _id: key },
         JSON.parse(JSON.stringify(data, BufferJSON.replacer)),
@@ -32,7 +34,7 @@ export async function useMultiFileAuthStateDb(
 
   const readData = async (key: string): Promise<any> => {
     try {
-      await RepositoryBroker.dbServer.connect();
+      await client.connect();
       const data = await collection.findOne({ _id: key });
       const creds = JSON.stringify(data);
       return JSON.parse(creds, BufferJSON.reviver);
@@ -41,7 +43,7 @@ export async function useMultiFileAuthStateDb(
 
   const removeData = async (key: string) => {
     try {
-      await RepositoryBroker.dbServer.connect();
+      await client.connect();
       return await collection.deleteOne({ _id: key });
     } catch {}
   };

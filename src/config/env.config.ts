@@ -148,7 +148,7 @@ export class ConfigService {
       DATABASE: {
         CONNECTION: {
           HOST: process.env?.DATABASE_CONNECTION_HOST,
-          PORT: Number.parseInt(process.env?.DATABASE_CONNECTION_HOST),
+          PORT: Number.parseInt(process.env?.DATABASE_CONNECTION_PORT),
           USER: process.env.DATABASE_CONNECTION_USER,
           PASSWORD: process.env.DATABASE_CONNECTION_PASSWORD,
           DB_PREFIX_NAME: process.env.DATABASE_CONNECTION_DB_PREFIX_NAME,

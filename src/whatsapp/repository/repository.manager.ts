@@ -16,12 +16,12 @@ export class RepositoryBroker {
     public readonly auth: AuthRepository,
     dbServer?: MongoClient,
   ) {
-    RepositoryBroker.dbClient = dbServer;
+    this.dbClient = dbServer;
   }
 
-  private static dbClient?: MongoClient;
+  private dbClient?: MongoClient;
 
-  public static get dbServer() {
-    return RepositoryBroker.dbClient;
+  public get dbServer() {
+    return this.dbClient;
   }
 }

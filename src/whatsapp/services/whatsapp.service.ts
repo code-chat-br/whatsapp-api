@@ -91,6 +91,7 @@ import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
 import Long from 'long';
 import { WebhookRaw } from '../models/webhook.model';
+import { dbserver } from '../../db/db.connect';
 
 export class WAStartupService {
   constructor(
@@ -125,7 +126,7 @@ export class WAStartupService {
   public get instanceName() {
     return this.instance.name;
   }
-
+  s;
   public get wuid() {
     return this.instance.wuid;
   }
@@ -134,7 +135,8 @@ export class WAStartupService {
     let profileName = this.client.user?.name ?? this.client.user?.verifiedName;
     if (!profileName) {
       if (this.configService.get<Database>('DATABASE').ENABLED) {
-        const collection = RepositoryBroker.dbServer
+        const collection = dbserver
+          .getClient()
           .db(
             this.configService.get<Database>('DATABASE').CONNECTION.DB_PREFIX_NAME +
               '-instances',
