@@ -54,10 +54,7 @@ STORE:
 DATABASE:
   ENABLED: false
   CONNECTION:
-    HOST: <host>
-    PORT: <port>
-    USER: <user>
-    PASSWORD: <pass>
+    URI: 'mongodb://<USER>:<PASSWORD>@<HOST>:<PORT>/?authSource=admin&readPreference=primary&ssl=false&directConnection=true'
     DB_PREFIX_NAME: codechat
   # Choose the data you want to save in the application's database or store
   SAVE_DATA:
