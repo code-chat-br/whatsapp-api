@@ -325,7 +325,7 @@ export class WAStartupService {
       const shouldReconnect =
         (lastDisconnect.error as Boom)?.output?.statusCode !==
           DisconnectReason.loggedOut ||
-        (lastDisconnect.error as Boom)?.name !== 'qrCodeLimitReached';
+        (lastDisconnect.error as Boom)?.name === 'qrCodeLimitReached';
       if (shouldReconnect) {
         await this.connectToWhatsapp();
       } else {
