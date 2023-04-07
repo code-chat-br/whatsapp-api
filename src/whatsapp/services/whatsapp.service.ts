@@ -322,10 +322,10 @@ export class WAStartupService {
     }
 
     if (connection === 'close') {
+      if ((lastDisconnect.error as Boom)?.name === 'qrCodeLimitReached') return;
+
       const shouldReconnect =
-        (lastDisconnect.error as Boom)?.output?.statusCode !==
-          DisconnectReason.loggedOut ||
-        (lastDisconnect.error as Boom)?.name === 'qrCodeLimitReached';
+        (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
       if (shouldReconnect) {
         await this.connectToWhatsapp();
       } else {
