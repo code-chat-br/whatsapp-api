@@ -271,6 +271,11 @@ export class WAStartupService {
 
         delete this.client.ev.on;
 
+        this.client.end({
+          name: 'qrCodeLimitReached',
+          message: 'QR code limit reached, please login again',
+        });
+
         return this.eventEmitter.emit('no.connection', this.instance.name);
       }
 
@@ -318,7 +323,9 @@ export class WAStartupService {
 
     if (connection === 'close') {
       const shouldReconnect =
-        (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+        (lastDisconnect.error as Boom)?.output?.statusCode !==
+          DisconnectReason.loggedOut &&
+        (lastDisconnect.error as Boom)?.name !== 'qrCodeLimitReached';
       if (shouldReconnect) {
         await this.connectToWhatsapp();
       } else {
