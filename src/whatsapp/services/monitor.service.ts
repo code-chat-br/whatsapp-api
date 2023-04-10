@@ -4,9 +4,11 @@ import { INSTANCE_DIR } from '../../config/path.config';
 import EventEmitter2 from 'eventemitter2';
 import { join } from 'path';
 import { Logger } from '../../config/logger.config';
-import { ConfigService, Database, DelInstance } from '../../config/env.config';
+import { ConfigService, Database, DelInstance, Redis } from '../../config/env.config';
 import { RepositoryBroker } from '../repository/repository.manager';
 import { NotFoundException } from '../../exceptions';
+import { Db } from 'mongodb';
+import { RedisCache } from '../../db/redis.client';
 
 export class WAMonitoringService {
   constructor(
@@ -18,15 +20,17 @@ export class WAMonitoringService {
     this.noConnection();
     this.delInstanceFiles();
 
+    Object.assign(this.db, configService.get<Database>('DATABASE'));
+    Object.assign(this.redis, configService.get<Redis>('REDIS'));
+
     this.dbInstance = this.db.ENABLED
       ? this.repository.dbServer.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
       : null;
-
-    Object.assign(this.db, configService.get<Database>('DATABASE'));
   }
 
   private readonly db: Partial<Database> = {};
-  private dbInstance: any;
+  private readonly redis: Partial<Redis> = {};
+  private dbInstance: Db;
 
   private readonly logger = new Logger(WAMonitoringService.name);
   public readonly waInstances: Record<string, WAStartupService> = {};
@@ -99,6 +103,24 @@ export class WAMonitoringService {
     }, 3600 * 1000 * 2);
   }
 
+  private async cleaningUp(instanceName: string) {
+    if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
+      await this.repository.dbServer.connect();
+      const collections: any[] = await this.dbInstance.collections();
+      if (collections.length > 0) {
+        await this.dbInstance.dropCollection(instanceName);
+      }
+      return;
+    }
+
+    if (this.redis.ENABLED) {
+      const redisCache = new RedisCache(this.redis.URI, instanceName);
+      await redisCache.delAll();
+      return;
+    }
+    rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
+  }
+
   public async loadInstance() {
     const set = async (name: string) => {
       const instance = new WAStartupService(
@@ -114,7 +136,7 @@ export class WAMonitoringService {
     try {
       if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
         await this.repository.dbServer.connect();
-        const collections = await this.dbInstance.collections();
+        const collections: any[] = await this.dbInstance.collections();
         if (collections.length > 0) {
           collections.forEach(
             async (coll) => await set(coll.namespace.replace(/^[\w-]+\./, '')),
@@ -136,25 +158,19 @@ export class WAMonitoringService {
           await set(dirent.name);
         }
       }
-    } catch {}
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instanceName: string) => {
       try {
-        await this.waInstances[instanceName]?.client?.logout();
+        this.waInstances[instanceName] = undefined;
       } catch {}
 
       try {
-        delete this.waInstances[instanceName];
-      } catch {}
-
-      try {
-        if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-          await this.repository.dbServer.connect();
-          return await this.dbInstance.dropCollection(instanceName);
-        }
-        rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
+        this.cleaningUp(instanceName);
       } finally {
         this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
@@ -162,16 +178,10 @@ export class WAMonitoringService {
   }
 
   private noConnection() {
-    this.eventEmitter.once('no.connection', async (instanceName) => {
+    this.eventEmitter.on('no.connection', async (instanceName) => {
       try {
-        delete this.waInstances[instanceName];
-
-        if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-          await this.repository.dbServer.connect();
-          return await this.dbInstance.dropCollection(instanceName);
-        }
-
-        rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
+        this.waInstances[instanceName] = undefined;
+        this.cleaningUp(instanceName);
       } catch (error) {
         this.logger.error({
           localError: 'noConnection',
@@ -179,7 +189,7 @@ export class WAMonitoringService {
           error,
         });
       } finally {
-        this.logger.warn(`Instance "${instanceName}" - REMOVED`);
+        this.logger.warn(`Instance "${instanceName}" - NOT CONNECTION`);
       }
     });
   }

@@ -4,7 +4,7 @@ import { Env } from '../config/env.config';
 import { BufferJSON } from '@adiwajshing/baileys';
 
 export class RedisCache {
-  constructor(private readonly instanceName: string, uri: string) {
+  constructor(uri: string, private instanceName: string) {
     this.client = createClient({ url: uri });
 
     this.client.connect();

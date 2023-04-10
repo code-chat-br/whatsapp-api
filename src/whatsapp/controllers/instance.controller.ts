@@ -47,7 +47,7 @@ export class InstanceController {
     switch (state) {
       case 'close':
         await instance.connectToWhatsapp();
-        await delay(1200);
+        await delay(2000);
         return instance.qrCode;
       case 'connecting':
         return instance.qrCode;
@@ -70,7 +70,9 @@ export class InstanceController {
 
   public async logout({ instanceName }: InstanceDto) {
     try {
-      this.eventEmitter.emit('remove.instance', instanceName);
+      await this.waMonitor.waInstances[instanceName]?.client?.logout(
+        'Log out instance: ' + instanceName,
+      );
       return { error: false, message: 'Instance logged out' };
     } catch (error) {
       throw new InternalServerErrorException(error.toString());

@@ -2,6 +2,7 @@ import makeWASocket, {
   AnyMessageContent,
   BufferedEventData,
   BufferJSON,
+  CacheStore,
   Chat,
   ConnectionState,
   Contact,
@@ -14,7 +15,6 @@ import makeWASocket, {
   GroupMetadata,
   isJidGroup,
   isJidUser,
-  MessageRetryMap,
   MessageUpsertType,
   ParticipantAction,
   prepareWAMessageMedia,
@@ -30,7 +30,9 @@ import {
   ConfigService,
   ConfigSessionPhone,
   Database,
+  Env,
   QrCode,
+  Redis,
   StoreConf,
   Webhook,
 } from '../../config/env.config';
@@ -92,6 +94,8 @@ import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-d
 import Long from 'long';
 import { WebhookRaw } from '../models/webhook.model';
 import { dbserver } from '../../db/db.connect';
+import NodeCache from 'node-cache';
+import { useMultiFileAuthStateRedisDb } from '../../utils/use-multi-file-auth-state-redis-db';
 
 export class WAStartupService {
   constructor(
@@ -109,7 +113,9 @@ export class WAStartupService {
   private readonly localWebhook: wa.LocalWebHook = {};
   private stateConnection: wa.StateConnection = { state: 'close' };
   private readonly storePath = join(ROOT_DIR, 'store');
-  private readonly msgRetryCounterCache: MessageRetryMap = {};
+  private readonly msgRetryCounterCache: CacheStore = new NodeCache();
+  private readonly userDevicesCache: CacheStore = new NodeCache();
+  private endSession = false;
 
   public set instanceName(name: string) {
     if (!name) {
@@ -267,9 +273,7 @@ export class WAStartupService {
           status: 'removed',
         });
 
-        this.client.ev.removeAllListeners('connection.update');
-
-        delete this.client.ev.on;
+        this.endSession = true;
 
         return this.eventEmitter.emit('no.connection', this.instance.name);
       }
@@ -326,7 +330,7 @@ export class WAStartupService {
           instance: this.instance.name,
           status: 'removed',
         });
-        return this.eventEmitter.emit('remove.instance', this.instance.name);
+        return this.eventEmitter.emit('remove.instance', this.instance.name, 'inner');
       }
     }
 
@@ -384,10 +388,24 @@ export class WAStartupService {
     this.loadWebhook();
 
     const db = this.configService.get<Database>('DATABASE');
-    this.instance.authState =
-      db.ENABLED && db.SAVE_DATA.INSTANCE
-        ? await useMultiFileAuthStateDb(this.instance.name)
-        : await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
+    const redis = this.configService.get<Redis>('REDIS');
+
+    if (db.ENABLED && db.SAVE_DATA.INSTANCE) {
+      this.instance.authState = await useMultiFileAuthStateDb(this.instance.name);
+    }
+
+    if (redis.ENABLED && !db.SAVE_DATA.INSTANCE) {
+      this.instance.authState = await useMultiFileAuthStateRedisDb(
+        redis.URI,
+        this.instance.name,
+      );
+    }
+
+    if (!db.SAVE_DATA.INSTANCE && !redis.ENABLED) {
+      this.instance.authState = await useMultiFileAuthState(
+        join(INSTANCE_DIR, this.instance.name),
+      );
+    }
 
     const { version } = await fetchLatestBaileysVersion();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
@@ -400,15 +418,19 @@ export class WAStartupService {
       browser,
       version,
       connectTimeoutMs: 60_000,
+      qrTimeout: 10_000,
       emitOwnEvents: false,
-      msgRetryCounterMap: this.msgRetryCounterCache,
+      msgRetryCounterCache: this.msgRetryCounterCache,
       getMessage: this.getMessage as any,
       generateHighQualityLinkPreview: true,
+      syncFullHistory: true,
+      userDevicesCache: this.userDevicesCache,
+      transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
       patchMessageBeforeSending: (message) => {
         const requiresPatch = !!(message.buttonsMessage || message.listMessage);
         if (requiresPatch) {
           message = {
-            viewOnceMessageV2: {
+            editedMessage: {
               message: {
                 messageContextInfo: {
                   deviceListMetadataVersion: 2,
@@ -423,6 +445,8 @@ export class WAStartupService {
         return message;
       },
     };
+
+    this.endSession = false;
 
     this.client = makeWASocket(socketConfig);
 
@@ -666,74 +690,76 @@ export class WAStartupService {
 
   private eventHandler() {
     this.client.ev.process((events) => {
-      const database = this.configService.get<Database>('DATABASE');
+      if (!this.endSession) {
+        const database = this.configService.get<Database>('DATABASE');
 
-      if (events['connection.update']) {
-        this.connectionUpdate(events['connection.update']);
-      }
+        if (events['connection.update']) {
+          this.connectionUpdate(events['connection.update']);
+        }
 
-      if (events['creds.update']) {
-        this.instance.authState.saveCreds();
-      }
+        if (events['creds.update']) {
+          this.instance.authState.saveCreds();
+        }
 
-      if (events['messaging-history.set']) {
-        const payload = events['messaging-history.set'];
-        this.messageHandle['messaging-history.set'](payload, database);
-      }
+        if (events['messaging-history.set']) {
+          const payload = events['messaging-history.set'];
+          this.messageHandle['messaging-history.set'](payload, database);
+        }
 
-      if (events['messages.upsert']) {
-        const payload = events['messages.upsert'];
-        this.messageHandle['messages.upsert'](payload, database);
-      }
+        if (events['messages.upsert']) {
+          const payload = events['messages.upsert'];
+          this.messageHandle['messages.upsert'](payload, database);
+        }
 
-      if (events['messages.update']) {
-        const payload = events['messages.update'];
-        this.messageHandle['messages.update'](payload, database);
-      }
+        if (events['messages.update']) {
+          const payload = events['messages.update'];
+          this.messageHandle['messages.update'](payload, database);
+        }
 
-      if (events['presence.update']) {
-        const payload = events['presence.update'];
-        this.sendDataWebhook(Events.PRESENCE_UPDATE, payload);
-      }
+        if (events['presence.update']) {
+          const payload = events['presence.update'];
+          this.sendDataWebhook(Events.PRESENCE_UPDATE, payload);
+        }
 
-      if (events['groups.upsert']) {
-        const payload = events['groups.upsert'];
-        this.groupHandler['groups.upsert'](payload);
-      }
+        if (events['groups.upsert']) {
+          const payload = events['groups.upsert'];
+          this.groupHandler['groups.upsert'](payload);
+        }
 
-      if (events['groups.update']) {
-        const payload = events['groups.update'];
-        this.groupHandler['groups.update'](payload);
-      }
+        if (events['groups.update']) {
+          const payload = events['groups.update'];
+          this.groupHandler['groups.update'](payload);
+        }
 
-      if (events['group-participants.update']) {
-        const payload = events['group-participants.update'];
-        this.groupHandler['group-participants.update'](payload);
-      }
+        if (events['group-participants.update']) {
+          const payload = events['group-participants.update'];
+          this.groupHandler['group-participants.update'](payload);
+        }
 
-      if (events['chats.upsert']) {
-        const payload = events['chats.upsert'];
-        this.chatHandle['chats.upsert'](payload, database);
-      }
+        if (events['chats.upsert']) {
+          const payload = events['chats.upsert'];
+          this.chatHandle['chats.upsert'](payload, database);
+        }
 
-      if (events['chats.update']) {
-        const payload = events['chats.update'];
-        this.chatHandle['chats.update'](payload);
-      }
+        if (events['chats.update']) {
+          const payload = events['chats.update'];
+          this.chatHandle['chats.update'](payload);
+        }
 
-      if (events['chats.delete']) {
-        const payload = events['chats.delete'];
-        this.chatHandle['chats.delete'](payload);
-      }
+        if (events['chats.delete']) {
+          const payload = events['chats.delete'];
+          this.chatHandle['chats.delete'](payload);
+        }
 
-      if (events['contacts.upsert']) {
-        const payload = events['contacts.upsert'];
-        this.contactHandle['contacts.upsert'](payload, database);
-      }
+        if (events['contacts.upsert']) {
+          const payload = events['contacts.upsert'];
+          this.contactHandle['contacts.upsert'](payload, database);
+        }
 
-      if (events['contacts.update']) {
-        const payload = events['contacts.update'];
-        this.contactHandle['contacts.update'](payload);
+        if (events['contacts.update']) {
+          const payload = events['contacts.update'];
+          this.contactHandle['contacts.update'](payload);
+        }
       }
     });
   }

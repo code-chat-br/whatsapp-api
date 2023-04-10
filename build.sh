@@ -2,6 +2,7 @@
 
 if [ "$DOCKER_ENV" = "true" ];
 then
+  cp ./src/env.yml ./dist/src
   echo "Enabling environment variables for Docker"
   echo "DOCKER_ENV=$DOCKER_ENV"
   echo
@@ -11,7 +12,6 @@ rm -rf ./dist
 echo
 echo "> transpiling..."
 tsc
-cp ./src/env.yml ./dist/src
 
 echo
 echo "> Successfully build "
