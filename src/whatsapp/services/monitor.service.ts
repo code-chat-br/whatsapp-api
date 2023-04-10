@@ -24,7 +24,7 @@ export class WAMonitoringService {
     Object.assign(this.redis, configService.get<Redis>('REDIS'));
 
     this.dbInstance = this.db.ENABLED
-      ? this.repository.dbServer.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
+      ? this.repository.dbServer?.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
       : null;
   }
 
