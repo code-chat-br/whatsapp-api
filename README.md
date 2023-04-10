@@ -203,7 +203,6 @@ curl --location --request GET 'http://localhost:8080/instance/connect/codechat' 
 
 ### App in Docker
   - [Dockerfile](./Dockerfile)
-  - [docker-compose](./docker-compose.yaml)
   - [.env for docker](./Docker/dev.env)
 
 After building the application, in the same directory as the files above, run the following command:
@@ -216,7 +215,7 @@ docker-compose up
 | Send Text | ✔ |
 | Send Buttons | ✔ |
 | Send Template | ❌ |
-| Send Media: audio - video - image - documet - gif <br></br>base64: ```true``` | ✔ |
+| Send Media: audio - video - image - document - gif <br></br>base64: ```true``` | ✔ |
 | Send Media File | ❌ |
 | Send Audio type WhatsApp | ✔ |
 | Send Location | ✔ |
