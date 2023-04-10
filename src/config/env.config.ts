@@ -44,6 +44,11 @@ export type Database = {
   SAVE_DATA: SaveData;
 };
 
+export type Redis = {
+  ENABLED: boolean;
+  URI: string;
+};
+
 export type EventsWebhook = {
   QRCODE_UPDATED: boolean;
   MESSAGES_SET: boolean;
@@ -84,6 +89,7 @@ export interface Env {
   SSL_CONF: SslConf;
   STORE: StoreConf;
   DATABASE: Database;
+  REDIS: Redis;
   LOG: Log;
   DEL_INSTANCE: DelInstance;
   WEBHOOK: Webhook;
@@ -156,6 +162,10 @@ export class ConfigService {
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
         },
+      },
+      REDIS: {
+        ENABLED: process.env?.REDIS_ENABLED === 'true',
+        URI: process.env.REDIS_URI,
       },
       LOG: {
         LEVEL: process.env?.LOG_LEVEL.split(',') as LogLevel[],
