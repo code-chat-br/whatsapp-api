@@ -65,6 +65,10 @@ DATABASE:
     CONTACTS: true
     CHATS: true
 
+REDIS:
+  ENABLED: false
+  URI: 'redis://<ROST>'
+
 # Webhook Settings
 WEBHOOK:
   # Define a global webhook that will listen for enabled events from all instances
