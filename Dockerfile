@@ -90,4 +90,4 @@ COPY . .
 
 EXPOSE 8083
 
-CMD [ "npm", "run", "start:prod" ]
+CMD [ "npm", "run", "build" ]
