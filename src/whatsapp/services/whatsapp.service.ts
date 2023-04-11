@@ -401,7 +401,7 @@ export class WAStartupService {
       );
     }
 
-    if (!db.SAVE_DATA.INSTANCE && !redis.ENABLED) {
+    if (!redis.ENABLED) {
       this.instance.authState = await useMultiFileAuthState(
         join(INSTANCE_DIR, this.instance.name),
       );

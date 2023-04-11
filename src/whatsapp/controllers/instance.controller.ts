@@ -7,6 +7,7 @@ import { RepositoryBroker } from '../repository/repository.manager';
 import { AuthService, OldToken } from '../services/auth.service';
 import { WAMonitoringService } from '../services/monitor.service';
 import { WAStartupService } from '../services/whatsapp.service';
+import { Logger } from '../../config/logger.config';
 
 export class InstanceController {
   constructor(
@@ -16,6 +17,8 @@ export class InstanceController {
     private readonly eventEmitter: EventEmitter2,
     private readonly authService: AuthService,
   ) {}
+
+  private readonly logger = new Logger(InstanceController.name);
 
   public async createInstance({ instanceName }: InstanceDto) {
     const instance = new WAStartupService(
@@ -41,18 +44,22 @@ export class InstanceController {
   }
 
   public async connectToWhatsapp({ instanceName }: InstanceDto) {
-    const instance = this.waMonitor.waInstances[instanceName];
-    const state = instance.connectionStatus?.state;
+    try {
+      const instance = this.waMonitor.waInstances[instanceName];
+      const state = instance.connectionStatus?.state;
 
-    switch (state) {
-      case 'close':
-        await instance.connectToWhatsapp();
-        await delay(2000);
-        return instance.qrCode;
-      case 'connecting':
-        return instance.qrCode;
-      default:
-        return await this.connectionState({ instanceName });
+      switch (state) {
+        case 'close':
+          await instance.connectToWhatsapp();
+          await delay(2000);
+          return instance.qrCode;
+        case 'connecting':
+          return instance.qrCode;
+        default:
+          return await this.connectionState({ instanceName });
+      }
+    } catch (error) {
+      this.logger.log(error);
     }
   }
 
