@@ -67,7 +67,7 @@ DATABASE:
 
 REDIS:
   ENABLED: false
-  URI: 'redis://<ROST>'
+  URI: 'redis://<HOST>'
 
 # Webhook Settings
 WEBHOOK:
