@@ -39,11 +39,9 @@ function bootstrap() {
     compression(),
   );
 
-  if (!configService.get<Production>('PRODUCTION')) {
-    app.set('view engine', 'hbs');
-    app.set('views', join(ROOT_DIR, 'views'));
-    app.use(express.static(join(ROOT_DIR, 'public')));
-  }
+  app.set('view engine', 'hbs');
+  app.set('views', join(ROOT_DIR, 'views'));
+  app.use(express.static(join(ROOT_DIR, 'public')));
 
   app.use('/', router);
 

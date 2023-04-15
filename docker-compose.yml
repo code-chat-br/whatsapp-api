@@ -1,19 +1,18 @@
-version: '3'
+version: '3.3'
 
 networks:
   codechat-net:
     driver: bridge
 
-service:
+services:
   base:
     container_name: codechat_api
     image: codechat/api:latest
     ports:
       - 8083:8083
     volumes:
-      /data/instances:home/api/instances
-    env_file: ./Docker/.env
-    command: [node, './dist/src/main.js']
+      - /data/instances:/codechat/instances
+    command: ['node', './dist/src/main.js']
 
-  networks:
-    - codechat-net
+    networks:
+      - codechat-net

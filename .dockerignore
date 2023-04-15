@@ -2,21 +2,29 @@
 /test
 /.vs
 /.vscode
+/.github
+/.git
 
 # Docker
 /Dockerfile
 /docker-compose.yml
 /.dockerignore
+/docker.sh
 
 # Project related
-/LICENCE
+/LICENSE
 /README.md
 /.eslintignore
 /.eslintrc.js
-/.pretierrc.js
+/.prettierrc.js
 /.gitignore
 /mongodb
 /postman.json
-/node_modules
-/dist
-/src/dev-env.yml
+/src
+/postman.json
+/tsconfig.json
+/README.md
+/public
+/Docker
+/mongodb
+/start.sh

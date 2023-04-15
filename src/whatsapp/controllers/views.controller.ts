@@ -12,13 +12,17 @@ export class ViewsController {
   ) {}
 
   public async qrcode(request: Request, response: Response) {
-    const param = request.params as unknown as InstanceDto;
-    const instance = this.waMonit.waInstances[param.instanceName];
-    if (instance.connectionStatus.state === 'open') {
-      throw new BadRequestException('The instance is already connected');
-    }
-    const type = this.configService.get<Auth>('AUTHENTICATION').TYPE;
+    try {
+      const param = request.params as unknown as InstanceDto;
+      const instance = this.waMonit.waInstances[param.instanceName];
+      if (instance.connectionStatus.state === 'open') {
+        throw new BadRequestException('The instance is already connected');
+      }
+      const type = this.configService.get<Auth>('AUTHENTICATION').TYPE;
 
-    return response.status(HttpStatus.OK).render('qrcode', { type, ...param });
+      return response.status(HttpStatus.OK).render('qrcode', { type, ...param });
+    } catch (error) {
+      console.log('ERROR: ', error);
+    }
   }
 }

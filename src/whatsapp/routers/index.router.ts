@@ -27,7 +27,7 @@ router
   .use(
     '/instance',
     new InstanceRouter(configService, ...guards).router,
-    new ViewsRouter(configService, instanceExistsGuard).router,
+    new ViewsRouter(instanceExistsGuard).router,
   )
   .use('/message', new MessageRouter(...guards).router)
   .use('/chat', new ChatRouter(...guards).router)
