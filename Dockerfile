@@ -9,9 +9,11 @@ RUN apt-get upgrade -y
 
 WORKDIR /codechat
 
-COPY .package.json .
+COPY ./package.json .
 
-# see https://github.com/code-chat-br/whatsapp-api/blob/main/Docker/dev.env
+# See https://github.com/code-chat-br/whatsapp-api/blob/main/Docker/dev.env
+# This file composes an image from the data in this repository.
+# Check here the official image of this api: https://hub.docker.com/r/codechat/api
 
 ENV DOCKER_ENV=true
 
