@@ -390,18 +390,18 @@ export class WAStartupService {
     const db = this.configService.get<Database>('DATABASE');
     const redis = this.configService.get<Redis>('REDIS');
 
-    if (db.ENABLED && db.SAVE_DATA.INSTANCE) {
-      this.instance.authState = await useMultiFileAuthStateDb(this.instance.name);
-    }
-
-    if (redis.ENABLED && !db.SAVE_DATA.INSTANCE) {
-      this.instance.authState = await useMultiFileAuthStateRedisDb(
-        redis.URI,
-        this.instance.name,
-      );
-    }
-
-    if (!redis.ENABLED) {
+    if (db.SAVE_DATA.INSTANCE) {
+      if (redis.ENABLED) {
+        this.instance.authState = await useMultiFileAuthStateRedisDb(
+          redis.URI,
+          this.instance.name,
+        );
+      } else {
+        if (db.ENABLED) {
+          this.instance.authState = await useMultiFileAuthStateDb(this.instance.name);
+        }
+      }
+    } else {
       this.instance.authState = await useMultiFileAuthState(
         join(INSTANCE_DIR, this.instance.name),
       );
