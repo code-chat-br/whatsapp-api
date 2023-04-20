@@ -25,7 +25,7 @@ import makeWASocket, {
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
-} from '@adiwajshing/baileys';
+} from '@codechat/base';
 import {
   ConfigService,
   ConfigSessionPhone,
@@ -38,7 +38,7 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import axios from 'axios';
 import { v4 } from 'uuid';
@@ -396,10 +396,12 @@ export class WAStartupService {
           redis.URI,
           this.instance.name,
         );
+      } else if (db.ENABLED) {
+        this.instance.authState = await useMultiFileAuthStateDb(this.instance.name);
       } else {
-        if (db.ENABLED) {
-          this.instance.authState = await useMultiFileAuthStateDb(this.instance.name);
-        }
+        this.instance.authState = await useMultiFileAuthState(
+          join(INSTANCE_DIR, this.instance.name),
+        );
       }
     } else {
       this.instance.authState = await useMultiFileAuthState(
@@ -430,7 +432,7 @@ export class WAStartupService {
         const requiresPatch = !!(message.buttonsMessage || message.listMessage);
         if (requiresPatch) {
           message = {
-            editedMessage: {
+            viewOnceMessageV2: {
               message: {
                 messageContextInfo: {
                   deviceListMetadataVersion: 2,

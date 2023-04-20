@@ -1,6 +1,6 @@
 import { createClient, RedisClientType } from '@redis/client';
 import { Logger } from '../config/logger.config';
-import { BufferJSON } from '@adiwajshing/baileys';
+import { BufferJSON } from '@codechat/base';
 
 export class RedisCache {
   constructor(uri: string, private instanceName: string) {
