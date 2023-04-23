@@ -1,4 +1,4 @@
-import { proto, WAPresence } from '@adiwajshing/baileys';
+import { proto, WAPresence } from '@codechat/base';
 
 export class Options {
   delay?: number;

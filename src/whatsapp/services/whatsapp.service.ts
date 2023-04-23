@@ -384,30 +384,25 @@ export class WAStartupService {
     }
   }
 
-  public async connectToWhatsapp(): Promise<WASocket> {
-    this.loadWebhook();
-
+  private async defineAuthState() {
     const db = this.configService.get<Database>('DATABASE');
     const redis = this.configService.get<Redis>('REDIS');
 
-    if (db.SAVE_DATA.INSTANCE) {
-      if (redis.ENABLED) {
-        this.instance.authState = await useMultiFileAuthStateRedisDb(
-          redis.URI,
-          this.instance.name,
-        );
-      } else if (db.ENABLED) {
-        this.instance.authState = await useMultiFileAuthStateDb(this.instance.name);
-      } else {
-        this.instance.authState = await useMultiFileAuthState(
-          join(INSTANCE_DIR, this.instance.name),
-        );
-      }
-    } else {
-      this.instance.authState = await useMultiFileAuthState(
-        join(INSTANCE_DIR, this.instance.name),
-      );
+    if (redis?.ENABLED) {
+      return await useMultiFileAuthStateRedisDb(redis.URI, this.instance.name);
     }
+
+    if (db.SAVE_DATA.INSTANCE && db.ENABLED) {
+      return await useMultiFileAuthStateDb(this.instance.name);
+    }
+
+    return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
+  }
+
+  public async connectToWhatsapp(): Promise<WASocket> {
+    this.loadWebhook();
+
+    this.instance.authState = await this.defineAuthState();
 
     const { version } = await fetchLatestBaileysVersion();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');

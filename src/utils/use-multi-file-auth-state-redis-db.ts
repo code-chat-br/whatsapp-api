@@ -17,7 +17,7 @@ export async function useMultiFileAuthStateRedisDb(
 }> {
   const logger = new Logger(useMultiFileAuthStateRedisDb.name);
 
-  const cache = new RedisCache(instanceName, redisUri);
+  const cache = new RedisCache(redisUri, instanceName);
 
   const writeData = async (data: any, key: string): Promise<any> => {
     try {

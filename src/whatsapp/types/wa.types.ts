@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-namespace */
-import { AuthenticationState, WAConnectionState } from '@adiwajshing/baileys';
+import { AuthenticationState, WAConnectionState } from '@codechat/base';
 
 export enum Events {
   QRCODE_UPDATED = 'qrcode.updated',
