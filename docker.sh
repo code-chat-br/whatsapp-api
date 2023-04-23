@@ -12,6 +12,6 @@ sudo mkdir -p /data/instances
 
 docker build -t ${IMAGE} .
 
-# docker run --restart 'always' --name 'api-codechat' --mount 'type=bind,source=/data/instances,target=/home/api/instances' --publish '8083:8083' --hostname 'codechat-net' --network codechat-net codechat/api:latest
+# docker run --restart 'always' --name 'codechat_api' --mount 'type=bind,source=/data/instances,target=/home/api/instances' --publish '8083:8083' --hostname 'codechat' --network ${NET} ${IMAGE}
 
-docker run -d --restart 'always' --name 'api-codechat' --mount 'type=bind,source=/data/instances,target=/codechat/instances' --publish '8083:8083' --hostname 'codechat-net' --network 'codechat-net' ${IMAGE}
+docker run -d --restart 'always' --name 'codechat_api' --mount 'type=bind,source=/data/instances,target=/codechat/instances' --publish '8083:8083' --hostname 'codechat' --network ${NET} ${IMAGE}
