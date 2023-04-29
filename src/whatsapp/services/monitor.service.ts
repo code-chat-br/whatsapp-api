@@ -25,12 +25,16 @@ export class WAMonitoringService {
 
     this.dbInstance = this.db.ENABLED
       ? this.repository.dbServer?.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
-      : null;
+      : undefined;
+
+    this.redisCache = this.redis.ENABLED ? new RedisCache(this.redis.URI) : undefined;
   }
 
   private readonly db: Partial<Database> = {};
   private readonly redis: Partial<Redis> = {};
+
   private dbInstance: Db;
+  private redisCache: RedisCache;
 
   private readonly logger = new Logger(WAMonitoringService.name);
   public readonly waInstances: Record<string, WAStartupService> = {};
@@ -114,8 +118,8 @@ export class WAMonitoringService {
     }
 
     if (this.redis.ENABLED) {
-      const redisCache = new RedisCache(this.redis.URI, instanceName);
-      await redisCache.delAll();
+      this.redisCache.reference = instanceName;
+      await this.redisCache.delAll();
       return;
     }
     rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
@@ -134,6 +138,14 @@ export class WAMonitoringService {
     };
 
     try {
+      if (this.redis.ENABLED) {
+        const keys = await this.redisCache.instanceKeys();
+        if (keys?.length > 0) {
+          keys.forEach(async (k) => await set(k));
+        }
+        return;
+      }
+
       if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
         await this.repository.dbServer.connect();
         const collections: any[] = await this.dbInstance.collections();
@@ -144,6 +156,7 @@ export class WAMonitoringService {
         }
         return;
       }
+
       const dir = opendirSync(INSTANCE_DIR, { encoding: 'utf-8' });
       for await (const dirent of dir) {
         if (dirent.isDirectory()) {

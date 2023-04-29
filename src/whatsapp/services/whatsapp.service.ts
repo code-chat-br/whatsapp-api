@@ -400,56 +400,61 @@ export class WAStartupService {
   }
 
   public async connectToWhatsapp(): Promise<WASocket> {
-    this.loadWebhook();
+    try {
+      this.loadWebhook();
 
-    this.instance.authState = await this.defineAuthState();
+      this.instance.authState = await this.defineAuthState();
 
-    const { version } = await fetchLatestBaileysVersion();
-    const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-    const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+      const { version } = await fetchLatestBaileysVersion();
+      const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
+      const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
-    const socketConfig: UserFacingSocketConfig = {
-      auth: this.instance.authState.state,
-      logger: P({ level: 'error' }),
-      printQRInTerminal: false,
-      browser,
-      version,
-      connectTimeoutMs: 60_000,
-      qrTimeout: 10_000,
-      emitOwnEvents: false,
-      msgRetryCounterCache: this.msgRetryCounterCache,
-      getMessage: this.getMessage as any,
-      generateHighQualityLinkPreview: true,
-      syncFullHistory: true,
-      userDevicesCache: this.userDevicesCache,
-      transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
-      patchMessageBeforeSending: (message) => {
-        const requiresPatch = !!(message.buttonsMessage || message.listMessage);
-        if (requiresPatch) {
-          message = {
-            viewOnceMessageV2: {
-              message: {
-                messageContextInfo: {
-                  deviceListMetadataVersion: 2,
-                  deviceListMetadata: {},
+      const socketConfig: UserFacingSocketConfig = {
+        auth: this.instance.authState.state,
+        logger: P({ level: 'error' }),
+        printQRInTerminal: false,
+        browser,
+        version,
+        connectTimeoutMs: 60_000,
+        qrTimeout: 10_000,
+        emitOwnEvents: false,
+        msgRetryCounterCache: this.msgRetryCounterCache,
+        getMessage: this.getMessage as any,
+        generateHighQualityLinkPreview: true,
+        syncFullHistory: true,
+        userDevicesCache: this.userDevicesCache,
+        transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
+        patchMessageBeforeSending: (message) => {
+          const requiresPatch = !!(message.buttonsMessage || message.listMessage);
+          if (requiresPatch) {
+            message = {
+              viewOnceMessageV2: {
+                message: {
+                  messageContextInfo: {
+                    deviceListMetadataVersion: 2,
+                    deviceListMetadata: {},
+                  },
+                  ...message,
                 },
-                ...message,
               },
-            },
-          };
-        }
+            };
+          }
 
-        return message;
-      },
-    };
+          return message;
+        },
+      };
 
-    this.endSession = false;
+      this.endSession = false;
 
-    this.client = makeWASocket(socketConfig);
+      this.client = makeWASocket(socketConfig);
 
-    this.eventHandler();
+      this.eventHandler();
 
-    return this.client;
+      return this.client;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error?.toString());
+    }
   }
 
   private readonly chatHandle = {
