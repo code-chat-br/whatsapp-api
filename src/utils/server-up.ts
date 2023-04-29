@@ -11,7 +11,7 @@ export class ServerUP {
     this.#app = e;
   }
 
-  static https() {
+  static get https() {
     const { FULLCHAIN, PRIVKEY } = configService.get<SslConf>('SSL_CONF');
     return https.createServer(
       {
@@ -22,7 +22,7 @@ export class ServerUP {
     );
   }
 
-  static http() {
+  static get http() {
     return http.createServer(ServerUP.#app);
   }
 }

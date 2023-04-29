@@ -69,7 +69,7 @@ function bootstrap() {
   ServerUP.app = app;
   const server = ServerUP[httpServer.TYPE];
 
-  server().listen(httpServer.PORT, () =>
+  server.listen(httpServer.PORT, () =>
     logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT),
   );
 
