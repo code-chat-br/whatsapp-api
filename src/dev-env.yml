@@ -41,7 +41,7 @@ LOG:
 # Determine how long the instance should be deleted from memory in case of no connection.
 # Default time: 5 minutes
 # If you don't even want an expiration, enter the value false
-DEL_INSTANCE: 5 # or false
+DEL_INSTANCE: false # or false
 
 # Temporary data storage
 STORE:
@@ -116,5 +116,5 @@ AUTHENTICATION:
     KEY: t8OOEeISKzpmc3jjcMqBWYSaJsafdefer
   # Set the secret key to encrypt and decrypt your token and its expiration time.
   JWT:
-    EXPIRIN_IN: 3600 # seconds - 3600s === 1h | zero (0) - never expires
+    EXPIRIN_IN: 0 # seconds - 3600s === 1h | zero (0) - never expires
     SECRET: L=0YWt]b2w[WF>#>:&E`
