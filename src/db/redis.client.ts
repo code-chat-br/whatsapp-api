@@ -18,7 +18,7 @@ export class RedisCache {
 
   public async instanceKeys(): Promise<string[]> {
     try {
-      return await this.client.sendCommand(['keys', '*']);
+      return await this.client.sendCommand(['keys', 'codechat:*']);
     } catch (error) {
       this.logger.error(error);
     }
@@ -35,7 +35,7 @@ export class RedisCache {
   public async writeData(field: string, data: any) {
     try {
       const json = JSON.stringify(data, BufferJSON.replacer);
-      return await this.client.hSet(this.instanceName, field, json);
+      return await this.client.hSet('codechat:' + this.instanceName, field, json);
     } catch (error) {
       this.logger.error(error);
     }
@@ -43,7 +43,7 @@ export class RedisCache {
 
   public async readData(field: string) {
     try {
-      const data = await this.client.hGet(this.instanceName, field);
+      const data = await this.client.hGet('codechat:' + this.instanceName, field);
       if (data) {
         return JSON.parse(data, BufferJSON.reviver);
       }
@@ -54,7 +54,7 @@ export class RedisCache {
 
   public async removeData(field: string) {
     try {
-      return await this.client.hDel(this.instanceName, field);
+      return await this.client.hDel('codechat:' + this.instanceName, field);
     } catch (error) {
       this.logger.error(error);
     }
@@ -62,7 +62,7 @@ export class RedisCache {
 
   public async delAll(hash?: string) {
     try {
-      return await this.client.del(hash || this.instanceName);
+      return await this.client.del(hash || 'codechat:' + this.instanceName);
     } catch (error) {
       this.logger.error(error);
     }
