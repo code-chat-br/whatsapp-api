@@ -482,7 +482,7 @@ export const groupJidSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
-    groupJid: { type: 'string', pattern: '^[\\d]+@g.us$' },
+    groupJid: { type: 'string', pattern: '^[\\d-]+@g.us$' },
   },
   required: ['groupJid'],
   ...isNotEmpty('groupJid'),

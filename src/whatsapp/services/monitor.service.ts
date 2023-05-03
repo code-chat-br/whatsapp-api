@@ -141,7 +141,7 @@ export class WAMonitoringService {
       if (this.redis.ENABLED) {
         const keys = await this.redisCache.instanceKeys();
         if (keys?.length > 0) {
-          keys.forEach(async (k) => await set(k));
+          keys.forEach(async (k) => await set(k.split(':')[1]));
         }
         return;
       }
