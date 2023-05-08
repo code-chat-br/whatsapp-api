@@ -766,13 +766,21 @@ export class WAStartupService {
     });
   }
 
-  private createJid(number: string) {
-    if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
-      return number;
+  // Check if the number is MX or AR
+  private formatMXOrARNumber(jid: string): string {
+    const regexp = new RegExp(/^(\d{2})(\d{2})\d{1}(\d{8})$/);
+    if (regexp.test(jid)) {
+      const match = regexp.exec(jid);
+      if (match && (match[1] === '52' || match[1] === '54')) {
+        const joker = Number.parseInt(match[3][0]);
+        const ddd = Number.parseInt(match[2]);
+        if (joker < 7 || ddd < 11) {
+          return match[0];
+        }
+        return (match[1] === '52') ? '52' + match[3] : '54' + match[3];
+      }
     }
-    return number.includes('-')
-      ? `${number}@g.us`
-      : `${this.formatBRNumber(number)}@s.whatsapp.net`;
+    return jid;
   }
 
   // Check if the number is br
@@ -793,6 +801,28 @@ export class WAStartupService {
     }
   }
 
+  private createJid(number: string): string {
+    if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
+      return number;
+    }
+  
+    const formattedBRNumber = this.formatBRNumber(number);
+    if (formattedBRNumber !== number) {
+      return `${formattedBRNumber}@s.whatsapp.net`;
+    }
+  
+    const formattedMXARNumber = this.formatMXOrARNumber(number);
+    if (formattedMXARNumber !== number) {
+      return `${formattedMXARNumber}@s.whatsapp.net`;
+    }
+  
+    if (number.includes('-')) {
+      return `${number}@g.us`;
+    }
+  
+    return `${number}@s.whatsapp.net`;
+  }
+  
   public async profilePicture(number: string) {
     const jid = this.createJid(number);
     try {
