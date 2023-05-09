@@ -30,7 +30,6 @@ import {
   ConfigService,
   ConfigSessionPhone,
   Database,
-  Env,
   QrCode,
   Redis,
   StoreConf,
@@ -389,7 +388,7 @@ export class WAStartupService {
     const redis = this.configService.get<Redis>('REDIS');
 
     if (redis?.ENABLED) {
-      return await useMultiFileAuthStateRedisDb(redis.URI, this.instance.name);
+      return await useMultiFileAuthStateRedisDb(redis, this.instance.name);
     }
 
     if (db.SAVE_DATA.INSTANCE && db.ENABLED) {

@@ -29,7 +29,7 @@ export class RedisCache {
     try {
       const json = JSON.stringify(data, BufferJSON.replacer);
       return await this.client.hSet(
-        this.redisEnv.PREFIX_KEY + this.instanceName,
+        this.redisEnv.PREFIX_KEY + ':' + this.instanceName,
         field,
         json,
       );
@@ -41,7 +41,7 @@ export class RedisCache {
   public async readData(field: string) {
     try {
       const data = await this.client.hGet(
-        this.redisEnv.PREFIX_KEY + this.instanceName,
+        this.redisEnv.PREFIX_KEY + ':' + this.instanceName,
         field,
       );
       if (data) {
@@ -54,7 +54,10 @@ export class RedisCache {
 
   public async removeData(field: string) {
     try {
-      return await this.client.hDel(this.redisEnv.PREFIX_KEY + this.instanceName, field);
+      return await this.client.hDel(
+        this.redisEnv.PREFIX_KEY + ':' + this.instanceName,
+        field,
+      );
     } catch (error) {
       this.logger.error(error);
     }
@@ -62,7 +65,9 @@ export class RedisCache {
 
   public async delAll(hash?: string) {
     try {
-      return await this.client.del(hash || this.redisEnv.PREFIX_KEY + this.instanceName);
+      return await this.client.del(
+        hash || this.redisEnv.PREFIX_KEY + ':' + this.instanceName,
+      );
     } catch (error) {
       this.logger.error(error);
     }
