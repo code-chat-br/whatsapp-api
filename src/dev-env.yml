@@ -68,6 +68,7 @@ DATABASE:
 REDIS:
   ENABLED: false
   URI: 'redis://<HOST>'
+  PREFIX_KEY: 'codechat'
 
 # Webhook Settings
 WEBHOOK:
