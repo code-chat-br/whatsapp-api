@@ -27,7 +27,7 @@ export class WAMonitoringService {
       ? this.repository.dbServer?.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
       : undefined;
 
-    this.redisCache = this.redis.ENABLED ? new RedisCache(this.redis.URI) : undefined;
+    this.redisCache = this.redis.ENABLED ? new RedisCache(this.redis) : undefined;
   }
 
   private readonly db: Partial<Database> = {};
