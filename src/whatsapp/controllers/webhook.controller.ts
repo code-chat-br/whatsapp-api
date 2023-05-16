@@ -8,7 +8,7 @@ export class WebhookController {
   constructor(private readonly webhookService: WebhookService) {}
 
   public async createWebhook(instance: InstanceDto, data: WebhookDto) {
-    if (!isURL(data.url)) {
+    if (!isURL(data.url, {"require_tld": false})) {
       throw new BadRequestException('Invalid "url" property');
     }
     return this.webhookService.create(instance, data);
