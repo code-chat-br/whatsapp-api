@@ -80,6 +80,10 @@ export class InstanceController {
       await this.waMonitor.waInstances[instanceName]?.client?.logout(
         'Log out instance: ' + instanceName,
       );
+      this.waMonitor.waInstances[instanceName]?.client?.ws?.close();
+      this.waMonitor.waInstances[instanceName]?.client?.end(undefined);
+
+      
       return { error: false, message: 'Instance logged out' };
     } catch (error) {
       throw new InternalServerErrorException(error.toString());

@@ -5,7 +5,7 @@ import { validate } from 'jsonschema';
 import { BadRequestException } from '../../exceptions';
 import 'express-async-errors';
 import { Logger } from '../../config/logger.config';
-import { GroupJid } from '../dto/group.dto';
+import { GroupInvite, GroupJid } from '../dto/group.dto';
 
 type DataValidate<T> = {
   request: Request;
@@ -85,6 +85,50 @@ export abstract class RouterBroker {
     Object.assign(ref, body);
 
     const v = validate(ref, schema);
+
+    if (!v.valid) {
+      const message: any[] = v.errors.map(({ property, stack, schema }) => {
+        let message: string;
+        if (schema['description']) {
+          message = schema['description'];
+        } else {
+          message = stack.replace('instance.', '');
+        }
+        return {
+          property: property.replace('instance.', ''),
+          message,
+        };
+      });
+      logger.error([...message]);
+      throw new BadRequestException(...message);
+    }
+
+    return await execute(instance, ref);
+  }
+
+  public async inviteCodeValidate<T>(args: DataValidate<T>) {
+    const { request, ClassRef, schema, execute } = args;
+
+    const inviteCode = request.query as unknown as GroupInvite;
+
+    if (!inviteCode?.inviteCode) {
+      throw new BadRequestException(
+        'The group invite code id needs to be informed in the query',
+        'ex: "inviteCode=F1EX5QZxO181L3TMVP31gY" (Obtained from group join link)',
+      );
+    }
+
+    const instance = request.params as unknown as InstanceDto;
+    const body = request.body;
+
+    const ref = new ClassRef();
+
+    Object.assign(body, inviteCode);
+    Object.assign(ref, body);
+
+    const v = validate(ref, schema);
+
+    console.log(v, '@checkei aqui');
 
     if (!v.valid) {
       const message: any[] = v.errors.map(({ property, stack, schema }) => {

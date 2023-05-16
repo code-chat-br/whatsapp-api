@@ -1,8 +1,11 @@
 import {
   CreateGroupDto,
+  GroupInvite,
   GroupJid,
   GroupPictureDto,
+  GroupToggleEphemeralDto,
   GroupUpdateParticipantDto,
+  GroupUpdateSettingDto,
 } from '../dto/group.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
@@ -28,6 +31,10 @@ export class GroupController {
     return await this.waMonitor.waInstances[instance.instanceName].inviteCode(groupJid);
   }
 
+  public async inviteInfo(instance: InstanceDto, inviteCode: GroupInvite) {
+    return await this.waMonitor.waInstances[instance.instanceName].inviteInfo(inviteCode);
+  }
+
   public async revokeInviteCode(instance: InstanceDto, groupJid: GroupJid) {
     return await this.waMonitor.waInstances[instance.instanceName].revokeInviteCode(
       groupJid,
@@ -45,6 +52,24 @@ export class GroupController {
     update: GroupUpdateParticipantDto,
   ) {
     return await this.waMonitor.waInstances[instance.instanceName].updateGParticipant(
+      update,
+    );
+  }
+
+  public async updateGSetting(
+    instance: InstanceDto,
+    update: GroupUpdateSettingDto,
+  ) {
+    return await this.waMonitor.waInstances[instance.instanceName].updateGSetting(
+      update,
+    );
+  }
+
+  public async toggleEphemeral(
+    instance: InstanceDto,
+    update: GroupToggleEphemeralDto,
+  ) {
+    return await this.waMonitor.waInstances[instance.instanceName].toggleEphemeral(
       update,
     );
   }

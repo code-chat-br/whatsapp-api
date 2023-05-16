@@ -85,9 +85,12 @@ import {
 } from '../../exceptions';
 import {
   CreateGroupDto,
+  GroupInvite,
   GroupJid,
   GroupPictureDto,
   GroupUpdateParticipantDto,
+  GroupUpdateSettingDto,
+  GroupToggleEphemeralDto,
 } from '../dto/group.dto';
 import { MessageUpQuery } from '../repository/messageUp.repository';
 import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
@@ -1294,8 +1297,10 @@ export class WAStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
+        console.log("@DOWNLOAD IMAGEM\n");
         pic = (await axios.get(picture.image, { responseType: 'arraybuffer' })).data;
       } else if (isBase64(picture.image)) {
+        console.log("@IMAGE BASE64\n");
         pic = Buffer.from(picture.image, 'base64');
       } else {
         throw new BadRequestException('"profilePicture" must be a url or a base64');
@@ -1304,6 +1309,7 @@ export class WAStartupService {
 
       return { update: 'success' };
     } catch (error) {
+      console.log(error, "@IMAGE BASE64\n");
       throw new InternalServerErrorException('Error creating group', error.toString());
     }
   }
@@ -1325,6 +1331,14 @@ export class WAStartupService {
       return { inviteUrl: `https://chat.whatsapp.com/${code}`, inviteCode: code };
     } catch (error) {
       throw new NotFoundException('No invite code', error.toString());
+    }
+  }
+
+  public async inviteInfo(id: GroupInvite) {
+    try {
+      return await this.client.groupGetInviteInfo(id.inviteCode);
+    } catch (error) {
+      throw new NotFoundException('No invite info', id.inviteCode);
     }
   }
 
@@ -1357,6 +1371,30 @@ export class WAStartupService {
       return { updateParticipants: updateParticipants };
     } catch (error) {
       throw new BadRequestException('Error updating participants', error.toString());
+    }
+  }
+
+  public async updateGSetting(update: GroupUpdateSettingDto) {
+    try {
+      const updateSetting = await this.client.groupSettingUpdate(
+        update.groupJid,
+        update.action,
+      );
+      return { updateSetting: updateSetting };
+    } catch (error) {
+      throw new BadRequestException('Error updating setting', error.toString());
+    }
+  }
+
+  public async toggleEphemeral(update: GroupToggleEphemeralDto) {
+    try {
+      const toggleEphemeral = await this.client.groupToggleEphemeral(
+        update.groupJid,
+        update.expiration,
+      );
+      return { toggleEphemeral: toggleEphemeral };
+    } catch (error) {
+      throw new BadRequestException('Error updating setting', error.toString());
     }
   }
 
