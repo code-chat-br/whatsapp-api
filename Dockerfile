@@ -79,9 +79,6 @@ ENV AUTHENTICATION_API_KEY='t8OOEeISKzpmc3jjcMqBWYSaJsafdefer'
 ENV AUTHENTICATION_JWT_EXPIRIN_IN=3600
 ENV AUTHENTICATION_JWT_SECRET='L0YWtjb2w554WFqPG'
 
-RUN yarn install
-RUN yarn global add ts-node typescript
-
 COPY . .
 
 CMD [ "node", "./dist/src/main.js" ]

@@ -1297,10 +1297,8 @@ export class WAStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
-        console.log("@DOWNLOAD IMAGEM\n");
         pic = (await axios.get(picture.image, { responseType: 'arraybuffer' })).data;
       } else if (isBase64(picture.image)) {
-        console.log("@IMAGE BASE64\n");
         pic = Buffer.from(picture.image, 'base64');
       } else {
         throw new BadRequestException('"profilePicture" must be a url or a base64');
@@ -1309,7 +1307,6 @@ export class WAStartupService {
 
       return { update: 'success' };
     } catch (error) {
-      console.log(error, "@IMAGE BASE64\n");
       throw new InternalServerErrorException('Error creating group', error.toString());
     }
   }
