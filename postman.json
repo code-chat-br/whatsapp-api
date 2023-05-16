@@ -995,6 +995,35 @@
             "response": []
           },
           {
+            "name": "Invite Info",
+            "id": "851b93e1-0ab2-43c3-8ce9-0248deee6169",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{baseUrl}}/group/inviteInfo/{{instance}}?inviteCode={{inviteCode}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "group",
+                  "inviteInfo",
+                  "{{instance}}"
+                ],
+                "query": [
+                  {
+                    "key": "inviteCode",
+                    "value": "{{inviteCode}}"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
             "name": "Revoke Invite Code",
             "id": "67291926-2d3e-4b97-911f-7f2760761681",
             "protocolProfileBehavior": {
@@ -1049,6 +1078,82 @@
                 "path": [
                   "group",
                   "updateParticipant",
+                  "{{instance}}"
+                ],
+                "query": [
+                  {
+                    "key": "groupJid",
+                    "value": "{{groupJid}}"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Update Setting",
+            "id": "403820ea-e5c9-4292-b02f-098b899e6bc3",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "PUT",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\r\n  \"action\": \"'announcement', 'not_announcement', 'locked', 'unlocked'\"\r\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/group/updateSetting/{{instance}}?groupJid={{groupJid}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "group",
+                  "updateSetting",
+                  "{{instance}}"
+                ],
+                "query": [
+                  {
+                    "key": "groupJid",
+                    "value": "{{groupJid}}"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Toggle Ephemeral",
+            "id": "56cf9355-5398-43c8-8821-250aee9456fc",
+            "protocolProfileBehavior": {
+              "disableBodyPruning": true
+            },
+            "request": {
+              "method": "PUT",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\r\n  \"expiration\": 0 | 86400 | 604800 | 7776000 // Off / 24H / 7D / 90D\r\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{baseUrl}}/group/toggleEphemeral/{{instance}}?groupJid={{groupJid}}",
+                "host": [
+                  "{{baseUrl}}"
+                ],
+                "path": [
+                  "group",
+                  "toggleEphemeral",
                   "{{instance}}"
                 ],
                 "query": [
@@ -1271,6 +1376,12 @@
         "value": "120363046555718472@g.us",
         "type": "string",
         "disabled": true
+      },
+      {
+        "id": "25247aff-1580-4f14-b8ce-4d38d00662bd",
+        "key": "inviteCode",
+        "value": "HyO8X8K0bAo0bfaeW8bhY5",
+        "type": "string"
       }
     ]
   }
