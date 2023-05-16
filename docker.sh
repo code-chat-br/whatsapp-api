@@ -1,7 +1,7 @@
 #!/bin/bash
 
 NET='codechat-net'
-IMAGE='codechat/api:git'
+IMAGE='codechat/api:local'
 
 if !(docker network ls | grep ${NET} > /dev/null)
 then

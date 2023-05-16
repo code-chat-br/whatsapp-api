@@ -106,7 +106,7 @@ export class AuthService {
       try {
         const webhook = await this.repository.webhook.find(decode.instanceName);
         if (
-          webhook.enabled &&
+          webhook?.enabled &&
           this.configService.get<Webhook>('WEBHOOK').EVENTS.NEW_JWT_TOKEN
         ) {
           const httpService = axios.create({ baseURL: webhook.url });
