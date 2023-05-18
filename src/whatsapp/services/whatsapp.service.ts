@@ -3,6 +3,7 @@ import makeWASocket, {
   BufferedEventData,
   BufferJSON,
   CacheStore,
+  makeCacheableSignalKeyStore,
   Chat,
   ConnectionState,
   Contact,
@@ -412,7 +413,14 @@ export class WAStartupService {
       const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
       const socketConfig: UserFacingSocketConfig = {
-        auth: this.instance.authState.state,
+        auth: {
+          creds: this.instance.authState.state.creds,
+          /** caching makes the store faster to send/recv messages */
+          keys: makeCacheableSignalKeyStore(
+            this.instance.authState.state.keys,
+            P({ level: 'error' }),
+          ),
+        },
         logger: P({ level: 'error' }),
         printQRInTerminal: false,
         browser,
