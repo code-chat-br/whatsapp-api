@@ -329,7 +329,9 @@ export class WAStartupService {
           instance: this.instance.name,
           status: 'removed',
         });
-        return this.eventEmitter.emit('remove.instance', this.instance.name, 'inner');
+        this.eventEmitter.emit('remove.instance', this.instance.name, 'inner');
+        this.client?.ws?.close()
+        this.client.end(new Error('Close connection'))
       }
     }
 
