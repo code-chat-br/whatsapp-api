@@ -4,7 +4,7 @@ import {
   initAuthCreds,
   proto,
   SignalDataTypeMap,
-} from '@codechat/base';
+} from '@whiskeysockets/baileys';
 import { RedisCache } from '../db/redis.client';
 import { Logger } from '../config/logger.config';
 import { Redis } from '../config/env.config';

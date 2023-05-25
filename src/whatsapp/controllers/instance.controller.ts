@@ -1,4 +1,4 @@
-import { delay } from '@codechat/base';
+import { delay } from '@whiskeysockets/baileys';
 import EventEmitter2 from 'eventemitter2';
 import { ConfigService } from '../../config/env.config';
 import { BadRequestException, InternalServerErrorException } from '../../exceptions';

@@ -25,7 +25,7 @@ import makeWASocket, {
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
-} from '@codechat/base';
+} from '@whiskeysockets/baileys';
 import {
   ConfigService,
   ConfigSessionPhone,

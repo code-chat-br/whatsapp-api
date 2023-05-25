@@ -5,7 +5,7 @@ import {
   initAuthCreds,
   proto,
   SignalDataTypeMap,
-} from '@codechat/base';
+} from '@whiskeysockets/baileys';
 import { configService, Database } from '../config/env.config';
 import { Logger } from '../config/logger.config';
 import { dbserver } from '../db/db.connect';
