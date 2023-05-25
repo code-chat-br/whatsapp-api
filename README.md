@@ -1,12 +1,8 @@
-<h1 align="center">CodeChat Api Pro</h1>
-
-It is a version of this API with advanced features like message queue management, send processing status, integration with **[n8n](https://github.com/code-chat-br/n8n-nodes-codechat)** unique models and much more! **[Check it out](https://github.com/code-chat-br/docs-codechat)** 😉!
-
-<div align="center">
-  <a href="https://github.com/code-chat-br/docs-codechat" target="_blank" rel="noopener noreferrer">
-    <img src="./public/images/code.png" style="width: 35% !important;">
-  </a>
-</div>
+<h2>Update commands:</h2>
+```sh
+git pull
+npm install
+```
 
 </br>
 <hr style="height: 5px;background: #007500;margin: 20px 0;box-shadow: 0px 3px 5px 0px rgb(204 204 204);">
@@ -25,7 +21,7 @@ It is a version of this API with advanced features like message queue management
 
 ## WhatsApp-Api-NodeJs
 
-This code is an implementation of [Baileys](https://github.com/adiwajshing/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
+This code is an implementation of [Baileys](https://github.com/WhiskeySockets/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
 With this one you can create multiservice chats, service bots or any other system that uses whatsapp. With this code you don't need to know javascript for nodejs , just start the server and make the language requests that you feel most comfortable with.
 
 ## [Node n8n](https://github.com/jrCleber/n8n-codechat-wapi)
