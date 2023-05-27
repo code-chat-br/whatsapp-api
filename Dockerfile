@@ -1,4 +1,4 @@
-FROM node:16.19.0
+FROM node:16.20.0
 
 LABEL version="1.2.0" description="Api to control whatsapp features through http requests." 
 LABEL maintainer="Cleber Wilson" git="https://github.com/jrCleber"

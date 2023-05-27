@@ -22,7 +22,7 @@ import { chatController } from '../whatsapp.module';
 import { RouterBroker } from '../abstract/abstract.router';
 import { HttpStatus } from './index.router';
 import { MessageUpQuery } from '../repository/messageUp.repository';
-import { proto } from '@codechat/base';
+import { proto } from '@whiskeysockets/baileys';
 import { InstanceDto } from '../dto/instance.dto';
 
 export class ChatRouter extends RouterBroker {

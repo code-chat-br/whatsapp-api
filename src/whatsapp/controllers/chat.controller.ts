@@ -1,4 +1,4 @@
-import { proto } from '@codechat/base';
+import { proto } from '@whiskeysockets/baileys';
 import {
   ArchiveChatDto,
   DeleteMessage,

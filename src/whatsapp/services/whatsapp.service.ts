@@ -15,6 +15,7 @@ import makeWASocket, {
   GroupMetadata,
   isJidGroup,
   isJidUser,
+  makeCacheableSignalKeyStore,
   MessageUpsertType,
   ParticipantAction,
   prepareWAMessageMedia,
@@ -330,8 +331,8 @@ export class WAStartupService {
           status: 'removed',
         });
         this.eventEmitter.emit('remove.instance', this.instance.name, 'inner');
-        this.client?.ws?.close()
-        this.client.end(new Error('Close connection'))
+        this.client?.ws?.close();
+        this.client.end(new Error('Close connection'));
       }
     }
 
@@ -411,7 +412,13 @@ export class WAStartupService {
       const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
       const socketConfig: UserFacingSocketConfig = {
-        auth: this.instance.authState.state,
+        auth: {
+          creds: this.instance.authState.state.creds,
+          keys: makeCacheableSignalKeyStore(
+            this.instance.authState.state.keys,
+            P({ level: 'error' }),
+          ),
+        },
         logger: P({ level: 'error' }),
         printQRInTerminal: false,
         browser,
@@ -778,7 +785,7 @@ export class WAStartupService {
         if (joker < 7 || ddd < 11) {
           return match[0];
         }
-        return (match[1] === '52') ? '52' + match[3] : '54' + match[3];
+        return match[1] === '52' ? '52' + match[3] : '54' + match[3];
       }
     }
     return jid;
@@ -806,24 +813,24 @@ export class WAStartupService {
     if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
       return number;
     }
-  
+
     const formattedBRNumber = this.formatBRNumber(number);
     if (formattedBRNumber !== number) {
       return `${formattedBRNumber}@s.whatsapp.net`;
     }
-  
+
     const formattedMXARNumber = this.formatMXOrARNumber(number);
     if (formattedMXARNumber !== number) {
       return `${formattedMXARNumber}@s.whatsapp.net`;
     }
-  
+
     if (number.includes('-')) {
       return `${number}@g.us`;
     }
-  
+
     return `${number}@s.whatsapp.net`;
   }
-  
+
   public async profilePicture(number: string) {
     const jid = this.createJid(number);
     try {
