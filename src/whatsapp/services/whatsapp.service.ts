@@ -204,8 +204,7 @@ export class WAStartupService {
               event,
               instance: this.instance.name,
               data,
-            },
-            { params: { owner: this.instance.wuid } },
+            }
           );
         }
       } catch (error) {
@@ -231,8 +230,7 @@ export class WAStartupService {
               event,
               instance: this.instance.name,
               data,
-            },
-            { params: { owner: this.instance.wuid } },
+            }
           );
         }
       } catch (error) {
