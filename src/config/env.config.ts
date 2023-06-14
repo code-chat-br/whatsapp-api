@@ -118,12 +118,7 @@ export class ConfigService {
     this.env.PRODUCTION = process.env?.NODE_ENV === 'PROD';
     if (process.env?.DOCKER_ENV === 'true') {
       this.env.SERVER.TYPE = 'http';
-      this.env.SERVER.PORT = Number.parseInt(process.env?.SERVER_PORT ?? '8080');
-    }
-  }
-
-  private envYaml(): Env {
-    return load(readFileSync(join(SRC_DIR, 'env.yml'), { encoding: 'utf-8' })) as Env;
+    this.env.SERVER.PORT = 8083;
   }
 
   private envProcess(): Env {
