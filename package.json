@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-api",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Rest api for communication with WhatsApp",
   "main": "index.js",
   "scripts": {

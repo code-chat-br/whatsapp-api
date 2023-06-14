@@ -1,8 +1,8 @@
-FROM node:16.20.0
+FROM node:18
 
 LABEL version="1.2.0" description="Api to control whatsapp features through http requests." 
 LABEL maintainer="Cleber Wilson" git="https://github.com/jrCleber"
-LABEL contact="contato@codechat.dev"
+LABEL contact="contato@codechat.dev" whatsapp="https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5" telegram="https://t.me/codechatBR"
 
 RUN apt-get update -y
 RUN apt-get upgrade -y
