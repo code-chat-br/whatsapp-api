@@ -124,7 +124,7 @@ export class ConfigService {
   }
 
   private envYaml(): Env {
-    return load(readFileSync(join(SRC_DIR, 'env.yml'), { encoding: 'utf-8' })) as Env;
+    return load(readFileSync('env.yml', { encoding: 'utf-8' })) as Env;
   }
 
   private envProcess(): Env {

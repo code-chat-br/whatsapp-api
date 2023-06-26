@@ -109,7 +109,7 @@ pm2 start 'npm run start:prod' --name ApiCodechat
 ```
 ## Authentication
 
-You can define two authentication **types** for the routes in the **[env file](./src/dev-env.yml)**.
+You can define two authentication **types** for the routes in the **[env file](./dev-env.yml)**.
 Authentications must be inserted in the request header.
 
 1. **apikey**

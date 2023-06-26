@@ -2,7 +2,7 @@
 # ⚠️ ALL SETTINGS DEFINED IN THIS FILE ARE APPLIED TO ALL INSTANCES.
 # ⚠️
 
-# ⚠️ RENAME THIS FILE TO env.yml
+# ⚠️ COPY THIS FILE TO env.yml
 
 # Choose the server type for the application
 SERVER:
