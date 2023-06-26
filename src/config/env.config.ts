@@ -1,7 +1,5 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
-import { join } from 'path';
-import { SRC_DIR } from './path.config';
 import { isBooleanString } from 'class-validator';
 
 export type HttpServer = { TYPE: 'http' | 'https'; PORT: number };

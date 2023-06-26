@@ -252,7 +252,7 @@ docker-compose up
 
 See additional settings that can be applied through the **env** file by clicking **[here](./src/dev-env.yml)**.
 
-> **⚠️Attention⚠️:** rename the **dev-env.yml** file to **env.yml**.
+> **⚠️Attention⚠️:** copy the **dev-env.yml** file to **env.yml**.
 
 ## SSL
 
