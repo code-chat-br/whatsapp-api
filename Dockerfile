@@ -41,5 +41,5 @@ EXPOSE 8080
 
 # All settings must be in the env.yml file, passed as a volume to the container
 
-CMD [ "node", "./dist/src/main.js" ]
+CMD [ "node", "./src/main.js" ]
 
