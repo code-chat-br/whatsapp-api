@@ -15,6 +15,7 @@ export class WAMonitoringService {
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
     private readonly repository: RepositoryBroker,
+    private readonly cache: RedisCache,
   ) {
     this.removeInstance();
     this.noConnection();
@@ -131,6 +132,7 @@ export class WAMonitoringService {
         this.configService,
         this.eventEmitter,
         this.repository,
+        this.cache,
       );
       instance.instanceName = name;
       await instance.connectToWhatsapp();

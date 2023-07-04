@@ -26,6 +26,7 @@ import { dbserver } from '../db/db.connect';
 import { WebhookRepository } from './repository/webhook.repository';
 import { WebhookModel } from './models/webhook.model';
 import { AuthRepository } from './repository/auth.repository';
+import { RedisCache } from '../db/redis.client';
 
 const logger = new Logger('WA MODULE');
 
@@ -46,7 +47,14 @@ export const repository = new RepositoryBroker(
   dbserver?.getClient(),
 );
 
-export const waMonitor = new WAMonitoringService(eventEmitter, configService, repository);
+const cache = new RedisCache();
+
+export const waMonitor = new WAMonitoringService(
+  eventEmitter,
+  configService,
+  repository,
+  cache,
+);
 
 const authService = new AuthService(configService, waMonitor, repository);
 
