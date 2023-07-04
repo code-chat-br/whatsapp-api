@@ -27,15 +27,12 @@ export class WAMonitoringService {
     this.dbInstance = this.db.ENABLED
       ? this.repository.dbServer?.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
       : undefined;
-
-    this.redisCache = this.redis.ENABLED ? new RedisCache(this.redis) : undefined;
   }
 
   private readonly db: Partial<Database> = {};
   private readonly redis: Partial<Redis> = {};
 
   private dbInstance: Db;
-  private redisCache: RedisCache;
 
   private readonly logger = new Logger(WAMonitoringService.name);
   public readonly waInstances: Record<string, WAStartupService> = {};
@@ -87,6 +84,7 @@ export class WAMonitoringService {
             ],
           });
         });
+      } else if (this.redis.ENABLED) {
       } else {
         const dir = opendirSync(INSTANCE_DIR, { encoding: 'utf-8' });
         for await (const dirent of dir) {
@@ -119,8 +117,8 @@ export class WAMonitoringService {
     }
 
     if (this.redis.ENABLED) {
-      this.redisCache.reference = instanceName;
-      await this.redisCache.delAll();
+      this.cache.reference = instanceName;
+      await this.cache.delAll();
       return;
     }
     rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
@@ -141,7 +139,8 @@ export class WAMonitoringService {
 
     try {
       if (this.redis.ENABLED) {
-        const keys = await this.redisCache.instanceKeys();
+        await this.cache.connect(this.redis as Redis);
+        const keys = await this.cache.instanceKeys();
         if (keys?.length > 0) {
           keys.forEach(async (k) => await set(k.split(':')[1]));
         }

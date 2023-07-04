@@ -47,7 +47,7 @@ export const repository = new RepositoryBroker(
   dbserver?.getClient(),
 );
 
-const cache = new RedisCache();
+export const cache = new RedisCache();
 
 export const waMonitor = new WAMonitoringService(
   eventEmitter,
@@ -68,6 +68,7 @@ export const instanceController = new InstanceController(
   repository,
   eventEmitter,
   authService,
+  cache,
 );
 export const viewsController = new ViewsController(waMonitor, configService);
 export const sendMessageController = new SendMessageController(waMonitor);

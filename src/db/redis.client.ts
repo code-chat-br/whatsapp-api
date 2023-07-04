@@ -4,20 +4,27 @@ import { BufferJSON } from '@whiskeysockets/baileys';
 import { Redis } from '../config/env.config';
 
 export class RedisCache {
-  constructor(private redisEnv?: Partial<Redis>, private instanceName?: string) {
-    if (redisEnv?.URI) {
-      this.client = createClient({ url: this.redisEnv.URI });
-      this.client.connect();
-    }
+  constructor() {
+    process.on('beforeExit', async () => {
+      if (this.statusConnection) {
+        await this.client.disconnect();
+      }
+    });
   }
+
+  private statusConnection = false;
+  private instanceName: string;
+  private redisEnv: Redis;
 
   public set reference(reference: string) {
     this.instanceName = reference;
   }
 
-  public async connect(url: string) {
-    this.client = createClient({ url });
+  public async connect(redisEnv: Redis) {
+    this.client = createClient({ url: redisEnv.URI });
     await this.client.connect();
+    this.statusConnection = true;
+    this.redisEnv = redisEnv;
   }
 
   private readonly logger = new Logger(RedisCache.name);

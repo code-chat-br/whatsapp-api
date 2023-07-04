@@ -393,7 +393,6 @@ export class WAStartupService {
     const redis = this.configService.get<Redis>('REDIS');
 
     if (redis?.ENABLED) {
-      await this.cache.connect(redis.URI);
       this.cache.reference = this.instance.name;
       return await useMultiFileAuthStateRedisDb(this.cache);
     }
