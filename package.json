@@ -1,8 +1,8 @@
 {
   "name": "whatsapp-api",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "Rest api for communication with WhatsApp",
-  "main": "index.js",
+  "main": "./dist/src/main.js",
   "scripts": {
     "build": "tsc",
     "start": "ts-node --files --transpile-only ./src/main.ts",

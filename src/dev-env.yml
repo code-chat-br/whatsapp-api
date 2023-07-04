@@ -7,7 +7,7 @@
 # Choose the server type for the application
 SERVER:
   TYPE: http # https
-  PORT: 8080 # 443
+  PORT: 8083 # 443
 
 CORS:
   ORIGIN:
@@ -52,9 +52,9 @@ STORE:
 
 # Permanent data storage
 DATABASE:
-  ENABLED: true
+  ENABLED: false
   CONNECTION:
-    URI: 'mongodb://root:mysupersecretpassword@mongodb/?authSource=admin&readPreference=primary&ssl=false&directConnection=true'
+    URI: 'mongodb://<USER>:<PASSWORD>@<HOST>/?authSource=admin&readPreference=primary&ssl=false&directConnection=true'
     DB_PREFIX_NAME: codechat
   # Choose the data you want to save in the application's database or store
   SAVE_DATA:
@@ -66,8 +66,8 @@ DATABASE:
     CHATS: true
 
 REDIS:
-  ENABLED: true
-  URI: 'redis://cache'
+  ENABLED: false
+  URI: 'redis://<HOST>'
   PREFIX_KEY: 'codechat'
 
 # Webhook Settings

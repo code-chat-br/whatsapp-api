@@ -14,10 +14,10 @@ services:
     image: codechat/api:local
     restart: unless-stopped
     ports:
-      - 8083:8080
+      - 8083:8083
     volumes:
       - ./instances:/codechat/instances
-      - ./env.yml:/codechat/env.yml
+      - ./src/env.yml:/codechat/src/env.yml
     command: ['node', './src/main.js']
     networks:
       - api-net
