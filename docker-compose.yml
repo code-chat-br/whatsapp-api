@@ -1,18 +1,46 @@
-version: '3.3'
+version: '3.8'
 
 networks:
-  codechat-net:
+  api-net:
     driver: bridge
 
+volumes:
+  mongo_data:
+  redis_data:
+
 services:
-  base:
+  api:
     container_name: codechat_api
     image: codechat/api:local
+    restart: unless-stopped
     ports:
       - 8083:8083
     volumes:
-      - /data/instances:/codechat/instances
-    command: ['node', './dist/src/main.js']
-
+      - ./instances:/codechat/instances
+      - ./src/env.yml:/codechat/src/env.yml
+    command: ['node', './src/main.js']
     networks:
-      - codechat-net
+      - api-net
+    depends_on:
+      - mongodb
+
+  mongodb:
+    container_name: mongodb
+    image: mongo:6
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: mysupersecretpassword
+    networks:
+      - api-net
+
+  cache:
+    image: redis:7
+    restart: unless-stopped
+    command: redis-server --save 20 1 --loglevel warning 
+    volumes: 
+      - redis_data:/data
+    networks:
+      - api-net

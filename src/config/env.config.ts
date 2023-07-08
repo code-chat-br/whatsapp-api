@@ -1,8 +1,7 @@
 import { readFileSync } from 'fs';
 import { load } from 'js-yaml';
-import { join } from 'path';
-import { SRC_DIR } from './path.config';
 import { isBooleanString } from 'class-validator';
+import { join } from 'path';
 
 export type HttpServer = { TYPE: 'http' | 'https'; PORT: number };
 
@@ -124,7 +123,9 @@ export class ConfigService {
   }
 
   private envYaml(): Env {
-    return load(readFileSync(join(SRC_DIR, 'env.yml'), { encoding: 'utf-8' })) as Env;
+    return load(
+      readFileSync(join(process.cwd(), 'src', 'env.yml'), { encoding: 'utf-8' }),
+    ) as Env;
   }
 
   private envProcess(): Env {

@@ -16,8 +16,6 @@ function initWA() {
 }
 
 function bootstrap() {
-  initWA();
-
   const logger = new Logger('SERVER');
   const app = express();
 
@@ -72,6 +70,8 @@ function bootstrap() {
   server.listen(httpServer.PORT, () =>
     logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT),
   );
+
+  initWA();
 
   onUnexpectedError();
 }
