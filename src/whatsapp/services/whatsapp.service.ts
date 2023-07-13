@@ -880,12 +880,18 @@ export class WAStartupService {
 
       const messageSent = await (async () => {
         if (!message['audio']) {
-          return await this.client.sendMessage(sender, {
-            forward: {
-              key: { remoteJid: this.instance.wuid, fromMe: true },
-              message,
+          return await this.client.sendMessage(
+            sender,
+            {
+              forward: {
+                key: { remoteJid: this.instance.wuid, fromMe: true },
+                message,
+              },
             },
-          });
+            {
+              quoted: options?.quoted || null,
+            },
+          );
         }
 
         return await this.client.sendMessage(

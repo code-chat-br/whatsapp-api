@@ -3,6 +3,7 @@ import { proto, WAPresence } from '@whiskeysockets/baileys';
 export class Options {
   delay?: number;
   presence?: WAPresence;
+  quoted?: proto.IWebMessageInfo;
 }
 class OptionsMessage {
   options: Options;
