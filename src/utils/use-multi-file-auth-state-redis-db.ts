@@ -1,3 +1,41 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────────┐
+ * │ @author jrCleber                                                             │
+ * │ @filename use-multi-file-auth-state-redis-db.ts                              │
+ * │ Developed by: Cleber Wilson                                                  │
+ * │ Creation date: Apr 09, 2023                                                  │
+ * │ Contact: contato@codechat.dev                                                │
+ * ├──────────────────────────────────────────────────────────────────────────────┤
+ * │ @copyright © Cleber Wilson 2023. All rights reserved.                        │
+ * │ Licensed under the Apache License, Version 2.0                               │
+ * │                                                                              │
+ * │  @license "https://github.com/code-chat-br/whatsapp-api/blob/main/LICENSE"   │
+ * │                                                                              │
+ * │ You may not use this file except in compliance with the License.             │
+ * │ You may obtain a copy of the License at                                      │
+ * │                                                                              │
+ * │    http://www.apache.org/licenses/LICENSE-2.0                                │
+ * │                                                                              │
+ * │ Unless required by applicable law or agreed to in writing, software          │
+ * │ distributed under the License is distributed on an "AS IS" BASIS,            │
+ * │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.     │
+ * │                                                                              │
+ * │ See the License for the specific language governing permissions and          │
+ * │ limitations under the License.                                               │
+ * │                                                                              │
+ * │ @type {AuthState}                                                            │
+ * │ @function useMultiFileAuthStateRedisDb @param {RedisCache} cache             │
+ * │ @returns {Promise<AuthState>}                                                │
+ * ├──────────────────────────────────────────────────────────────────────────────┤
+ * │ @important                                                                   │
+ * │ For any future changes to the code in this file, it is recommended to        │
+ * │ contain, together with the modification, the information of the developer    │
+ * │ who changed it and the date of modification.                                 │
+ * └──────────────────────────────────────────────────────────────────────────────┘
+ */
+
+type AuthState = { state: AuthenticationState; saveCreds: () => Promise<void> };
+
 import {
   AuthenticationCreds,
   AuthenticationState,
@@ -7,12 +45,10 @@ import {
 } from '@whiskeysockets/baileys';
 import { RedisCache } from '../db/redis.client';
 import { Logger } from '../config/logger.config';
-import { Redis } from '../config/env.config';
 
-export async function useMultiFileAuthStateRedisDb(cache: RedisCache): Promise<{
-  state: AuthenticationState;
-  saveCreds: () => Promise<void>;
-}> {
+export async function useMultiFileAuthStateRedisDb(
+  cache: RedisCache,
+): Promise<AuthState> {
   const logger = new Logger(useMultiFileAuthStateRedisDb.name);
 
   const writeData = async (data: any, key: string): Promise<any> => {

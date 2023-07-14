@@ -34,7 +34,7 @@
     "name": "jrcleber",
     "email": "contato@codechat.dev"
   },
-  "license": "GPL-3.0",
+  "license": "Apache license 2.0",
   "bugs": {
     "url": "https://github.com/code-chat-br/whatsapp-api/issues"
   },
