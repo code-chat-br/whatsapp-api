@@ -28,7 +28,8 @@
     "whatsapp-group",
     "automation",
     "multi-device",
-    "bot"
+    "bot",
+    "apache-2.0"
   ],
   "author": {
     "name": "jrcleber",
