@@ -1,9 +1,9 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename validate.module.ts                                                 │
+ * │ @filename validate.schema.ts                                                 │
  * │ Developed by: Cleber Wilson                                                  │
- * │ Creation date: Nov 17, 2022                                                  │
+ * │ Creation date: Nov 27, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │

@@ -1,7 +1,7 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename auth.guard.ts                                                  │
+ * │ @filename auth.guard.ts                                                      │
  * │ Developed by: Cleber Wilson                                                  │
  * │ Creation date: Nov 27, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │

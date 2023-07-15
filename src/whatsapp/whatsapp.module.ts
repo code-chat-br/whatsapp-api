@@ -23,13 +23,13 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @constant logger @constant messageRepository @constant chatRepository        │                                                   │
- * │ @constant contactRepository @constant messageUpdateRepository                │                                         │
- * │ @constant webhookRepository @constant authRepository @constant repository    │                                                     │
- * │ @constant cache @constant authService @constant webhookService               │                                                │
- * │ @constant webhookController @constant instanceController                     │                                               │
- * │ @constant viewsController @constant sendMessageController                    │                                             │
- * │ @constant chatController @constant groupController                           │                                              │
+ * │ @constant logger @constant messageRepository @constant chatRepository        │
+ * │ @constant contactRepository @constant messageUpdateRepository                │
+ * │ @constant webhookRepository @constant authRepository @constant repository    │
+ * │ @constant cache @constant authService @constant webhookService               │
+ * │ @constant webhookController @constant instanceController                     │
+ * │ @constant viewsController @constant sendMessageController                    │
+ * │ @constant chatController @constant groupController                           │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │

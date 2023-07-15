@@ -1,7 +1,7 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename instance.guard.ts                                                   │
+ * │ @filename instance.guard.ts                                                  │
  * │ Developed by: Cleber Wilson                                                  │
  * │ Creation date: Nov 27, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │

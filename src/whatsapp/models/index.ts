@@ -1,13 +1,4 @@
 /**
- * ┌───────────────────────────────────────────────────────┐
- * │ @author jrCleber                                      │
- * │ Developed by: Cleber Wilson                           │
- * │ File name: index.ts                                   │
- * │ Creation date: Dec 05, 2022                           │
- * │ @copyright © Cleber Wilson 2022. All rights reserved. │
- * └───────────────────────────────────────────────────────┘
- */
-/**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
  * │ @filename index.ts                                                           │
