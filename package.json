@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-api",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Rest api for communication with WhatsApp",
   "main": "./dist/src/main.js",
   "scripts": {
@@ -28,13 +28,14 @@
     "whatsapp-group",
     "automation",
     "multi-device",
-    "bot"
+    "bot",
+    "apache-2.0"
   ],
   "author": {
     "name": "jrcleber",
     "email": "contato@codechat.dev"
   },
-  "license": "GPL-3.0",
+  "license": "Apache license 2.0",
   "bugs": {
     "url": "https://github.com/code-chat-br/whatsapp-api/issues"
   },
@@ -42,7 +43,7 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys",
+    "@whiskeysockets/baileys": "^6.0.0",
     "axios": "^1.3.5",
     "class-validator": "^0.13.2",
     "compression": "^1.7.4",

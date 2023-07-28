@@ -1,3 +1,49 @@
+/**
+ * ┌──────────────────────────────────────────────────────────────────────────────┐
+ * │ @author jrCleber                                                             │
+ * │ @filename validate.schema.ts                                                 │
+ * │ Developed by: Cleber Wilson                                                  │
+ * │ Creation date: Nov 27, 2022                                                  │
+ * │ Contact: contato@codechat.dev                                                │
+ * ├──────────────────────────────────────────────────────────────────────────────┤
+ * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
+ * │ Licensed under the Apache License, Version 2.0                               │
+ * │                                                                              │
+ * │  @license "https://github.com/code-chat-br/whatsapp-api/blob/main/LICENSE"   │
+ * │                                                                              │
+ * │ You may not use this file except in compliance with the License.             │
+ * │ You may obtain a copy of the License at                                      │
+ * │                                                                              │
+ * │    http://www.apache.org/licenses/LICENSE-2.0                                │
+ * │                                                                              │
+ * │ Unless required by applicable law or agreed to in writing, software          │
+ * │ distributed under the License is distributed on an "AS IS" BASIS,            │
+ * │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.     │
+ * │                                                                              │
+ * │ See the License for the specific language governing permissions and          │
+ * │ limitations under the License.                                               │
+ * │                                                                              │
+ * │ @constant isNotEmpty @constant instanceNameSchema                            │
+ * │ @constant optionsSchema @constant numberDefinition                           │
+ * │ @constant textMessageSchema @constant mediaMessageSchema                     │
+ * │ @constant audioMessageSchema @constant buttonMessageSchema                   │
+ * │ @constant locationMessageSchema @constant listMessageSchema                  │
+ * │ @constant contactMessageSchema @constant reactionMessageSchema               │
+ * │ @constant whatsappNumberSchema @constant readMessageSchema                   │
+ * │ @constant archiveChatSchema @constant deleteMessageSchema                    │
+ * │ @constant contactValidateSchema @constant profilePictureSchema               │
+ * │ @constant messageValidateSchema @constant messageUpSchema                    │
+ * │ @constant createGroupSchema @constant groupJidSchema                         │
+ * │ @constant updateParticipantsSchema @constant updateGroupPicture              │
+ * │ @constant webhookSchema @constant oldTokenSchema                             │
+ * ├──────────────────────────────────────────────────────────────────────────────┤
+ * │ @important                                                                   │
+ * │ For any future changes to the code in this file, it is recommended to        │
+ * │ contain, together with the modification, the information of the developer    │
+ * │ who changed it and the date of modification.                                 │
+ * └──────────────────────────────────────────────────────────────────────────────┘
+ */
+
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
 import { v4 } from 'uuid';
 
