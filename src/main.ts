@@ -67,8 +67,8 @@ function bootstrap() {
       methods: [...configService.get<Cors>('CORS').METHODS],
       credentials: configService.get<Cors>('CORS').CREDENTIALS,
     }),
-    urlencoded({ extended: true, limit: '136mb' }),
-    json({ limit: '136mb' }),
+    urlencoded({ extended: true, limit: '50mb' }),
+    json({ limit: '50mb' }),
     compression(),
   );
 
