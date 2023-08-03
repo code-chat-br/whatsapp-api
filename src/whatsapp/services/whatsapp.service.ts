@@ -1035,7 +1035,7 @@ export class WAStartupService {
           ? { url: data.audioMessage.audio }
           : Buffer.from(data.audioMessage.audio, 'base64'),
         ptt: true,
-        mimetype: 'audio/aac',
+        mimetype: 'audio/ogg; codecs=opus',
       },
       { presence: 'recording', delay: data?.options?.delay },
     );
