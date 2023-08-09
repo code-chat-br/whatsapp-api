@@ -95,19 +95,19 @@ import { ContactRaw } from '../models/contact.model';
 import { ChatRaw } from '../models/chat.model';
 import { getMIMEType } from 'node-mime-types';
 import {
+  AudioMessageFileDto,
   ContactMessage,
+  MediaFileDto,
   MediaMessage,
   Options,
   SendAudioDto,
-  SendButtonDto,
   SendContactDto,
-  SendListDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import { arrayUnique, isBase64, isURL } from 'class-validator';
+import { isBase64, isNotEmpty, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
   DeleteMessage,
@@ -972,9 +972,9 @@ export class WAStartupService {
     try {
       const prepareMedia = await prepareWAMessageMedia(
         {
-          [mediaMessage.mediatype]: isURL(mediaMessage.media)
+          [mediaMessage.mediatype]: isURL(mediaMessage.media as string)
             ? { url: mediaMessage.media }
-            : Buffer.from(mediaMessage.media, 'base64'),
+            : (mediaMessage.media as Buffer),
         } as any,
         { upload: this.client.waUploadToServer },
       );
@@ -983,13 +983,13 @@ export class WAStartupService {
 
       if (mediaMessage.mediatype === 'document' && !mediaMessage.fileName) {
         const regex = new RegExp(/.*\/(.+?)\./);
-        const arrayMatch = regex.exec(mediaMessage.media);
+        const arrayMatch = regex.exec(mediaMessage.media as string);
         mediaMessage.fileName = arrayMatch[1];
       }
 
       let mimetype: string;
 
-      if (isURL(mediaMessage.media)) {
+      if (typeof mediaMessage.media === 'string' && isURL(mediaMessage.media)) {
         mimetype = getMIMEType(mediaMessage.media);
       } else {
         mimetype = getMIMEType(mediaMessage.fileName);
@@ -1027,6 +1027,24 @@ export class WAStartupService {
     );
   }
 
+  public async mediaFileMessage(data: MediaFileDto, file: Express.Multer.File) {
+    const generate = await this.prepareMediaMessage({
+      fileName: file.originalname,
+      media: file.buffer,
+      mediatype: data.mediatype,
+      caption: data?.caption,
+    });
+
+    return await this.sendMessageWithTyping(
+      data.number,
+      { ...generate.message },
+      {
+        presence: isNotEmpty(data?.presence) ? data.presence : undefined,
+        delay: data?.delay,
+      },
+    );
+  }
+
   public async audioWhatsapp(data: SendAudioDto) {
     return this.sendMessageWithTyping<AnyMessageContent>(
       data.number,
@@ -1041,51 +1059,15 @@ export class WAStartupService {
     );
   }
 
-  public async buttonMessage(data: SendButtonDto) {
-    const embeddedMedia: any = {};
-    let mediatype = 'TEXT';
-
-    if (data.buttonMessage?.mediaMessage) {
-      mediatype = data.buttonMessage.mediaMessage?.mediatype.toUpperCase() ?? 'TEXT';
-      embeddedMedia.mediaKey = mediatype.toLowerCase() + 'Message';
-      const generate = await this.prepareMediaMessage(data.buttonMessage.mediaMessage);
-      embeddedMedia.message = generate.message[embeddedMedia.mediaKey];
-      embeddedMedia.contentText = `*${data.buttonMessage.title}*\n\n${data.buttonMessage.description}`;
-    }
-
-    const btnItems = {
-      text: data.buttonMessage.buttons.map((btn) => btn.buttonText),
-      ids: data.buttonMessage.buttons.map((btn) => btn.buttonId),
-    };
-
-    if (!arrayUnique(btnItems.text) || !arrayUnique(btnItems.ids)) {
-      throw new BadRequestException(
-        'Button texts cannot be repeated',
-        'Button IDs cannot be repeated.',
-      );
-    }
-
-    return await this.sendMessageWithTyping(
+  public async audioWhatsAppFile(data: AudioMessageFileDto, file: Express.Multer.File) {
+    return this.sendMessageWithTyping<AnyMessageContent>(
       data.number,
       {
-        buttonsMessage: {
-          text: !embeddedMedia?.mediaKey ? data.buttonMessage.title : undefined,
-          contentText: embeddedMedia?.contentText ?? data.buttonMessage.description,
-          footerText: data.buttonMessage?.footerText,
-          buttons: data.buttonMessage.buttons.map((button) => {
-            return {
-              buttonText: {
-                displayText: button.buttonText,
-              },
-              buttonId: button.buttonId,
-              type: 1,
-            };
-          }),
-          headerType: proto.Message.ButtonsMessage.HeaderType[mediatype],
-          [embeddedMedia?.mediaKey]: embeddedMedia?.message,
-        },
+        audio: file.buffer,
+        ptt: true,
+        mimetype: 'audio/aac',
       },
-      data?.options,
+      { presence: 'recording', delay: data?.delay },
     );
   }
 
@@ -1098,23 +1080,6 @@ export class WAStartupService {
           degreesLongitude: data.locationMessage.longitude,
           name: data.locationMessage?.name,
           address: data.locationMessage?.address,
-        },
-      },
-      data?.options,
-    );
-  }
-
-  public async listMessage(data: SendListDto) {
-    return await this.sendMessageWithTyping(
-      data.number,
-      {
-        listMessage: {
-          title: data.listMessage.title,
-          description: data.listMessage.description,
-          buttonText: data.listMessage?.buttonText,
-          footerText: data.listMessage?.footerText,
-          sections: data.listMessage.sections,
-          listType: 1,
         },
       },
       data?.options,

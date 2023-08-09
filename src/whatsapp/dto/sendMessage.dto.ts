@@ -66,10 +66,17 @@ export class MediaMessage {
   // for document
   fileName?: string;
   // url or base64
-  media: string;
+  media: string | Buffer;
 }
 export class SendMediaDto extends Metadata {
   mediaMessage: MediaMessage;
+}
+
+export class MediaFileDto extends Metadata {
+  caption?: string;
+  mediatype: MediaType;
+  presence?: WAPresence;
+  delay: number;
 }
 
 class Audio {
@@ -79,19 +86,14 @@ export class SendAudioDto extends Metadata {
   audioMessage: Audio;
 }
 
+export class AudioMessageFileDto extends Metadata {
+  delay: number;
+  audio: Buffer;
+}
+
 class Button {
   buttonText: string;
   buttonId: string;
-}
-class ButtonMessage {
-  title: string;
-  description: string;
-  footerText?: string;
-  buttons: Button[];
-  mediaMessage?: MediaMessage;
-}
-export class SendButtonDto extends Metadata {
-  buttonMessage: ButtonMessage;
 }
 
 class LocationMessage {
@@ -102,26 +104,6 @@ class LocationMessage {
 }
 export class SendLocationDto extends Metadata {
   locationMessage: LocationMessage;
-}
-
-class Row {
-  title: string;
-  description: string;
-  rowId: string;
-}
-class Section {
-  title: string;
-  rows: Row[];
-}
-class ListMessage {
-  title: string;
-  description: string;
-  footerText?: string;
-  buttonText: string;
-  sections: Section[];
-}
-export class SendListDto extends Metadata {
-  listMessage: ListMessage;
 }
 
 export class ContactMessage {

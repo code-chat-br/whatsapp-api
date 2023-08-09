@@ -26,8 +26,7 @@
  * │ @constant isNotEmpty @constant instanceNameSchema                            │
  * │ @constant optionsSchema @constant numberDefinition                           │
  * │ @constant textMessageSchema @constant mediaMessageSchema                     │
- * │ @constant audioMessageSchema @constant buttonMessageSchema                   │
- * │ @constant locationMessageSchema @constant listMessageSchema                  │
+ * │ @constant locationMessageSchema @constant mediaFileMessageSchema             │
  * │ @constant contactMessageSchema @constant reactionMessageSchema               │
  * │ @constant whatsappNumberSchema @constant readMessageSchema                   │
  * │ @constant archiveChatSchema @constant deleteMessageSchema                    │
@@ -36,6 +35,7 @@
  * │ @constant createGroupSchema @constant groupJidSchema                         │
  * │ @constant updateParticipantsSchema @constant updateGroupPicture              │
  * │ @constant webhookSchema @constant oldTokenSchema                             │
+ * │ @constant audioMessageSchema                                                 │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -145,6 +145,20 @@ export const mediaMessageSchema: JSONSchema7 = {
   required: ['mediaMessage', 'number'],
 };
 
+export const mediaFileMessageSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    caption: { type: 'string' },
+    mediatype: { type: 'string', enum: ['image', 'document', 'video', 'audio'] },
+    presence: { type: 'string', enum: ['composing', 'recording'] },
+    delay: { type: 'string' },
+  },
+  required: ['mediatype', 'number'],
+  ...isNotEmpty('caption', 'mediatype', 'number', 'delay', 'presence'),
+};
+
 export const audioMessageSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
@@ -156,55 +170,22 @@ export const audioMessageSchema: JSONSchema7 = {
       properties: {
         audio: { type: 'string' },
       },
-      required: ['audio'],
+      required: ['audio', 'number'],
       ...isNotEmpty('audio'),
     },
   },
   required: ['audioMessage', 'number'],
 };
 
-export const buttonMessageSchema: JSONSchema7 = {
+export const audioFileMessageSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
-    options: { ...optionsSchema },
-    buttonMessage: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        description: { type: 'string' },
-        footerText: { type: 'string' },
-        buttons: {
-          type: 'array',
-          minItems: 1,
-          uniqueItems: true,
-          items: {
-            type: 'object',
-            properties: {
-              buttonText: { type: 'string' },
-              buttonId: { type: 'string' },
-            },
-            required: ['buttonText', 'buttonId'],
-            ...isNotEmpty('buttonText', 'buttonId'),
-          },
-        },
-        mediaMessage: {
-          type: 'object',
-          properties: {
-            media: { type: 'string' },
-            fileName: { type: 'string' },
-            mediatype: { type: 'string', enum: ['image', 'document', 'video'] },
-          },
-          required: ['media', 'mediatype'],
-          ...isNotEmpty('media', 'fileName'),
-        },
-      },
-      required: ['title', 'buttons'],
-      ...isNotEmpty('title', 'description'),
-    },
+    delay: { type: 'string' },
   },
-  required: ['number', 'buttonMessage'],
+  required: ['number'],
+  ...isNotEmpty('delay'),
 };
 
 export const locationMessageSchema: JSONSchema7 = {
@@ -222,59 +203,10 @@ export const locationMessageSchema: JSONSchema7 = {
         address: { type: 'string' },
       },
       required: ['latitude', 'longitude'],
-      ...isNotEmpty('name', 'addresss'),
+      ...isNotEmpty('name', 'address'),
     },
   },
   required: ['number', 'locationMessage'],
-};
-
-export const listMessageSchema: JSONSchema7 = {
-  $id: v4(),
-  type: 'object',
-  properties: {
-    number: { ...numberDefinition },
-    options: { ...optionsSchema },
-    listMessage: {
-      type: 'object',
-      properties: {
-        title: { type: 'string' },
-        description: { type: 'string' },
-        footerText: { type: 'string' },
-        buttonText: { type: 'string' },
-        sections: {
-          type: 'array',
-          minItems: 1,
-          uniqueItems: true,
-          items: {
-            type: 'object',
-            properties: {
-              title: { type: 'string' },
-              rows: {
-                type: 'array',
-                minItems: 1,
-                uniqueItems: true,
-                items: {
-                  type: 'object',
-                  properties: {
-                    title: { type: 'string' },
-                    description: { type: 'string' },
-                    rowId: { type: 'string' },
-                  },
-                  required: ['title', 'description', 'rowId'],
-                  ...isNotEmpty('title', 'description', 'rowId'),
-                },
-              },
-            },
-            required: ['title', 'rows'],
-            ...isNotEmpty('title'),
-          },
-        },
-      },
-      required: ['title', 'description', 'buttonText', 'sections'],
-      ...isNotEmpty('title', 'description', 'buttonText', 'footerText'),
-    },
-  },
-  required: ['number', 'listMessage'],
 };
 
 export const contactMessageSchema: JSONSchema7 = {

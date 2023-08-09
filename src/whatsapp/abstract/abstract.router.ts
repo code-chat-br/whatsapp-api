@@ -48,7 +48,7 @@ type DataValidate<T> = {
   request: Request;
   schema: JSONSchema7;
   ClassRef: any;
-  execute: (instance: InstanceDto, data: T) => Promise<any>;
+  execute: (instance: InstanceDto, data: T, file?: Express.Multer.File) => Promise<any>;
 };
 
 const logger = new Logger('Validate');
@@ -97,7 +97,7 @@ export abstract class RouterBroker {
       throw new BadRequestException(...message);
     }
 
-    return await execute(instance, ref);
+    return await execute(instance, ref, request?.file);
   }
 
   public async groupValidate<T>(args: DataValidate<T>) {

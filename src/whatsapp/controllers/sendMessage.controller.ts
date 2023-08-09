@@ -34,14 +34,14 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { isBase64, isURL } from 'class-validator';
+import { isBase64, isNumberString, isURL } from 'class-validator';
 import { BadRequestException } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
 import {
+  AudioMessageFileDto,
+  MediaFileDto,
   SendAudioDto,
-  SendButtonDto,
   SendContactDto,
-  SendListDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -57,38 +57,54 @@ export class SendMessageController {
   }
 
   public async sendMedia({ instanceName }: InstanceDto, data: SendMediaDto) {
-    if (isBase64(data?.mediaMessage?.media) && !data?.mediaMessage?.fileName) {
-      throw new BadRequestException('For bse64 the file name must be informed.');
+    if (isBase64(data?.mediaMessage?.media)) {
+      throw new BadRequestException('Owned media must be a url');
     }
-    if (isURL(data?.mediaMessage?.media) || isBase64(data?.mediaMessage?.media)) {
+    if (data?.mediaMessage.mediatype === 'document' && !data?.mediaMessage?.fileName) {
+      throw new BadRequestException('Enter the file name for the "document" type.');
+    }
+    if (isURL(data?.mediaMessage?.media as string)) {
       return await this.waMonitor.waInstances[instanceName].mediaMessage(data);
     }
-    throw new BadRequestException('Owned media must be a url or base64');
+  }
+
+  public async sendMediaFile(
+    { instanceName }: InstanceDto,
+    data: MediaFileDto,
+    file: Express.Multer.File,
+  ) {
+    if (data?.delay && !isNumberString(data.delay)) {
+      throw new BadRequestException('The "delay" property must have an integer.');
+    } else {
+      data.delay = Number.parseInt(data?.delay as never);
+    }
+    return await this.waMonitor.waInstances[instanceName].mediaFileMessage(data, file);
   }
 
   public async sendWhatsAppAudio({ instanceName }: InstanceDto, data: SendAudioDto) {
+    if (isBase64(data?.audioMessage.audio)) {
+      throw new BadRequestException('Owned media must be a url');
+    }
     if (isURL(data.audioMessage.audio) || isBase64(data.audioMessage.audio)) {
       return await this.waMonitor.waInstances[instanceName].audioWhatsapp(data);
     }
-    throw new BadRequestException('Owned media must be a url or base64');
   }
 
-  public async sendButtons({ instanceName }: InstanceDto, data: SendButtonDto) {
-    if (
-      isBase64(data.buttonMessage.mediaMessage?.media) &&
-      !data.buttonMessage.mediaMessage?.fileName
-    ) {
-      throw new BadRequestException('For bse64 the file name must be informed.');
+  public async sendWhatsAppAudioFile(
+    { instanceName }: InstanceDto,
+    data: AudioMessageFileDto,
+    file: Express.Multer.File,
+  ) {
+    if (data?.delay && !isNumberString(data.delay)) {
+      throw new BadRequestException('The "delay" property must have an integer.');
+    } else {
+      data.delay = Number.parseInt(data?.delay as never);
     }
-    return await this.waMonitor.waInstances[instanceName].buttonMessage(data);
+    return await this.waMonitor.waInstances[instanceName].audioWhatsAppFile(data, file);
   }
 
   public async sendLocation({ instanceName }: InstanceDto, data: SendLocationDto) {
     return await this.waMonitor.waInstances[instanceName].locationMessage(data);
-  }
-
-  public async sendList({ instanceName }: InstanceDto, data: SendListDto) {
-    return await this.waMonitor.waInstances[instanceName].listMessage(data);
   }
 
   public async sendContact({ instanceName }: InstanceDto, data: SendContactDto) {
