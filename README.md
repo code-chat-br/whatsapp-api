@@ -1,10 +1,3 @@
-<h2>Update commands:</h2>
-
-```sh
-git pull
-npm install
-```
-
 </br>
 <hr style="height: 5px;background: #007500;margin: 20px 0;box-shadow: 0px 3px 5px 0px rgb(204 204 204);">
 
