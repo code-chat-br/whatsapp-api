@@ -170,7 +170,7 @@ export const audioMessageSchema: JSONSchema7 = {
       properties: {
         audio: { type: 'string' },
       },
-      required: ['audio', 'number'],
+      required: ['audio'],
       ...isNotEmpty('audio'),
     },
   },
