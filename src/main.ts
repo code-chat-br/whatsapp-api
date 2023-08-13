@@ -104,9 +104,16 @@ function bootstrap() {
   ServerUP.app = app;
   const server = ServerUP[httpServer.TYPE];
 
-  server.listen(httpServer.PORT, () =>
-    logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT),
-  );
+  server.listen(httpServer.PORT, () => {
+    logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT + '\n\n');
+    new Logger('Swagger Docs').warn(
+      `
+      ┌──────────────────────────────┐
+      │         Swagger Docs         │
+      │  http://localhost:${httpServer.PORT}/docs  │
+      └──────────────────────────────┘`.replace(/^ +/gm, '  '),
+    );
+  });
 
   initWA();
 
