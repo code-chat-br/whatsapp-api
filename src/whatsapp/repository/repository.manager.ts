@@ -49,8 +49,8 @@ import { MongoClient } from 'mongodb';
 import { WebhookRepository } from './webhook.repository';
 import { AuthRepository } from './auth.repository';
 import { Auth, ConfigService, Database } from '../../config/env.config';
-import { execSync } from 'child_process';
 import { join } from 'path';
+import fs from 'fs';
 
 export class RepositoryBroker {
   constructor(
@@ -76,18 +76,39 @@ export class RepositoryBroker {
   private __init_repo_without_db__() {
     if (!this.configService.get<Database>('DATABASE').ENABLED) {
       const storePath = join(process.cwd(), 'store');
-      execSync(
-        `mkdir -p ${join(
+      try {
+        const authDir = join(
           storePath,
           'auth',
           this.configService.get<Auth>('AUTHENTICATION').TYPE,
-        )}`,
-      );
-      execSync(`mkdir -p ${join(storePath, 'chats')}`);
-      execSync(`mkdir -p ${join(storePath, 'contacts')}`);
-      execSync(`mkdir -p ${join(storePath, 'messages')}`);
-      execSync(`mkdir -p ${join(storePath, 'message-up')}`);
-      execSync(`mkdir -p ${join(storePath, 'webhook')}`);
+        );
+        const chatsDir = join(storePath, 'chats');
+        const contactsDir = join(storePath, 'contacts');
+        const messagesDir = join(storePath, 'messages');
+        const messageUpDir = join(storePath, 'message-up');
+        const webhookDir = join(storePath, 'webhook');
+
+        if (!fs.existsSync(authDir)) {
+          fs.mkdirSync(authDir, { recursive: true });
+        }
+        if (!fs.existsSync(chatsDir)) {
+          fs.mkdirSync(chatsDir, { recursive: true });
+        }
+        if (!fs.existsSync(contactsDir)) {
+          fs.mkdirSync(contactsDir, { recursive: true });
+        }
+        if (!fs.existsSync(messagesDir)) {
+          fs.mkdirSync(messagesDir, { recursive: true });
+        }
+        if (!fs.existsSync(messageUpDir)) {
+          fs.mkdirSync(messageUpDir, { recursive: true });
+        }
+        if (!fs.existsSync(webhookDir)) {
+          fs.mkdirSync(webhookDir, { recursive: true });
+        }
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 }
