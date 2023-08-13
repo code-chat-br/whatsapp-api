@@ -45,7 +45,7 @@ import { waMonitor } from './whatsapp/whatsapp.module';
 import { HttpStatus, router } from './whatsapp/routers/index.router';
 import 'express-async-errors';
 import { ServerUP } from './utils/server-up';
-import { swaggerRouter } from './swagger/swagger.conf';
+import { swaggerRouter } from '../docs/swagger.conf';
 
 function initWA() {
   waMonitor.loadInstance();
@@ -59,7 +59,9 @@ function bootstrap() {
     cors({
       origin(requestOrigin, callback) {
         const { ORIGIN } = configService.get<Cors>('CORS');
-        !requestOrigin ? (requestOrigin = '*') : undefined;
+        if (ORIGIN.includes('*')) {
+          return callback(null, true);
+        }
         if (ORIGIN.indexOf(requestOrigin) !== -1) {
           return callback(null, true);
         }
