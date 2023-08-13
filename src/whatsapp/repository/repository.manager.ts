@@ -51,6 +51,7 @@ import { AuthRepository } from './auth.repository';
 import { Auth, ConfigService, Database } from '../../config/env.config';
 import { execSync } from 'child_process';
 import { join } from 'path';
+import { existsSync } from 'fs';
 
 export class RepositoryBroker {
   constructor(
@@ -76,18 +77,21 @@ export class RepositoryBroker {
   private __init_repo_without_db__() {
     if (!this.configService.get<Database>('DATABASE').ENABLED) {
       const storePath = join(process.cwd(), 'store');
-      execSync(
-        `mkdir -p ${join(
-          storePath,
-          'auth',
-          this.configService.get<Auth>('AUTHENTICATION').TYPE,
-        )}`,
-      );
-      execSync(`mkdir -p ${join(storePath, 'chats')}`);
-      execSync(`mkdir -p ${join(storePath, 'contacts')}`);
-      execSync(`mkdir -p ${join(storePath, 'messages')}`);
-      execSync(`mkdir -p ${join(storePath, 'message-up')}`);
-      execSync(`mkdir -p ${join(storePath, 'webhook')}`);
+      const paths = [
+        join(storePath, 'auth', this.configService.get<Auth>('AUTHENTICATION').TYPE),
+        join(storePath, 'chats'),
+        join(storePath, 'contacts'),
+        join(storePath, 'messages'),
+        join(storePath, 'message-up'),
+        join(storePath, 'webhook'),
+      ];
+
+      for (const path of paths) {
+        if (existsSync(path)) {
+          continue;
+        }
+        execSync(`mkdir -p ${path}`);
+      }
     }
   }
 }
