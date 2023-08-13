@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 networks:
   api-net:
@@ -8,21 +8,20 @@ volumes:
   mongo_data:
   redis_data:
 
+
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:local
+    image: codechat/api:v1.2.5
     restart: unless-stopped
     ports:
       - 8083:8083
     volumes:
       - ./instances:/codechat/instances
       - ./src/env.yml:/codechat/src/env.yml
-    command: ['node', './src/main.js']
+    command: [ 'node', './src/main.js' ]
     networks:
       - api-net
-    depends_on:
-      - mongodb
 
   mongodb:
     container_name: mongodb
@@ -39,8 +38,8 @@ services:
   cache:
     image: redis:7
     restart: unless-stopped
-    command: redis-server --save 20 1 --loglevel warning 
-    volumes: 
+    command: redis-server --save 20 1 --loglevel warning
+    volumes:
       - redis_data:/data
     networks:
       - api-net

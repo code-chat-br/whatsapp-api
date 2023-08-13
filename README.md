@@ -205,11 +205,12 @@ docker-compose up
 |     |   |
 |-----|---|
 | Send Text | ✔ |
-| Send Buttons | ✔ |
+| Send Buttons | ❌ |
 | Send Template | ❌ |
 | Send Media: audio - video - image - document - gif <br></br>base64: ```true``` | ✔ |
-| Send Media File | ❌ |
+| Send Media File | ✔ |
 | Send Audio type WhatsApp | ✔ |
+| Send Audio type WhatsApp - File | ✔ |
 | Send Location | ✔ |
 | Send List | ✔ |
 | Send Link Preview | ❌ |
@@ -218,6 +219,7 @@ docker-compose up
 
 ## Postman collections
   - [Postman Json](./postman.json)
+  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/api/fbe06c7b-7647-4c71-81ee-841f5b2e90d8?action=share&creator=14064846)
 
 ## Webhook Events
 

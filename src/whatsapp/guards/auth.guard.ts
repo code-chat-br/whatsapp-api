@@ -56,10 +56,6 @@ const logger = new Logger('GUARD');
 async function jwtGuard(req: Request, _: Response, next: NextFunction) {
   const key = req.get('apikey');
 
-  if (key && configService.get<Auth>('AUTHENTICATION').API_KEY.KEY !== key) {
-    throw new UnauthorizedException();
-  }
-
   if (configService.get<Auth>('AUTHENTICATION').API_KEY.KEY === key) {
     return next();
   }

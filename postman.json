@@ -1,1381 +1,1659 @@
 {
-  "collection": {
-      "info": {
-          "_postman_id": "a346ce06-3faa-47c3-88f0-4924ab4ca92d",
-          "name": "Api Whatsapp",
-          "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-          "updatedAt": "2023-08-08T22:56:47.000Z",
-          "uid": "14064846-a346ce06-3faa-47c3-88f0-4924ab4ca92d"
-      },
-      "item": [
-          {
-              "name": "Instance Controller",
-              "item": [
-                  {
-                      "name": "Views",
-                      "item": [
-                          {
-                              "name": "QrCode",
-                              "id": "e13e73d1-ca81-46b7-82a9-717e1558284e",
-                              "protocolProfileBehavior": {
-                                  "disableBodyPruning": true
-                              },
-                              "request": {
-                                  "method": "GET",
-                                  "header": [],
-                                  "url": {
-                                      "raw": "{{baseUrl}}/instance/qrcode/{{instance}}",
-                                      "host": [
-                                          "{{baseUrl}}"
-                                      ],
-                                      "path": [
-                                          "instance",
-                                          "qrcode",
-                                          "{{instance}}"
-                                      ]
-                                  }
-                              },
-                              "response": [],
-                              "uid": "14064846-e13e73d1-ca81-46b7-82a9-717e1558284e"
-                          }
-                      ],
-                      "id": "c58c742f-3010-4e95-99f8-28feeb37891a",
-                      "uid": "14064846-c58c742f-3010-4e95-99f8-28feeb37891a"
-                  },
-                  {
-                      "name": "Create Instance",
-                      "id": "0e70f058-7b96-4ca9-a31c-408bb638c00b",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "auth": {
-                              "type": "apikey",
-                              "apikey": [
-                                  {
-                                      "key": "in",
-                                      "value": "header",
-                                      "type": "string"
-                                  },
-                                  {
-                                      "key": "key",
-                                      "value": "apikey",
-                                      "type": "string"
-                                  },
-                                  {
-                                      "key": "value",
-                                      "value": "{{globalApikey}}",
-                                      "type": "string"
-                                  }
-                              ]
-                          },
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"instanceName\": \"codedrop\"\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/create",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "create"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-0e70f058-7b96-4ca9-a31c-408bb638c00b"
-                  },
-                  {
-                      "name": "Fetch Instances",
-                      "id": "cf9aeacf-dd2e-4798-8c9a-123420d2b66e",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "auth": {
-                              "type": "apikey",
-                              "apikey": [
-                                  {
-                                      "key": "in",
-                                      "value": "header",
-                                      "type": "string"
-                                  },
-                                  {
-                                      "key": "key",
-                                      "value": "apikey",
-                                      "type": "string"
-                                  },
-                                  {
-                                      "key": "value",
-                                      "value": "{{globalApikey}}",
-                                      "type": "string"
-                                  }
-                              ]
-                          },
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/fetchInstances?instanceName={{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "fetchInstances"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "instanceName",
-                                      "value": "{{instance}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-cf9aeacf-dd2e-4798-8c9a-123420d2b66e"
-                  },
-                  {
-                      "name": "Instance Connect",
-                      "event": [
-                          {
-                              "listen": "test",
-                              "script": {
-                                  "id": "bbdb886d-3a50-43ce-a1ce-97aba902dbbd",
-                                  "exec": [
-                                      "const img = \"<img src='{{base64}}' heigth=80%/>\";\r",
-                                      "pm.visualizer.set(img, { base64: pm.response.json()['base64'] });\r",
-                                      ""
-                                  ],
-                                  "type": "text/javascript"
-                              }
-                          }
-                      ],
-                      "id": "39ef2c5a-bb9e-4996-94b5-689d161f5412",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/connect/codedrop",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "connect",
-                                  "codedrop"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-39ef2c5a-bb9e-4996-94b5-689d161f5412"
-                  },
-                  {
-                      "name": "Connection Status",
-                      "id": "7b4d3891-9a72-4b8c-9fa8-393308273b99",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/connectionState/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "connectionState",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-7b4d3891-9a72-4b8c-9fa8-393308273b99"
-                  },
-                  {
-                      "name": "Logout Instance",
-                      "id": "c852edac-88bc-4b14-8452-dc00749797f1",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "DELETE",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/logout/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "logout",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-c852edac-88bc-4b14-8452-dc00749797f1"
-                  },
-                  {
-                      "name": "Delete Instance",
-                      "id": "4bb47543-b864-41fe-b53d-4e6fd135764a",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "DELETE",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/delete/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "delete",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-4bb47543-b864-41fe-b53d-4e6fd135764a"
-                  }
-              ],
-              "id": "6513b816-9425-4ca7-b350-5f137dcf7239",
-              "event": [
-                  {
-                      "listen": "prerequest",
-                      "script": {
-                          "id": "5777fabe-31ff-4f2e-b782-6b089f990b67",
-                          "type": "text/javascript",
-                          "exec": [
-                              ""
-                          ]
-                      }
-                  },
-                  {
-                      "listen": "test",
-                      "script": {
-                          "id": "fe0c8c67-1abf-4863-8a11-8f3dd54e6fa2",
-                          "type": "text/javascript",
-                          "exec": [
-                              ""
-                          ]
-                      }
-                  }
-              ],
-              "uid": "14064846-6513b816-9425-4ca7-b350-5f137dcf7239"
-          },
-          {
-              "name": "Send Message Controller",
-              "item": [
-                  {
-                      "name": "Send Text",
-                      "id": "0989292a-7aba-4ba8-9b48-7097b3eaf218",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"textMessage\": {\r\n    \"text\": \"ok\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendText/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendText",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-0989292a-7aba-4ba8-9b48-7097b3eaf218"
-                  },
-                  {
-                      "name": "Send Media",
-                      "id": "4d17edef-f237-4f00-906d-71687a2210d8",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"mediaMessage\": {\r\n    \"mediatype\": \"video\",\r\n    \"fileName\": \"video.mp4\",\r\n    \"caption\": \"Description\",\r\n    \"media\": \"https://video-previews.elements.envatousercontent.com/files/a8c95f09-1a77-4c38-bba1-f8c3d7a3ef23/video_preview_h264.mp4\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendMedia/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendMedia",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-4d17edef-f237-4f00-906d-71687a2210d8"
-                  },
-                  {
-                      "name": "Send Media File",
-                      "id": "f627bd40-4708-4919-86ac-c2620f06b221",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "formdata",
-                              "formdata": [
-                                  {
-                                      "key": "number",
-                                      "value": "5531900000000",
-                                      "description": "- required",
-                                      "type": "text"
-                                  },
-                                  {
-                                      "key": "caption",
-                                      "value": "Image test",
-                                      "type": "text"
-                                  },
-                                  {
-                                      "key": "attachment",
-                                      "description": "- required",
-                                      "type": "file",
-                                      "src": "/C:/Users/clebe/OneDrive/Imagens/Saved Pictures/wp2437961.png"
-                                  },
-                                  {
-                                      "key": "mediatype",
-                                      "value": "image",
-                                      "description": "image | document | video | audio",
-                                      "type": "text"
-                                  },
-                                  {
-                                      "key": "presence",
-                                      "value": "",
-                                      "description": "composing | recording",
-                                      "type": "text"
-                                  },
-                                  {
-                                      "key": "delay",
-                                      "value": "1200",
-                                      "type": "text"
-                                  }
-                              ]
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendMediaFile/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendMediaFile",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-f627bd40-4708-4919-86ac-c2620f06b221"
-                  },
-                  {
-                      "name": "Send Location",
-                      "id": "12dcb0d1-d6e1-465c-916e-8a238b1413e9",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"locationMessage\": {\r\n    \"name\": \"Moeda - MG\",\r\n    \"address\": \"🗺️ Moeda 🗺️\",\r\n    \"latitude\": -20.32568196333534,\r\n    \"longitude\": -44.016271276581236\r\n  },\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendLocation/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendLocation",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-12dcb0d1-d6e1-465c-916e-8a238b1413e9"
-                  },
-                  {
-                      "name": "Send Contact",
-                      "id": "55802759-f91c-4963-a191-7bc6d58face5",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"contactMessage\": [\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531922228888\",\r\n      \"phoneNumber\": \"+55 31 9 2222-8888\"\r\n    }\r\n  ],\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendContact/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendContact",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-55802759-f91c-4963-a191-7bc6d58face5"
-                  },
-                  {
-                      "name": "Send Reaction",
-                      "id": "94e29b21-410d-470b-925c-0739ad36efcb",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"reactionMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"5531900000000@s.whatsapp.net\",\r\n      \"fromMe\": true,\r\n      \"id\": \"BAE5D6023E03E7AC\"\r\n    },\r\n    \"reaction\": \"😒\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendReaction/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendReaction",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-94e29b21-410d-470b-925c-0739ad36efcb"
-                  },
-                  {
-                      "name": "Send WhatsApp Audio",
-                      "id": "bb6b9445-7f29-42c7-b1b2-b9b9b9bfa121",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"number\": \"5531900000000\",\r\n  \"options\": {\r\n    \"delay\": 1200\r\n  },\r\n  \"audioMessage\": {\r\n    \"audio\": \"https://lp.naturefarm.site/wp-content/uploads/2023/01/WhatsApp-Ptt-2022-12-05-at-13.00.53.ogg\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendWhatsAppAudio/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendWhatsAppAudio",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-bb6b9445-7f29-42c7-b1b2-b9b9b9bfa121"
-                  },
-                  {
-                      "name": "Send WhatsApp Audio - File",
-                      "id": "56629699-79d0-4fa5-b249-92bb10fa2a41",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "formdata",
-                              "formdata": [
-                                  {
-                                      "key": "number",
-                                      "value": "5531997853327",
-                                      "description": "- required",
-                                      "type": "text"
-                                  },
-                                  {
-                                      "key": "attachment",
-                                      "description": "- required",
-                                      "type": "file",
-                                      "value": null
-                                  }
-                              ]
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/message/sendMediaFile/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "message",
-                                  "sendMediaFile",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-56629699-79d0-4fa5-b249-92bb10fa2a41"
-                  }
-              ],
-              "id": "254b8181-a775-4f4c-b9f8-e7b61d77fed1",
-              "uid": "14064846-254b8181-a775-4f4c-b9f8-e7b61d77fed1"
-          },
-          {
-              "name": "Chat Controller",
-              "item": [
-                  {
-                      "name": "WhatsApp Number",
-                      "id": "d75c7dda-1473-401e-9775-69baa4ce3de3",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"numbers\": [\r\n    \"5531997853327\",\r\n    \"5531911111111\"\r\n  ]\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/whatsappNumbers/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "whatsappNumbers",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-d75c7dda-1473-401e-9775-69baa4ce3de3"
-                  },
-                  {
-                      "name": "Read Messages",
-                      "id": "32f9cd0c-69c8-4319-8526-a8154b2891c5",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "PUT",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"readMessages\": [\r\n    {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": false,\r\n      \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n    }\r\n  ]\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/markMessageAsRead/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "markMessageAsRead",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-32f9cd0c-69c8-4319-8526-a8154b2891c5"
-                  },
-                  {
-                      "name": "Archive Chat",
-                      "id": "26364791-b1df-4abe-910d-98b295509754",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "PUT",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"lastMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"fromMe\": false,\r\n      \"id\": \"80C4CE9B72F797DBC6ECD8D19B247FC9\"\r\n    }\r\n  },\r\n  // false: to unarchive\r\n  // true: to archive\r\n  \"archive\": false\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/archiveChat/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "archiveChat",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-26364791-b1df-4abe-910d-98b295509754"
-                  },
-                  {
-                      "name": "Delete Message",
-                      "id": "98b828cf-6eda-4d9c-afc9-5e27f3f06b21",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "DELETE",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"id\": \"id\",\r\n  \"remoteJid\": \"remoteJid\",\r\n  \"fromMe\": true,\r\n  // optional\r\n  \"paticipant\": \"paticipant\"\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/deleteMessageForEveryone/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "deleteMessageForEveryone",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-98b828cf-6eda-4d9c-afc9-5e27f3f06b21"
-                  },
-                  {
-                      "name": "Fetch Profile Picture",
-                      "id": "0106583a-2842-432f-88bc-f63df3469e1c",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"number\": \"5531900000000\"\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/fetchProfilePictureUrl/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "fetchProfilePictureUrl",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-0106583a-2842-432f-88bc-f63df3469e1c"
-                  },
-                  {
-                      "name": "Find Contacts",
-                      "id": "1ae99ab9-abca-4240-8097-a3aa067ebc90",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"where\": {\r\n    \"id\": \"5531900000000@s.whatsapp.net\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/findContacts/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "findContacts",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-1ae99ab9-abca-4240-8097-a3aa067ebc90"
-                  },
-                  {
-                      "name": "Get Base64 From Media Message",
-                      "event": [
-                          {
-                              "listen": "test",
-                              "script": {
-                                  "id": "50374ffc-d4e6-4511-8b11-90a41cce0a0d",
-                                  "exec": [
-                                      "const img = \"<img src='data:image/jpeg;base64,{{base64}}' height=80%/>\";\r",
-                                      "pm.visualizer.set(img, {base64: pm.response.json()['base64']});"
-                                  ],
-                                  "type": "text/javascript"
-                              }
-                          }
-                      ],
-                      "id": "0e66db81-8d9c-41b1-bfb6-a274a185f977",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "\r\n{\r\n  \"key\": {\r\n    \"id\": \"0479702F62C9DAA0A1EB96EC66215989\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/getBase64FromMediaMessage/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "getBase64FromMediaMessage",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-0e66db81-8d9c-41b1-bfb6-a274a185f977"
-                  },
-                  {
-                      "name": "Find Messages",
-                      "id": "4754ff87-4d2a-4933-9130-769c788cf625",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"key.id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n{\r\n  \"where\": {\r\n    /* \r\n     * \"key.fromMe\": false,\r\n     * \"key.remoteJid\": \"123@s.whatsapp.net\",\r\n     * \"key.id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    */\r\n    \"key\": {\r\n      \"fromMe\": false,\r\n      \"remoteJid\": \"123@s.whatsapp.net\",\r\n      \"id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    },\r\n    \"message.[...]\": { }\r\n  },\r\n  // optional\r\n  \"limit\": 10\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/findMessages/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "findMessages",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-4754ff87-4d2a-4933-9130-769c788cf625"
-                  },
-                  {
-                      "name": "Find Status Message",
-                      "id": "b261a9c9-d41c-4e75-a537-dbdafd872d5f",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"where\": {\r\n      \"id\": \"31E2A5CD2D0A83740FCB52786C32B22D\"\r\n  }\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/findStatusMessage/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "findStatusMessage",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-b261a9c9-d41c-4e75-a537-dbdafd872d5f"
-                  },
-                  {
-                      "name": "Find Chats",
-                      "id": "55345816-b322-47bf-9f66-411c8ead9afb",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/chat/findChats/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "chat",
-                                  "findChats",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-55345816-b322-47bf-9f66-411c8ead9afb"
-                  }
-              ],
-              "id": "84b58e33-0408-481f-9874-b82ceeb6e1bc",
-              "uid": "14064846-84b58e33-0408-481f-9874-b82ceeb6e1bc"
-          },
-          {
-              "name": "Group Controller",
-              "item": [
-                  {
-                      "name": "Create Group",
-                      "id": "783e0b82-8960-4248-b432-9fa47697dd6a",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"subject\": \"Test 02\",  \r\n  \"description\": \"optional\",\r\n  \"participants\": [\r\n    \"5531900000000\",\r\n    \"5531900000000\"\r\n  ]\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/group/create/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "create",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-783e0b82-8960-4248-b432-9fa47697dd6a"
-                  },
-                  {
-                      "name": "Update Group Picture",
-                      "id": "f0288c97-00ea-4790-a510-9810b68775d0",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "PUT",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"image\": \"https://i.pinimg.com/736x/25/78/61/25786134576ce0344893b33a051160b1.jpg\"\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/group/updateGroupPicture/{{instance}}?groupJid={{groupJid}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "updateGroupPicture",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-f0288c97-00ea-4790-a510-9810b68775d0"
-                  },
-                  {
-                      "name": "Find Group",
-                      "id": "bf7c0e39-056e-4d89-acb6-bc5fc850a3eb",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/group/findGroupInfos/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "findGroupInfos",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}",
-                                      "disabled": true
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-bf7c0e39-056e-4d89-acb6-bc5fc850a3eb"
-                  },
-                  {
-                      "name": "Find Participants",
-                      "id": "326818bf-c75d-4f1a-868e-a5079efff7a5",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/group/participants/{{instance}}?groupJid={{groupJid}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "participants",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-326818bf-c75d-4f1a-868e-a5079efff7a5"
-                  },
-                  {
-                      "name": "Invite Code",
-                      "id": "daacb24b-86cb-4a95-abe3-13fd1dfe8304",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/group/inviteCode/{{instance}}?groupJid={{groupJid}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "inviteCode",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-daacb24b-86cb-4a95-abe3-13fd1dfe8304"
-                  },
-                  {
-                      "name": "Revoke Invite Code",
-                      "id": "67291926-2d3e-4b97-911f-7f2760761681",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "PUT",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/group/revokeInviteCode/{{instance}}?groupJid={{groupJid}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "revokeInviteCode",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-67291926-2d3e-4b97-911f-7f2760761681"
-                  },
-                  {
-                      "name": "Update Participant",
-                      "id": "aef56a44-c790-45d5-b370-7f5716c59d68",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "PUT",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"action\": \"'add' | 'remove' | 'promote' | 'demote'\",\r\n  \"participants\": [\r\n    \"5531900000000\",\r\n    \"5531911111111\",\r\n    \"5531922222222\"\r\n  ]\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/group/updateParticipant/{{instance}}?groupJid={{groupJid}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "updateParticipant",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-aef56a44-c790-45d5-b370-7f5716c59d68"
-                  },
-                  {
-                      "name": "Leave Group",
-                      "id": "4918cfc2-7b8c-483b-80a6-ee6c977f0772",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "DELETE",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/group/leaveGroup/{{instance}}?groupJid={{groupJid}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "group",
-                                  "leaveGroup",
-                                  "{{instance}}"
-                              ],
-                              "query": [
-                                  {
-                                      "key": "groupJid",
-                                      "value": "{{groupJid}}"
-                                  }
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-4918cfc2-7b8c-483b-80a6-ee6c977f0772"
-                  }
-              ],
-              "id": "e448a85f-92e6-4a3e-b400-1e58bebd1271",
-              "uid": "14064846-e448a85f-92e6-4a3e-b400-1e58bebd1271"
-          },
-          {
-              "name": "JWT",
-              "item": [
-                  {
-                      "name": "Refresh Token",
-                      "id": "8fa47d1f-712d-4138-84cc-2b793e04b838",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "auth": {
-                              "type": "noauth"
-                          },
-                          "method": "PUT",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"oldToken\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlZHJvcCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiM2JhMzVhNDgtNDdkNy00ZGI3LWIyYWMtNjYzZTRmNDQyNzE0IiwiaWF0IjoxNjkxNTI2NTkzLCJleHAiOjE2OTE1MzAxOTMsInN1YiI6ImctdCJ9.eBpoWLKwN0KOuHOkMmUQFnlbCTpPPeC1AtSdc-MYTOk\"\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/instance/refreshToken/",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "instance",
-                                  "refreshToken",
-                                  ""
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-8fa47d1f-712d-4138-84cc-2b793e04b838"
-                  }
-              ],
-              "id": "088f2e19-b320-4513-ab9b-c19fa45d1b5c",
-              "uid": "14064846-088f2e19-b320-4513-ab9b-c19fa45d1b5c"
-          },
-          {
-              "name": "Webhook",
-              "item": [
-                  {
-                      "name": "Set Webhook",
-                      "id": "2b7ce76a-d3ab-4065-a984-3774a35492b9",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "POST",
-                          "header": [],
-                          "body": {
-                              "mode": "raw",
-                              "raw": "{\r\n  \"enabled\": false,\r\n  \"url\": \"http://127.0.0.1:3333\"\r\n}",
-                              "options": {
-                                  "raw": {
-                                      "language": "json"
-                                  }
-                              }
-                          },
-                          "url": {
-                              "raw": "{{baseUrl}}/webhook/set/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "webhook",
-                                  "set",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-2b7ce76a-d3ab-4065-a984-3774a35492b9"
-                  },
-                  {
-                      "name": "Find Webhook",
-                      "id": "a3e196de-3bc0-40b6-b907-831e1f2f8a8f",
-                      "protocolProfileBehavior": {
-                          "disableBodyPruning": true
-                      },
-                      "request": {
-                          "method": "GET",
-                          "header": [],
-                          "url": {
-                              "raw": "{{baseUrl}}/webhook/find/{{instance}}",
-                              "host": [
-                                  "{{baseUrl}}"
-                              ],
-                              "path": [
-                                  "webhook",
-                                  "find",
-                                  "{{instance}}"
-                              ]
-                          }
-                      },
-                      "response": [],
-                      "uid": "14064846-a3e196de-3bc0-40b6-b907-831e1f2f8a8f"
-                  }
-              ],
-              "id": "700b438c-2364-4445-8f7f-e4eb55277a22",
-              "uid": "14064846-700b438c-2364-4445-8f7f-e4eb55277a22"
-          }
-      ],
-      "auth": {
-          "type": "bearer",
-          "bearer": [
-              {
-                  "key": "token",
-                  "value": "{{token}}",
-                  "type": "string"
-              }
-          ]
-      },
-      "event": [
-          {
-              "listen": "prerequest",
-              "script": {
-                  "id": "05e80c4e-fd69-4103-ba69-951a8fd8af6b",
-                  "type": "text/javascript",
-                  "exec": [
-                      ""
-                  ]
-              }
-          },
-          {
-              "listen": "test",
-              "script": {
-                  "id": "42d9cc8c-66a4-4674-aa92-a4ae60aadae3",
-                  "type": "text/javascript",
-                  "exec": [
-                      ""
-                  ]
-              }
-          }
-      ],
-      "variable": [
-          {
-              "id": "8e3caa22-b1a6-418d-a403-0b55f76acfbe",
-              "key": "baseUrl",
-              "value": "https://api.codechat.dev",
-              "type": "string"
-          },
-          {
-              "id": "31c8783c-cb80-4b4b-9faa-db4115cbc3e5",
-              "key": "instance",
-              "value": "codechat",
-              "type": "string"
-          },
-          {
-              "id": "c58c22d8-937a-4075-85c8-9d8c6d3cdf7d",
-              "key": "token",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlZHJvcCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMmU2NjkyYWQtMGEzZi00NzU2LTgyY2YtYTQxNmQ1NGVjMzhiIiwiaWF0IjoxNjg4NDc5MzM3LCJleHAiOjE2ODg0ODI5MzcsInN1YiI6ImctdCJ9.3bwxn92a3-xWKDnC9PYPQ4BvK20fRls4lFVofCZPfRk",
-              "type": "string"
-          },
-          {
-              "id": "5abca1ff-8f77-4d58-b9e9-726c3507995d",
-              "key": "apikey",
-              "value": "7259FC4B-2825-402D-9321-022978061B84",
-              "type": "string",
-              "disabled": true
-          },
-          {
-              "id": "01cae452-03a4-4f79-a62f-0667f462a84b",
-              "key": "globalApikey",
-              "value": "t8OOEeISKzpmc3jjcMqBWYSaJsafdefer",
-              "type": "string"
-          },
-          {
-              "id": "d48c454d-cbd2-4475-8e93-2f2b9255ce88",
-              "key": "groupJid",
-              "value": "120363046555718472@g.us",
-              "type": "string"
-          }
-      ]
-  }
+    "collection": {
+        "info": {
+            "_postman_id": "d10f4457-b4b0-43ca-9806-b9e70ea99b1f",
+            "name": "v1.2.6",
+            "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+            "updatedAt": "2023-08-13T17:25:43.000Z",
+            "uid": "14064846-d10f4457-b4b0-43ca-9806-b9e70ea99b1f"
+        },
+        "item": [
+            {
+                "name": "Instance Controller",
+                "item": [
+                    {
+                        "name": "Views",
+                        "item": [
+                            {
+                                "name": "QrCode",
+                                "id": "c7dd8ded-4305-44f9-97d4-46712723749d",
+                                "protocolProfileBehavior": {
+                                    "disableBodyPruning": true
+                                },
+                                "request": {
+                                    "method": "GET",
+                                    "header": [],
+                                    "url": {
+                                        "raw": "{{baseUrl}}/instance/qrcode/:instanceName",
+                                        "host": [
+                                            "{{baseUrl}}"
+                                        ],
+                                        "path": [
+                                            "instance",
+                                            "qrcode",
+                                            ":instanceName"
+                                        ],
+                                        "variable": [
+                                            {
+                                                "id": "08774fc5-daa1-4636-8dde-7830968edf95",
+                                                "key": "instanceName",
+                                                "value": "{{instance}}",
+                                                "description": "- required"
+                                            }
+                                        ]
+                                    }
+                                },
+                                "response": [],
+                                "uid": "14064846-c7dd8ded-4305-44f9-97d4-46712723749d"
+                            }
+                        ],
+                        "id": "4a9edbaa-49a8-4d7f-9f62-e7acb092e20e",
+                        "uid": "14064846-4a9edbaa-49a8-4d7f-9f62-e7acb092e20e"
+                    },
+                    {
+                        "name": "Create Instance",
+                        "id": "436d5187-e90b-4c5e-9314-dd05e34fc177",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "auth": {
+                                "type": "apikey",
+                                "apikey": [
+                                    {
+                                        "key": "in",
+                                        "value": "header",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "key": "key",
+                                        "value": "apikey",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "key": "value",
+                                        "value": "{{globalApikey}}",
+                                        "type": "string"
+                                    }
+                                ]
+                            },
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"instanceName\": \"{{instance}}\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/create",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "create"
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-436d5187-e90b-4c5e-9314-dd05e34fc177"
+                    },
+                    {
+                        "name": "Fetch Instances",
+                        "id": "0aa05baf-e6db-4e1e-9b5e-e89b29532b6a",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "auth": {
+                                "type": "apikey",
+                                "apikey": [
+                                    {
+                                        "key": "in",
+                                        "value": "header",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "key": "key",
+                                        "value": "apikey",
+                                        "type": "string"
+                                    },
+                                    {
+                                        "key": "value",
+                                        "value": "{{globalApikey}}",
+                                        "type": "string"
+                                    }
+                                ]
+                            },
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/fetchInstances?instanceName={{instance}}",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "fetchInstances"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "Recupere uma ou todas as intâncias - optional"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-0aa05baf-e6db-4e1e-9b5e-e89b29532b6a"
+                    },
+                    {
+                        "name": "Instance Connect",
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "id": "bbdb886d-3a50-43ce-a1ce-97aba902dbbd",
+                                    "exec": [
+                                        "const img = \"<img src='{{base64}}' heigth=80%/>\";\r",
+                                        "pm.visualizer.set(img, { base64: pm.response.json()['base64'] });\r",
+                                        ""
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "id": "4be43927-49b3-40bb-87d5-e69e9ec40917",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/connect/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "connect",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "5615cb74-36eb-4894-9768-78d319585766",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "Conecte-se à sua intância - required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-4be43927-49b3-40bb-87d5-e69e9ec40917"
+                    },
+                    {
+                        "name": "Connection Status",
+                        "id": "b72815a6-2db8-45ee-9a64-d97032e1915f",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/connectionState/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "connectionState",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "e76aebc2-e5f4-4858-ab60-d8053d312f41",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-b72815a6-2db8-45ee-9a64-d97032e1915f"
+                    },
+                    {
+                        "name": "Logout Instance",
+                        "id": "cc3fead4-cb13-420a-a217-e0d16d4b401f",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "DELETE",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/logout/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "logout",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "5782590a-3ba6-42c5-a11f-338eb4a70c95",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-cc3fead4-cb13-420a-a217-e0d16d4b401f"
+                    },
+                    {
+                        "name": "Delete Instance",
+                        "id": "753a041d-d6f6-48d3-8d72-99a31efb9b7b",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "DELETE",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/delete/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "delete",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "495550d4-2087-4e14-82ab-8a1e7b182c49",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-753a041d-d6f6-48d3-8d72-99a31efb9b7b"
+                    }
+                ],
+                "id": "9d6912db-3ac1-47c4-8b1f-67c211c6ffa6",
+                "event": [
+                    {
+                        "listen": "prerequest",
+                        "script": {
+                            "id": "5777fabe-31ff-4f2e-b782-6b089f990b67",
+                            "type": "text/javascript",
+                            "exec": [
+                                ""
+                            ]
+                        }
+                    },
+                    {
+                        "listen": "test",
+                        "script": {
+                            "id": "fe0c8c67-1abf-4863-8a11-8f3dd54e6fa2",
+                            "type": "text/javascript",
+                            "exec": [
+                                ""
+                            ]
+                        }
+                    }
+                ],
+                "uid": "14064846-9d6912db-3ac1-47c4-8b1f-67c211c6ffa6"
+            },
+            {
+                "name": "Send Message Controller",
+                "item": [
+                    {
+                        "name": "Send Text",
+                        "id": "fef1e43b-ef5b-4c96-b5bf-c72c808322ae",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\"\r\n  },\r\n  \"textMessage\": {\r\n    \"text\": \"<string> - requerido\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendText/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendText",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "key": "instanceName",
+                                        "value": ""
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-fef1e43b-ef5b-4c96-b5bf-c72c808322ae"
+                    },
+                    {
+                        "name": "Send Media",
+                        "id": "28467e5d-e39f-415d-93fc-be0ca47cf13f",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\"\r\n  },\r\n  \"mediaMessage\": {\r\n    \"mediatype\": \"<'image' | 'document' | 'video' | 'audio'> - required\",\r\n    \"fileName\": \"<string> - optional\",\r\n    \"caption\": \"<string> - optional\",\r\n    \"media\": \"<string> - URL - required\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendMedia/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendMedia",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "6059d2d7-7400-4227-a043-7c93f9826d35",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-28467e5d-e39f-415d-93fc-be0ca47cf13f"
+                    },
+                    {
+                        "name": "Send Media File",
+                        "id": "fa1a565f-d141-4121-9be2-b219e6fbd743",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "formdata",
+                                "formdata": [
+                                    {
+                                        "key": "number",
+                                        "value": "<string>",
+                                        "description": "- required",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "caption",
+                                        "value": "<string>",
+                                        "description": "- optional",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "attachment",
+                                        "description": "- required - file",
+                                        "type": "file",
+                                        "src": "/C:/Users/clebe/OneDrive/Imagens/Saved Pictures/wp2437961.png"
+                                    },
+                                    {
+                                        "key": "mediatype",
+                                        "value": "<string>",
+                                        "description": "-required - image | document | video | audio",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "presence",
+                                        "value": "<string>",
+                                        "description": "- optional - composing | recording",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "delay",
+                                        "value": "<number>",
+                                        "description": "- optional",
+                                        "type": "text"
+                                    }
+                                ]
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendMediaFile/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendMediaFile",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "3a9cb721-b513-46cb-885a-df4add11190c",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "Required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-fa1a565f-d141-4121-9be2-b219e6fbd743"
+                    },
+                    {
+                        "name": "Send Location",
+                        "id": "b3132a5e-84ec-41ac-8002-53c4fab28aa6",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\"\r\n  },\r\n  \"locationMessage\": {\r\n    \"name\": \"<string> - optional\",\r\n    \"address\": \"<string> - optional\",\r\n    \"latitude\": \"<interger> - required\",\r\n    \"longitude\": \"<interger> - required\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendLocation/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendLocation",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "0f1aa7f9-3a5b-4cb8-a6e3-4c4dc663a0c2",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-b3132a5e-84ec-41ac-8002-53c4fab28aa6"
+                    },
+                    {
+                        "name": "Send Contact",
+                        "id": "f64ffaab-3b90-4834-82ac-5259695de359",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\"\r\n  },\r\n  \"contactMessage\": [\r\n    {\r\n      \"fullName\": \"<string> - required\",\r\n      \"wuid\": \"<string> - required\",\r\n      \"phoneNumber\": \"<string> - required\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531922228888\",\r\n      \"phoneNumber\": \"+55 31 9 2222-8888\"\r\n    }\r\n  ]\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendContact/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendContact",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "bfc03fb3-4831-44df-8306-d13d97a19c99",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-f64ffaab-3b90-4834-82ac-5259695de359"
+                    },
+                    {
+                        "name": "Send Reaction",
+                        "id": "47017693-1abb-41a1-a627-2565e0bd358d",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"reactionMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    },\r\n    \"reaction\": \"<string> - required - max 1\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendReaction/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendReaction",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "64cf358e-ef37-40e7-be36-4b86acc00d72",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-47017693-1abb-41a1-a627-2565e0bd358d"
+                    },
+                    {
+                        "name": "Send WhatsApp Audio",
+                        "id": "6f20d32e-2671-455d-956f-43a039fe9c35",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\"\r\n  },\r\n  \"audioMessage\": {\r\n    \"audio\": \"<string> - URL - required\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendWhatsAppAudio/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendWhatsAppAudio",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "93a135e9-3e3e-4f6c-9fb7-b77f334c4b8f",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-6f20d32e-2671-455d-956f-43a039fe9c35"
+                    },
+                    {
+                        "name": "Send WhatsApp Audio - File",
+                        "id": "0808bf98-1fc6-4e87-92d3-b71db784fdd8",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "formdata",
+                                "formdata": [
+                                    {
+                                        "key": "number",
+                                        "value": "<string>",
+                                        "description": "- required",
+                                        "type": "text"
+                                    },
+                                    {
+                                        "key": "attachment",
+                                        "description": "- required - file",
+                                        "type": "file",
+                                        "src": "/C:/Users/clebe/Downloads/sample-3s.mp3"
+                                    },
+                                    {
+                                        "key": "delay",
+                                        "value": "<interger>",
+                                        "description": "- optional",
+                                        "type": "text"
+                                    }
+                                ]
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/message/sendWhatsAppAudioFile/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "message",
+                                    "sendWhatsAppAudioFile",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "8f893bc7-f86e-4362-9904-26a76d04aa00",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-0808bf98-1fc6-4e87-92d3-b71db784fdd8"
+                    }
+                ],
+                "id": "776d4e76-fee1-474d-9ef6-255dba0ad7fc",
+                "uid": "14064846-776d4e76-fee1-474d-9ef6-255dba0ad7fc"
+            },
+            {
+                "name": "Chat Controller",
+                "item": [
+                    {
+                        "name": "WhatsApp Number",
+                        "id": "98c2448f-0520-4a26-9950-3037b22bc78a",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"numbers\": [\r\n    \"<string> - required\"\r\n  ]\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/whatsappNumbers/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "whatsappNumbers",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "e6ad9dce-ab9d-4a16-93cd-38eb341c20be",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-98c2448f-0520-4a26-9950-3037b22bc78a"
+                    },
+                    {
+                        "name": "Read Messages",
+                        "id": "8d15e7a7-fa09-49da-accc-ec13cbbf1070",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "PUT",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"readMessages\": [\r\n    {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    }\r\n  ]\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/markMessageAsRead/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "markMessageAsRead",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "27f7b59c-54af-4c79-b44f-97977f13de2f",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-8d15e7a7-fa09-49da-accc-ec13cbbf1070"
+                    },
+                    {
+                        "name": "Archive Chat",
+                        "id": "4ef2dead-25ca-4147-90f9-fca55bea93c1",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "PUT",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"lastMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    }\r\n  },\r\n  // false: to unarchive\r\n  // true: to archive\r\n  \"archive\": \"<boolean> - required\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/archiveChat/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "archiveChat",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "363a71db-3618-4712-9aeb-3d56f252275d",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-4ef2dead-25ca-4147-90f9-fca55bea93c1"
+                    },
+                    {
+                        "name": "Delete Message",
+                        "id": "e31eca47-a3cf-47da-8c2f-a4bddb7eae78",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "DELETE",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"remoteJid\": \"<string> - required\",\r\n  \"fromMe\": \"<boolean> - required\",\r\n  \"id\": \"<string> - required\",\r\n  \"paticipant\": \"<string> - optional\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/deleteMessageForEveryone/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "deleteMessageForEveryone",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "d5d20df3-6a3b-4673-9f4b-4cc536ee71f3",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-e31eca47-a3cf-47da-8c2f-a4bddb7eae78"
+                    },
+                    {
+                        "name": "Fetch Profile Picture",
+                        "id": "0c05f775-d055-488b-90e8-a25ba3c106d4",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"number\": \"<string> - required\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/fetchProfilePictureUrl/:instanceNamce",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "fetchProfilePictureUrl",
+                                    ":instanceNamce"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "e614b75b-7b8c-47a4-83e8-cc9520224cd4",
+                                        "key": "instanceNamce",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-0c05f775-d055-488b-90e8-a25ba3c106d4"
+                    },
+                    {
+                        "name": "Find Contacts",
+                        "id": "32320677-aad6-47db-b22f-5a7035c4f545",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  // A propriedade \"where\" é opcional\r\n  \"where\": {\r\n    \"id\": \"<string> - required\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/findContacts/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "findContacts",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "4a6606d1-49af-453c-b70e-d37658d95b73",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-32320677-aad6-47db-b22f-5a7035c4f545"
+                    },
+                    {
+                        "name": "Get Base64 From Media Message",
+                        "event": [
+                            {
+                                "listen": "test",
+                                "script": {
+                                    "id": "50374ffc-d4e6-4511-8b11-90a41cce0a0d",
+                                    "exec": [
+                                        "const img = \"<img src='data:image/jpeg;base64,{{base64}}' height=80%/>\";\r",
+                                        "pm.visualizer.set(img, {base64: pm.response.json()['base64']});"
+                                    ],
+                                    "type": "text/javascript"
+                                }
+                            }
+                        ],
+                        "id": "a1ac3001-9f02-49f0-8688-70562f04400f",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "\r\n{\r\n  \"key\": {\r\n    \"id\": \"0479702F62C9DAA0A1EB96EC66215989\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/getBase64FromMediaMessage/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "getBase64FromMediaMessage",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "7a0cafa6-9253-4698-a133-50d4238cb81c",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-a1ac3001-9f02-49f0-8688-70562f04400f"
+                    },
+                    {
+                        "name": "Find Messages",
+                        "id": "ab002c19-f1d4-437b-8f45-57d533fc191b",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "/*\r\n  Each of these properties are optional.\r\n  With mongodb disabled, only the \"key.id\" property is available.\r\n  Remove all comments before submitting the request.\r\n*/\r\n{\r\n  \"where\": {\r\n    /* \r\n     * \"key.fromMe\": false,\r\n     * \"key.remoteJid\": \"123@s.whatsapp.net\",\r\n     * \"key.id\": \"1C42B68AFA410DBE198BA54DB7F45762\"\r\n    */\r\n    \"key\": {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    },\r\n    \"message.[...]\": {}\r\n  },\r\n  // optional\r\n  \"limit\": 10\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/findMessages/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "findMessages",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "fc2316f0-719f-4c7b-af61-736558266352",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-ab002c19-f1d4-437b-8f45-57d533fc191b"
+                    },
+                    {
+                        "name": "Find Status Message",
+                        "id": "fbbe557d-bd20-400f-9083-485e1fddb27a",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  // A propriedade \"where\" é opcional, sem ela, é possível recuperar o array com todos os dades\r\n  \"where\": {\r\n    \"id\": \"<string> - required\"\r\n  }\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/findStatusMessage/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "findStatusMessage",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "75a896e6-ca9b-4c94-a7de-b97c492dafe5",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-fbbe557d-bd20-400f-9083-485e1fddb27a"
+                    },
+                    {
+                        "name": "Find Chats",
+                        "id": "d803c9ec-2eaf-4bd7-9fa7-38ecdc3392f0",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/chat/findChats/:inatnceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "chat",
+                                    "findChats",
+                                    ":inatnceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "8ef498a0-aad8-4baa-8712-b8f7fabf648a",
+                                        "key": "inatnceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-d803c9ec-2eaf-4bd7-9fa7-38ecdc3392f0"
+                    }
+                ],
+                "id": "af8b6ebc-c433-46af-9dfb-7cec50f86c9a",
+                "uid": "14064846-af8b6ebc-c433-46af-9dfb-7cec50f86c9a"
+            },
+            {
+                "name": "Group Controller",
+                "item": [
+                    {
+                        "name": "Create Group",
+                        "id": "4160a4b9-d719-474e-a113-0d4c1b3044fc",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"subject\": \"<string> - required\",  \r\n  \"description\": \"<string> - optional\",\r\n  \"participants\": [\r\n    \"<string> - required\"\r\n  ]\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/group/create/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "create",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "1e7a0df5-6897-48ab-8b4e-40cdc985e466",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-4160a4b9-d719-474e-a113-0d4c1b3044fc"
+                    },
+                    {
+                        "name": "Update Group Picture",
+                        "id": "fc6e2a0b-bcc3-4563-9413-f5f074162740",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "PUT",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"image\": \"<string> - URL - required\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/group/updateGroupPicture/:instanceName?groupJid={{groupJid}}",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "updateGroupPicture",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "description": "- required"
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "a0901308-1fdc-4a86-af29-92762530ba22",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-fc6e2a0b-bcc3-4563-9413-f5f074162740"
+                    },
+                    {
+                        "name": "Find Group",
+                        "id": "c6752c31-eebe-40e3-97ae-438490f6e7ef",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/group/findGroupInfos/:instanceName?groupJid={{groupJid}}",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "findGroupInfos",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "description": "- required"
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "b64beb06-5192-4e6b-9b70-c0e5f7ce188d",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-c6752c31-eebe-40e3-97ae-438490f6e7ef"
+                    },
+                    {
+                        "name": "Find Participants",
+                        "id": "040566a6-3414-401d-bbb9-4e569c64bbd7",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/group/participants/:instanceName?groupJid={{groupJid}}",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "participants",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "description": "- required"
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "88405d8f-9ed9-4fea-8901-82ce771b94a0",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-040566a6-3414-401d-bbb9-4e569c64bbd7"
+                    },
+                    {
+                        "name": "Invite Code",
+                        "id": "ca735986-ff6c-45bd-a0f2-b31f01cdd9d0",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/group/inviteCode/:instanceName?groupJid={{groupJid}}",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "inviteCode",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "description": "- required"
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "77b5efb8-fea3-4d72-9c70-401f07e6b2f5",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-ca735986-ff6c-45bd-a0f2-b31f01cdd9d0"
+                    },
+                    {
+                        "name": "Revoke Invite Code",
+                        "id": "34ea166e-9cea-4e29-a198-b13b7219373b",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "PUT",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/group/revokeInviteCode/:instanceName?groupJid={{groupJid}}",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "revokeInviteCode",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "description": "- required"
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "c1d58447-33cf-4e89-82c2-e128cfb4468a",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-34ea166e-9cea-4e29-a198-b13b7219373b"
+                    },
+                    {
+                        "name": "Update Participant",
+                        "id": "4f71953a-fcfc-4934-bef6-8e0443802e88",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "PUT",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"action\": \"<'add' | 'remove' | 'promote' | 'demote'> - required\",\r\n  \"participants\": [\r\n    \"<string> - required\"\r\n  ]\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/group/updateParticipant/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "updateParticipant",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "disabled": true
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "f1434fea-b3b2-4a3a-aef3-3e3aa8f599f0",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-4f71953a-fcfc-4934-bef6-8e0443802e88"
+                    },
+                    {
+                        "name": "Leave Group",
+                        "id": "d9e39831-7fe4-4bb5-a981-066e85f9abc2",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "DELETE",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/group/leaveGroup/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "group",
+                                    "leaveGroup",
+                                    ":instanceName"
+                                ],
+                                "query": [
+                                    {
+                                        "key": "groupJid",
+                                        "value": "{{groupJid}}",
+                                        "description": "- required",
+                                        "disabled": true
+                                    }
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "167ed039-b9a3-4344-b25e-27a83dd8920f",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-d9e39831-7fe4-4bb5-a981-066e85f9abc2"
+                    }
+                ],
+                "id": "608da484-e5b0-4803-a89a-df1cccebe446",
+                "uid": "14064846-608da484-e5b0-4803-a89a-df1cccebe446"
+            },
+            {
+                "name": "JWT",
+                "item": [
+                    {
+                        "name": "Refresh Token",
+                        "id": "82614b8e-df56-4b1d-88fe-1a2b2ad46723",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "auth": {
+                                "type": "noauth"
+                            },
+                            "method": "PUT",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"oldToken\": \"<string> - required\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/instance/refreshToken/",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "instance",
+                                    "refreshToken",
+                                    ""
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-82614b8e-df56-4b1d-88fe-1a2b2ad46723"
+                    }
+                ],
+                "id": "1f1ed2a7-d92d-4de2-b6d7-5c1544d4d0b6",
+                "uid": "14064846-1f1ed2a7-d92d-4de2-b6d7-5c1544d4d0b6"
+            },
+            {
+                "name": "Webhook",
+                "item": [
+                    {
+                        "name": "Set Webhook",
+                        "id": "70008a74-b066-42ae-abb2-4a74e53a9d13",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "POST",
+                            "header": [],
+                            "body": {
+                                "mode": "raw",
+                                "raw": "{\r\n  \"enabled\": false,\r\n  \"url\": \"http://127.0.0.1:3333\"\r\n}",
+                                "options": {
+                                    "raw": {
+                                        "language": "json"
+                                    }
+                                }
+                            },
+                            "url": {
+                                "raw": "{{baseUrl}}/webhook/set/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "webhook",
+                                    "set",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "69dbe158-aabb-479a-9526-b1e9ac478f14",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-70008a74-b066-42ae-abb2-4a74e53a9d13"
+                    },
+                    {
+                        "name": "Find Webhook",
+                        "id": "29eb9fd5-9bbd-4c57-82bf-176a3b40317d",
+                        "protocolProfileBehavior": {
+                            "disableBodyPruning": true
+                        },
+                        "request": {
+                            "method": "GET",
+                            "header": [],
+                            "url": {
+                                "raw": "{{baseUrl}}/webhook/find/:instanceName",
+                                "host": [
+                                    "{{baseUrl}}"
+                                ],
+                                "path": [
+                                    "webhook",
+                                    "find",
+                                    ":instanceName"
+                                ],
+                                "variable": [
+                                    {
+                                        "id": "89c16412-940e-41ca-ab9b-4255c30f166d",
+                                        "key": "instanceName",
+                                        "value": "{{instance}}",
+                                        "description": "- required"
+                                    }
+                                ]
+                            }
+                        },
+                        "response": [],
+                        "uid": "14064846-29eb9fd5-9bbd-4c57-82bf-176a3b40317d"
+                    }
+                ],
+                "id": "25ad6351-03be-4099-8d7c-6536eb6efd27",
+                "uid": "14064846-25ad6351-03be-4099-8d7c-6536eb6efd27"
+            }
+        ],
+        "auth": {
+            "type": "bearer",
+            "bearer": [
+                {
+                    "key": "token",
+                    "value": "{{token}}",
+                    "type": "string"
+                }
+            ]
+        },
+        "event": [
+            {
+                "listen": "prerequest",
+                "script": {
+                    "id": "9fc582d7-4e41-4bfd-8ab2-e7e1484bf1b3",
+                    "type": "text/javascript",
+                    "exec": [
+                        ""
+                    ]
+                }
+            },
+            {
+                "listen": "test",
+                "script": {
+                    "id": "2b483815-3919-4a83-9a95-7108bfefa466",
+                    "type": "text/javascript",
+                    "exec": [
+                        ""
+                    ]
+                }
+            }
+        ],
+        "variable": [
+            {
+                "id": "d82db27f-fd19-4e49-a826-08779f0d1f31",
+                "key": "baseUrl",
+                "value": "https://",
+                "type": "string"
+            },
+            {
+                "id": "13a80b29-de4f-484f-9bf4-dfdc8d47f404",
+                "key": "instance",
+                "value": "codechat",
+                "type": "string"
+            },
+            {
+                "id": "665a9aea-2705-4b8b-96e0-6212bbf9d6e9",
+                "key": "token",
+                "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlZHJvcCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiMmU2NjkyYWQtMGEzZi00NzU2LTgyY2YtYTQxNmQ1NGVjMzhiIiwiaWF0IjoxNjg4NDc5MzM3LCJleHAiOjE2ODg0ODI5MzcsInN1YiI6ImctdCJ9.3bwxn92a3-xWKDnC9PYPQ4BvK20fRls4lFVofCZPfRk",
+                "type": "string"
+            },
+            {
+                "id": "36c19c7e-6ace-457c-b13f-280499f32d6e",
+                "key": "apikey",
+                "value": "7259FC4B-2825-402D-9321-022978061B84",
+                "type": "string",
+                "disabled": true
+            },
+            {
+                "id": "c1a5d4f4-c3b8-4366-b2a8-cf76e4494bf2",
+                "key": "globalApikey",
+                "value": "zYzP7ocstxh3SJ23D4FZTCu4ehnM8v4hu",
+                "type": "string"
+            },
+            {
+                "id": "f3d668f4-93ed-4b6a-a671-6edc163ec991",
+                "key": "groupJid",
+                "value": "123@g.us",
+                "type": "string"
+            }
+        ]
+    }
 }
