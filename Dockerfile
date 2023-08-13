@@ -17,6 +17,7 @@ RUN npm install
 
 COPY ./tsconfig.json .
 COPY ./src ./src
+COPY ./public ./public
 
 RUN npm run build
 
@@ -35,6 +36,7 @@ COPY --from=builder /codechat/dist .
 
 COPY ./tsconfig.json .
 COPY ./src ./src
+COPY ./public ./public
 RUN mkdir instances
 
 ENV DOCKER_ENV=true

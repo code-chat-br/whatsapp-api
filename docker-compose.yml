@@ -11,13 +11,13 @@ volumes:
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:local
+    image: codechat/api:v1.2.6
     restart: unless-stopped
     ports:
       - 8083:8083
     volumes:
       - ./instances:/codechat/instances
-      - ./srv/env.yml:/codechat/src/env.yml:ro
+      - ./src/env.yml:/codechat/src/env.yml:ro
     # environment:
     #   - DOCKER_ENV=true
     #   - LOG_LEVEL='ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK'
@@ -78,23 +78,23 @@ services:
     networks:
       - public-network
 
-  mongodb:
-    container_name: mongodb
-    image: mongo:6
-    restart: unless-stopped
-    volumes:
-      - mongo_data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: mysupersecretpassword
-    networks:
-      - public-network
+  # mongodb:
+  #   container_name: mongodb
+  #   image: mongo:6
+  #   restart: unless-stopped
+  #   volumes:
+  #     - mongo_data:/data/db
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: mysupersecretpassword
+  #   networks:
+  #     - public-network
 
-  cache:
-    image: redis:7
-    restart: unless-stopped
-    command: redis-server --save 20 1 --loglevel warning 
-    volumes: 
-      - redis_data:/data
-    networks:
-      - public-network
+  # cache:
+  #   image: redis:7
+  #   restart: unless-stopped
+  #   command: redis-server --save 20 1 --loglevel warning 
+  #   volumes: 
+  #     - redis_data:/data
+  #   networks:
+  #     - public-network
