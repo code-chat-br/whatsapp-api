@@ -145,7 +145,28 @@ paths:
         '200':
           description: Successful response
           content:
-            application/json: {}
+            application/json:
+              schema:
+                type: array
+                items: 
+                  type: object
+                  properties:
+                    instance:
+                      type: object
+                      properties:
+                        instanceName:
+                          type: string
+                        owner:
+                          type: string
+                        profileName:
+                          type: string
+                        profilePictureUrl:
+                          type: string
+                    auth:
+                      type: object
+                      properties:
+                        jwt:
+                          type: string
   /instance/connect/{instanceName}:
     get:
       tags:

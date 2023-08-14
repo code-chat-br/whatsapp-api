@@ -96,6 +96,7 @@ export class WAMonitoringService {
 
     for await (const [key, value] of Object.entries(this.waInstances)) {
       if (value && value.connectionStatus.state === 'open') {
+        const auth = await this.repository.auth.find(key);
         instances.push({
           instance: {
             instanceName: key,
@@ -103,11 +104,12 @@ export class WAMonitoringService {
             profileName: (await value.getProfileName()) || 'not loaded',
             profilePictureUrl: value.profilePictureUrl,
           },
+          auth,
         });
       }
     }
 
-    return instances.find((i) => i.instance.instanceName === instanceName) ?? instances;
+    return instances;
   }
 
   private delInstanceFiles() {
