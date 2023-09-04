@@ -46,6 +46,7 @@ import { HttpStatus, router } from './whatsapp/routers/index.router';
 import 'express-async-errors';
 import { ServerUP } from './utils/server-up';
 import { swaggerRouter } from './docs/swagger.conf';
+import session from 'express-session';
 
 function initWA() {
   waMonitor.loadInstance();
@@ -54,6 +55,8 @@ function initWA() {
 function bootstrap() {
   const logger = new Logger('SERVER');
   const app = express();
+
+  logger.debug(configService.get<string>('SESSION_SECRET'));
 
   app.use(
     cors({
@@ -73,6 +76,15 @@ function bootstrap() {
     urlencoded({ extended: true, limit: '50mb' }),
     json({ limit: '50mb' }),
     compression(),
+  );
+
+  app.use(
+    session({
+      secret: configService.get<string>('SESSION_SECRET'),
+      resave: false,
+      saveUninitialized: false,
+      name: 'codechat.api.sid',
+    }),
   );
 
   app.set('view engine', 'hbs');

@@ -50,6 +50,7 @@ import { WAMonitoringService } from '../services/monitor.service';
 import { WAStartupService } from '../services/whatsapp.service';
 import { Logger } from '../../config/logger.config';
 import { RedisCache } from '../../db/redis.client';
+import { Request } from 'express';
 
 export class InstanceController {
   constructor(
@@ -63,28 +64,36 @@ export class InstanceController {
 
   private readonly logger = new Logger(InstanceController.name);
 
-  public async createInstance({ instanceName }: InstanceDto) {
-    const instance = new WAStartupService(
-      this.configService,
-      this.eventEmitter,
-      this.repository,
-      this.cache,
-    );
-    instance.instanceName = instanceName;
-    this.waMonitor.waInstances[instance.instanceName] = instance;
-    this.waMonitor.delInstanceTime(instance.instanceName);
+  public async createInstance({ instanceName }: InstanceDto, req: Request) {
+    try {
+      const instance = new WAStartupService(
+        this.configService,
+        this.eventEmitter,
+        this.repository,
+        this.cache,
+      );
+      instance.instanceName = instanceName;
+      this.waMonitor.waInstances[instance.instanceName] = instance;
+      this.waMonitor.delInstanceTime(instance.instanceName);
 
-    const hash = await this.authService.generateHash({
-      instanceName: instance.instanceName,
-    });
-
-    return {
-      instance: {
+      const hash = await this.authService.generateHash({
         instanceName: instance.instanceName,
-        status: 'created',
-      },
-      hash,
-    };
+      });
+
+      req.session[instance.instanceName] = Buffer.from(JSON.stringify(hash)).toString(
+        'base64',
+      );
+
+      return {
+        instance: {
+          instanceName: instance.instanceName,
+          status: 'created',
+        },
+        hash,
+      };
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   public async connectToWhatsapp({ instanceName }: InstanceDto) {
@@ -146,7 +155,11 @@ export class InstanceController {
     }
   }
 
-  public async refreshToken(_: InstanceDto, oldToken: OldToken) {
-    return await this.authService.refreshToken(oldToken);
+  public async refreshToken(instance: InstanceDto, oldToken: OldToken, req: Request) {
+    const token = await this.authService.refreshToken(oldToken);
+
+    req.session[instance.instanceName] = Buffer.from(JSON.stringify(token)).toString(
+      'base64',
+    );
   }
 }

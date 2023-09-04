@@ -113,9 +113,8 @@ export type EventsWebhook = {
   NEW_JWT_TOKEN: boolean;
 };
 
-export type ApiKey = { KEY: string };
 export type Jwt = { EXPIRIN_IN: number; SECRET: string };
-export type Auth = { API_KEY: ApiKey; JWT: Jwt; TYPE: 'jwt' | 'apikey' };
+export type Auth = { API_KEY: string; JWT: Jwt; TYPE: 'jwt' | 'apikey' };
 
 export type DelInstance = number | boolean;
 
@@ -124,7 +123,6 @@ export type SslConf = { PRIVKEY: string; FULLCHAIN: string };
 export type Webhook = { GLOBAL?: GlobalWebhook; EVENTS: EventsWebhook };
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
 export type QrCode = { LIMIT: number };
-export type Production = boolean;
 
 export interface Env {
   SERVER: HttpServer;
@@ -139,7 +137,8 @@ export interface Env {
   CONFIG_SESSION_PHONE: ConfigSessionPhone;
   QRCODE: QrCode;
   AUTHENTICATION: Auth;
-  PRODUCTION?: Production;
+  PRODUCTION?: boolean;
+  SESSION_SECRET: string;
 }
 
 export type Key = keyof Env;
@@ -256,9 +255,7 @@ export class ConfigService {
       },
       AUTHENTICATION: {
         TYPE: process.env.AUTHENTICATION_TYPE as 'jwt',
-        API_KEY: {
-          KEY: process.env.AUTHENTICATION_API_KEY,
-        },
+        API_KEY: process.env.AUTHENTICATION_API_KEY,
         JWT: {
           EXPIRIN_IN: Number.isInteger(process.env?.AUTHENTICATION_JWT_EXPIRIN_IN)
             ? Number.parseInt(process.env.AUTHENTICATION_JWT_EXPIRIN_IN)
@@ -266,6 +263,7 @@ export class ConfigService {
           SECRET: process.env.AUTHENTICATION_JWT_SECRET,
         },
       },
+      SESSION_SECRET: process.env.SESSION_SECRET,
     };
   }
 }

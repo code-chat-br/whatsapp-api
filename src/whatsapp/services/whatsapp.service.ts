@@ -466,7 +466,7 @@ export class WAStartupService {
         browser,
         version,
         connectTimeoutMs: 60_000,
-        qrTimeout: 10_000,
+        qrTimeout: 40_000,
         emitOwnEvents: false,
         msgRetryCounterCache: this.msgRetryCounterCache,
         getMessage: this.getMessage as any,

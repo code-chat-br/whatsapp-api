@@ -39,7 +39,7 @@ import { join } from 'path';
 import { Auth, ConfigService } from '../../config/env.config';
 import { IInsert, Repository } from '../abstract/abstract.repository';
 import { IAuthModel, AuthRaw } from '../models';
-import { readFileSync } from 'fs';
+import { readFileSync, readdirSync } from 'fs';
 import { AUTH_DIR } from '../../config/path.config';
 
 export class AuthRepository extends Repository {
@@ -82,11 +82,19 @@ export class AuthRepository extends Repository {
         return await this.authModel.findOne({ _id: instance });
       }
 
-      return JSON.parse(
-        readFileSync(join(AUTH_DIR, this.auth.TYPE, instance + '.json'), {
+      let authRaw: string;
+
+      if (readdirSync(join(AUTH_DIR, 'jwt')).find((i) => i === instance)) {
+        authRaw = readFileSync(join(AUTH_DIR, 'jwt', instance + '.json'), {
           encoding: 'utf-8',
-        }),
-      ) as AuthRaw;
+        });
+      } else {
+        authRaw = readFileSync(join(AUTH_DIR, 'apikey', instance + '.json'), {
+          encoding: 'utf-8',
+        });
+      }
+
+      return JSON.parse(authRaw) as AuthRaw;
     } catch (error) {
       return {};
     }
