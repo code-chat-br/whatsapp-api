@@ -51,12 +51,17 @@ sudo usermod -aG docker ${USER}
 ### Nodejs installation
 
 ```sh
-nvm install 16.17.0
+nvm install 18.17.0
 ```
 
 ### pm2 installation
 ```sh
 npm i -g pm2
+```
+
+### yarn installation
+```sh
+npm i -g yarn
 ```
 
 ```sh
@@ -86,20 +91,26 @@ Go to the project directory and install all dependencies.</br>
 ```sh
 cd whatsapp-api
 
-npm i
+yarn i
 ```
 
 Finally, run the command below to start the application:
 ```sh
 # Under development
-npm run start
+yarn start
 
 # In production
-npm run start:prod
+yarn start:prod
 
 # pm2
-pm2 start 'npm run start:prod' --name ApiCodechat
+pm2 start 'yarn start:prod' --name ApiCodechat
 ```
+
+## Swagger - OpenAPI 3.0.0
+
+* Route: `http://localhost:8083/docs`
+* YAML file: [swagger.yaml](./src/docs/swagger.yaml)
+
 ## Authentication
 
 You can define two authentication **types** for the routes in the **[env file](./dev-env.yml)**.
