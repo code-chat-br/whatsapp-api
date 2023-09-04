@@ -246,7 +246,7 @@ export class WAStartupService {
               instance: this.instance.name,
               data,
             },
-            { params: { owner: this.instance.wuid } },
+            { headers: { 'x-owner': this.instance.wuid } },
           );
         }
       } catch (error) {
@@ -273,7 +273,7 @@ export class WAStartupService {
               instance: this.instance.name,
               data,
             },
-            { params: { owner: this.instance.wuid } },
+            { headers: { 'x-owner': this.instance.wuid } },
           );
         }
       } catch (error) {
