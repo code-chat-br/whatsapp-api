@@ -56,8 +56,6 @@ function bootstrap() {
   const logger = new Logger('SERVER');
   const app = express();
 
-  logger.debug(configService.get<string>('SESSION_SECRET'));
-
   app.use(
     cors({
       origin(requestOrigin, callback) {
