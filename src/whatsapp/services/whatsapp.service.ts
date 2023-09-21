@@ -332,12 +332,10 @@ export class WAStartupService {
       };
 
       if (this.phoneNumber) {
-        await delay(2000);
         this.instance.qrcode.pairingCode = await this.client.requestPairingCode(this.phoneNumber);
       } else {
         this.instance.qrcode.pairingCode = null;
       }
-      await delay(2000);
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
         if (error) {
@@ -364,6 +362,7 @@ export class WAStartupService {
             qrcode,
         ),
       );
+      await delay(5000);
     }
 
     if (connection) {
