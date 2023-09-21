@@ -158,6 +158,8 @@ export class WAStartupService {
   private readonly userDevicesCache: CacheStore = new NodeCache();
   private endSession = false;
 
+  private phoneNumber: string;
+
   public set instanceName(name: string) {
     if (!name) {
       this.instance.name = v4();
@@ -212,6 +214,7 @@ export class WAStartupService {
 
   public get qrCode(): wa.QrCode {
     return {
+      pairingCode: this.instance.qrcode?.pairingCode,
       code: this.instance.qrcode?.code,
       base64: this.instance.qrcode?.base64,
     };
@@ -328,6 +331,13 @@ export class WAStartupService {
         color: { light: '#ffffff', dark: '#198754' },
       };
 
+      if (this.phoneNumber) {
+        await delay(2000);
+        this.instance.qrcode.pairingCode = await this.client.requestPairingCode(this.phoneNumber);
+      } else {
+        this.instance.qrcode.pairingCode = null;
+      }
+
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
         if (error) {
           this.logger.error('Qrcode generate failed:' + error.toString());
@@ -338,13 +348,18 @@ export class WAStartupService {
         this.instance.qrcode.code = qr;
 
         this.sendDataWebhook(Events.QRCODE_UPDATED, {
-          qrcode: { instance: this.instance.name, code: qr, base64 },
+          qrcode: {
+            instance: this.instance.name,
+            pairingCode: this.instance.qrcode.pairingCode,
+            code: qr,
+            base64
+          },
         });
       });
 
       qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
         this.logger.log(
-          `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
+          `\n{ instance: ${this.instance.name} pairingCode: ${this.instance.qrcode.pairingCode}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
             qrcode,
         ),
       );
@@ -443,7 +458,7 @@ export class WAStartupService {
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
   }
 
-  public async connectToWhatsapp(): Promise<WASocket> {
+  public async connectToWhatsapp(number?: string): Promise<WASocket> {
     try {
       this.loadWebhook();
 
@@ -500,6 +515,8 @@ export class WAStartupService {
 
       this.eventHandler();
 
+      this.phoneNumber = number;
+      
       return this.client;
     } catch (error) {
       this.logger.error(error);
