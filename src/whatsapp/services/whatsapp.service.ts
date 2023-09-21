@@ -337,6 +337,7 @@ export class WAStartupService {
       } else {
         this.instance.qrcode.pairingCode = null;
       }
+      await delay(2000);
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
         if (error) {
@@ -466,7 +467,7 @@ export class WAStartupService {
 
       const { version } = await fetchLatestBaileysVersion();
       const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-      const browser: WABrowserDescription = ['Chrome (Linux)', '', ''];
+      const browser: WABrowserDescription = [session.NAME, '', ''];
 
       const socketConfig: UserFacingSocketConfig = {
         auth: {
