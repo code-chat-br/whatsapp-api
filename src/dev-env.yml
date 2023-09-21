@@ -143,10 +143,11 @@ QRCODE:
 AUTHENTICATION:
   TYPE: jwt # or apikey->(deprecated)
   # Define a global apikey to access all instances
-  API_KEY:
-    # OBS: This key must be inserted in the request header to create an instance.
-    KEY: zYzP7ocstxh3SJ23D4FZTCu4ehnM8v4hu
+  # OBS: This key must be inserted in the request header to create an instance.
+  API_KEY: zYzP7ocstxh3SJ23D4FZTCu4ehnM8v4hu
   # Set the secret key to encrypt and decrypt your token and its expiration time.
   JWT:
     EXPIRIN_IN: 0 # seconds - 3600s === 1h | zero (0) - never expires
     SECRET: 3RFYiiRmvNiokSBrLZzx
+
+SESSION_SECRET: W0NvZGVDaGF0XTpbU2Vzc2lvbiBTZWNyZXQgS2V5Ll0=

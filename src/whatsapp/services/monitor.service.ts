@@ -234,17 +234,20 @@ export class WAMonitoringService {
 
   private noConnection() {
     this.eventEmitter.on('no.connection', async (instanceName) => {
-      try {
-        this.waInstances[instanceName] = undefined;
-        this.cleaningUp(instanceName);
-      } catch (error) {
-        this.logger.error({
-          localError: 'noConnection',
-          warn: 'Error deleting instance from memory.',
-          error,
-        });
-      } finally {
-        this.logger.warn(`Instance "${instanceName}" - NOT CONNECTION`);
+      const del = this.configService.get<DelInstance>('DEL_INSTANCE');
+      if(del) {
+        try {
+          this.waInstances[instanceName] = undefined;
+          this.cleaningUp(instanceName);
+        } catch (error) {
+          this.logger.error({
+            localError: 'noConnection',
+            warn: 'Error deleting instance from memory.',
+            error,
+          });
+        } finally {
+          this.logger.warn(`Instance "${instanceName}" - NOT CONNECTION`);
+        }
       }
     });
   }

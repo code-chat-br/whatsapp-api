@@ -53,7 +53,7 @@ export class InstanceRouter extends RouterBroker {
           request: req,
           schema: instanceNameSchema,
           ClassRef: InstanceDto,
-          execute: (instance) => instanceController.createInstance(instance),
+          execute: (instance) => instanceController.createInstance(instance, req),
         });
 
         return res.status(HttpStatus.CREATED).json(response);
@@ -125,7 +125,8 @@ export class InstanceRouter extends RouterBroker {
           request: req,
           schema: oldTokenSchema,
           ClassRef: OldToken,
-          execute: (_, data) => instanceController.refreshToken(_, data),
+          execute: (instance, data) =>
+            instanceController.refreshToken(instance, data, req),
         });
 
         return res.status(HttpStatus.CREATED).json(response);

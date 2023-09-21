@@ -36,16 +36,17 @@
  */
 
 import { Request, Response } from 'express';
-import { Auth, ConfigService } from '../../config/env.config';
 import { BadRequestException } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
 import { HttpStatus } from '../routers/index.router';
 import { WAMonitoringService } from '../services/monitor.service';
+import { AuthRaw } from '../models';
+import { RepositoryBroker } from '../repository/repository.manager';
 
 export class ViewsController {
   constructor(
     private readonly waMonit: WAMonitoringService,
-    private readonly configService: ConfigService,
+    private readonly repository: RepositoryBroker,
   ) {}
 
   public async qrcode(request: Request, response: Response) {
@@ -55,9 +56,25 @@ export class ViewsController {
       if (instance.connectionStatus.state === 'open') {
         throw new BadRequestException('The instance is already connected');
       }
-      const type = this.configService.get<Auth>('AUTHENTICATION').TYPE;
 
-      return response.status(HttpStatus.OK).render('qrcode', { type, ...param });
+      let auth: AuthRaw;
+
+      if (!request?.session?.[param.instanceName]) {
+        auth = await this.repository.auth.find(param.instanceName);
+      } else {
+        auth = JSON.parse(
+          Buffer.from(request.session[param.instanceName], 'base64').toString('utf8'),
+        ) as AuthRaw;
+      }
+
+      const type = auth?.jwt ? 'jwt' : 'apikey';
+
+      return response.status(HttpStatus.OK).render('qrcode', {
+        ...param,
+        type,
+        auth,
+        connectionState: instance.connectionStatus.state,
+      });
     } catch (error) {
       console.log('ERROR: ', error);
     }

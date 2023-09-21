@@ -111,7 +111,7 @@ export const instanceController = new InstanceController(
   authService,
   cache,
 );
-export const viewsController = new ViewsController(waMonitor, configService);
+export const viewsController = new ViewsController(waMonitor, repository);
 export const sendMessageController = new SendMessageController(waMonitor);
 export const chatController = new ChatController(waMonitor);
 export const groupController = new GroupController(waMonitor);

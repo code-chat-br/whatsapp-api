@@ -246,7 +246,7 @@ export class WAStartupService {
               instance: this.instance.name,
               data,
             },
-            { params: { owner: this.instance.wuid } },
+            { headers: { 'x-owner': this.instance.wuid } },
           );
         }
       } catch (error) {
@@ -273,7 +273,7 @@ export class WAStartupService {
               instance: this.instance.name,
               data,
             },
-            { params: { owner: this.instance.wuid } },
+            { headers: { 'x-owner': this.instance.wuid } },
           );
         }
       } catch (error) {
@@ -530,7 +530,7 @@ export class WAStartupService {
         browser,
         version,
         connectTimeoutMs: 60_000,
-        qrTimeout: 10_000,
+        qrTimeout: 40_000,
         emitOwnEvents: false,
         msgRetryCounterCache: this.msgRetryCounterCache,
         getMessage: this.getMessage as any,

@@ -56,7 +56,7 @@ const logger = new Logger('GUARD');
 async function jwtGuard(req: Request, _: Response, next: NextFunction) {
   const key = req.get('apikey');
 
-  if (configService.get<Auth>('AUTHENTICATION').API_KEY.KEY === key) {
+  if (configService.get<Auth>('AUTHENTICATION').API_KEY === key) {
     return next();
   }
 
@@ -103,10 +103,10 @@ async function jwtGuard(req: Request, _: Response, next: NextFunction) {
  * @deprecated
  */
 async function apikey(req: Request, _: Response, next: NextFunction) {
-  const env = configService.get<Auth>('AUTHENTICATION').API_KEY;
+  const API_KEY = configService.get<Auth>('AUTHENTICATION').API_KEY;
   const key = req.get('apikey');
 
-  if (env.KEY === key) {
+  if (API_KEY === key) {
     return next();
   }
 
