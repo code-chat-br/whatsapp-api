@@ -466,7 +466,7 @@ export class WAStartupService {
 
       const { version } = await fetchLatestBaileysVersion();
       const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-      const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+      const browser: WABrowserDescription = ['Chrome (Linux)', '', ''];
 
       const socketConfig: UserFacingSocketConfig = {
         auth: {
