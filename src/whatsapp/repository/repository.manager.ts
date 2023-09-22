@@ -90,7 +90,7 @@ export class RepositoryBroker {
         if (existsSync(path)) {
           continue;
         }
-        execSync(`mkdir ${path}`);
+        execSync(`mkdir -p ${path}`);
       }
     }
   }
