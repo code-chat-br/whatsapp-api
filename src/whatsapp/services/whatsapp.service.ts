@@ -740,6 +740,8 @@ export class WAStartupService {
         return;
       }
 
+      this.client.sendPresenceUpdate('unavailable');
+
       if (Long.isLong(received.messageTimestamp)) {
         received.messageTimestamp = received.messageTimestamp?.toNumber();
       }
