@@ -474,25 +474,7 @@ export class WAStartupService {
         generateHighQualityLinkPreview: true,
         syncFullHistory: true,
         userDevicesCache: this.userDevicesCache,
-        transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
-        patchMessageBeforeSending: (message) => {
-          const requiresPatch = !!(message.buttonsMessage || message.listMessage);
-          if (requiresPatch) {
-            message = {
-              viewOnceMessageV2: {
-                message: {
-                  messageContextInfo: {
-                    deviceListMetadataVersion: 2,
-                    deviceListMetadata: {},
-                  },
-                  ...message,
-                },
-              },
-            };
-          }
-
-          return message;
-        },
+        transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10 },
       };
 
       this.endSession = false;
