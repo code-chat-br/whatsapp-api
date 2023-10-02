@@ -887,7 +887,8 @@ paths:
       tags:
         - Chat Controller
       summary: Convert media message content to Base64.
-      description: This endpoint retrieves the Base64 representation of the content of a media message for the specified instance.
+      description: '**[Deprecated]** This endpoint retrieves the Base64 representation of the content of a media message for the specified instance.'
+      deprecated: true
       requestBody:
         content:
           application/json:
@@ -915,6 +916,39 @@ paths:
           description: Successful response
           content:
             application/json: {}
+  /chat/retrieverMediaMessage/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: Retriever Media Message.
+      description: This endpoint retrieves a media file from a given instance.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      description: Unique ID of the media message to be converted.
+                  required:
+                    - id
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the instance to which the reaction should be sent.
+          example: 'codechat'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/octet-stream: {}
   /chat/findMessages/{instanceName}:
     post:
       tags:

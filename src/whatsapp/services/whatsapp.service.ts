@@ -136,6 +136,7 @@ import { dbserver } from '../../db/db.connect';
 import NodeCache from 'node-cache';
 import { useMultiFileAuthStateRedisDb } from '../../utils/use-multi-file-auth-state-redis-db';
 import { RedisCache } from '../../db/redis.client';
+import mime from 'mime-types';
 
 export class WAStartupService {
   constructor(
@@ -1215,7 +1216,7 @@ export class WAStartupService {
     }
   }
 
-  public async getBase64FromMediaMessage(m: proto.IWebMessageInfo) {
+  public async getMediaMessage(m: proto.IWebMessageInfo, base64 = false) {
     try {
       const msg = m?.message
         ? m
@@ -1256,17 +1257,21 @@ export class WAStartupService {
         },
       );
 
+      const fileName =
+        mediaMessage?.['fileName'] ||
+        `${mediaType}.${mime.extension(mediaMessage?.['mimetype'])}`;
+
       return {
         mediaType,
-        fileName: mediaMessage['fileName'],
-        caption: mediaMessage['caption'],
+        fileName,
+        caption: mediaMessage?.['caption'],
         size: {
-          fileLength: mediaMessage['fileLength'],
-          height: mediaMessage['height'],
-          width: mediaMessage['width'],
+          fileLength: mediaMessage?.['fileLength'],
+          height: mediaMessage?.['height'],
+          width: mediaMessage?.['width'],
         },
-        mimetype: mediaMessage['mimetype'],
-        base64: buffer.toString('base64'),
+        mimetype: mediaMessage?.['mimetype'],
+        media: base64 ? buffer.toString('base64') : buffer,
       };
     } catch (error) {
       this.logger.error(error);
