@@ -96,6 +96,26 @@ export class InstanceController {
     }
   }
 
+  public async reloadConnection({ instanceName }: InstanceDto) {
+    try {
+      const instance = this.waMonitor.waInstances[instanceName];
+      const state = instance?.connectionStatus?.state;
+
+      switch (state) {
+        case 'open':
+			await instance.reloadConnection();
+			await delay(2000);
+			
+			return await this.connectionState({ instanceName });
+			
+        default:
+          return await this.connectionState({ instanceName });
+      }
+    } catch (error) {
+      this.logger.error(error);
+    }
+  }
+
   public async connectToWhatsapp({ instanceName }: InstanceDto) {
     try {
       const instance = this.waMonitor.waInstances[instanceName];
