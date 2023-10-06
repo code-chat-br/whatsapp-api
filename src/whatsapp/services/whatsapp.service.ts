@@ -666,35 +666,39 @@ export class WAStartupService {
       },
       database: Database,
     ) => {
-      const received = messages[0];
-      if (
-        type !== 'notify' ||
-        !received?.message ||
-        received.message?.protocolMessage ||
-        received.message.senderKeyDistributionMessage
-      ) {
-        return;
+      for (const received of messages) {
+        if (
+          type !== 'notify' ||
+          !received?.message ||
+          received.message?.protocolMessage ||
+          received.message.senderKeyDistributionMessage
+        ) {
+          return;
+        }
+
+        this.client.sendPresenceUpdate('unavailable');
+
+        if (Long.isLong(received.messageTimestamp)) {
+          received.messageTimestamp = received.messageTimestamp?.toNumber();
+        }
+
+        const messageRaw = new MessageRaw({
+          key: received.key,
+          pushName: received.pushName,
+          message: { ...received.message },
+          messageTimestamp: received.messageTimestamp as number,
+          owner: this.instance.wuid,
+          source: getDevice(received.key.id),
+        });
+
+        this.logger.log(received);
+
+        await this.repository.message.insert(
+          [messageRaw],
+          database.SAVE_DATA.NEW_MESSAGE,
+        );
+        await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
       }
-
-      this.client.sendPresenceUpdate('unavailable');
-
-      if (Long.isLong(received.messageTimestamp)) {
-        received.messageTimestamp = received.messageTimestamp?.toNumber();
-      }
-
-      const messageRaw: MessageRaw = {
-        key: received.key,
-        pushName: received.pushName,
-        message: { ...received.message },
-        messageTimestamp: received.messageTimestamp as number,
-        owner: this.instance.wuid,
-        source: getDevice(received.key.id),
-      };
-
-      this.logger.log(received);
-
-      await this.repository.message.insert([messageRaw], database.SAVE_DATA.NEW_MESSAGE);
-      await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
     },
 
     'messages.update': async (args: WAMessageUpdate[], database: Database) => {
