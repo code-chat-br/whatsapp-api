@@ -103,11 +103,9 @@ export class InstanceController {
 
       switch (state) {
         case 'open':
-			await instance.reloadConnection();
-			await delay(2000);
-			
-			return await this.connectionState({ instanceName });
-			
+          await instance.reloadConnection();
+          await delay(2000);
+          return await this.connectionState({ instanceName });
         default:
           return await this.connectionState({ instanceName });
       }

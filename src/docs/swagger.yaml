@@ -193,6 +193,33 @@ paths:
                   base64:
                     type: string
                     description: The QR Code as a string.
+  /instance/reload/{instanceName}:
+    get:
+      tags:
+        - Instance Controller
+      summary: Instance Reload
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Reload to your instance.
+          example: 'codechat'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instance:
+                    type: string
+                  state:
+                    type: string
+                  statusReason:
+                    type: string
   /instance/connectionState/{instanceName}:
     get:
       tags:
