@@ -60,6 +60,7 @@ import { HttpStatus } from './index.router';
 import { MessageUpQuery } from '../repository/messageUp.repository';
 import { proto } from '@whiskeysockets/baileys';
 import { InstanceDto } from '../dto/instance.dto';
+import { Readable } from 'stream';
 
 export class ChatRouter extends RouterBroker {
   constructor(...guards: RequestHandler[]) {
@@ -139,6 +140,28 @@ export class ChatRouter extends RouterBroker {
         });
 
         return res.status(HttpStatus.CREATED).json(response);
+      })
+      .post(this.routerPath('retrieverMediaMessage'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<proto.IWebMessageInfo>({
+          request: req,
+          schema: null,
+          ClassRef: Object,
+          execute: (instance, data) =>
+            chatController.getBinaryMediaFromMessage(instance, data),
+        });
+
+        res
+          .setHeader('Content-type', response.mimetype)
+          .setHeader(
+            'Content-Disposition',
+            'inline; filename="' + response.fileName + '"',
+          );
+
+        const readableStream = new Readable();
+        readableStream.push(response.media);
+        readableStream.push(null);
+
+        return readableStream.pipe(res);
       })
       .post(this.routerPath('findMessages'), ...guards, async (req, res) => {
         const response = await this.dataValidate<MessageQuery>({
