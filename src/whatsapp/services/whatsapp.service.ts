@@ -136,6 +136,7 @@ import { dbserver } from '../../db/db.connect';
 import NodeCache from 'node-cache';
 import { useMultiFileAuthStateRedisDb } from '../../utils/use-multi-file-auth-state-redis-db';
 import { RedisCache } from '../../db/redis.client';
+import mime from 'mime-types';
 
 export class WAStartupService {
   constructor(
@@ -157,7 +158,7 @@ export class WAStartupService {
   private readonly msgRetryCounterCache: CacheStore = new NodeCache();
   private readonly userDevicesCache: CacheStore = new NodeCache();
   private endSession = false;
-
+  
   private phoneNumber: string;
 
   public set instanceName(name: string) {
@@ -362,7 +363,6 @@ export class WAStartupService {
             qrcode,
         ),
       );
-      await delay(5000);
     }
 
     if (connection) {
@@ -458,65 +458,63 @@ export class WAStartupService {
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
   }
 
+  private async setSocket(number?: string) {
+    this.endSession = false;
+
+    this.instance.authState = await this.defineAuthState();
+
+    const { version } = await fetchLatestBaileysVersion();
+    const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
+
+    let browser: WABrowserDescription = [session.NAME, '', ''];
+    if (!number) {
+      browser = [session.CLIENT, session.NAME, release()];
+    }
+    
+
+    const socketConfig: UserFacingSocketConfig = {
+      auth: {
+        creds: this.instance.authState.state.creds,
+        keys: makeCacheableSignalKeyStore(
+          this.instance.authState.state.keys,
+          P({ level: 'error' }),
+        ),
+      },
+      logger: P({ level: 'error' }),
+      printQRInTerminal: false,
+      browser,
+      version,
+      connectTimeoutMs: 60_000,
+      qrTimeout: 10_000,
+      emitOwnEvents: false,
+      msgRetryCounterCache: this.msgRetryCounterCache,
+      getMessage: this.getMessage as any,
+      generateHighQualityLinkPreview: true,
+      syncFullHistory: true,
+      userDevicesCache: this.userDevicesCache,
+      transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
+    };
+
+    return makeWASocket(socketConfig);
+  }
+
+  public async reloadConnection(): Promise<WASocket> {
+    try {
+      this.client = await this.setSocket();
+      return this.client;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error?.toString());
+    }
+  }
+
   public async connectToWhatsapp(number?: string): Promise<WASocket> {
     try {
       this.loadWebhook();
-
-      this.instance.authState = await this.defineAuthState();
-
-      const { version } = await fetchLatestBaileysVersion();
-      const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-      const browser: WABrowserDescription = [session.NAME, '', ''];
-
-      const socketConfig: UserFacingSocketConfig = {
-        auth: {
-          creds: this.instance.authState.state.creds,
-          keys: makeCacheableSignalKeyStore(
-            this.instance.authState.state.keys,
-            P({ level: 'error' }),
-          ),
-        },
-        logger: P({ level: 'error' }),
-        printQRInTerminal: false,
-        browser,
-        version,
-        connectTimeoutMs: 60_000,
-        qrTimeout: 40_000,
-        emitOwnEvents: false,
-        msgRetryCounterCache: this.msgRetryCounterCache,
-        getMessage: this.getMessage as any,
-        generateHighQualityLinkPreview: true,
-        syncFullHistory: true,
-        userDevicesCache: this.userDevicesCache,
-        transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
-        patchMessageBeforeSending: (message) => {
-          const requiresPatch = !!(message.buttonsMessage || message.listMessage);
-          if (requiresPatch) {
-            message = {
-              viewOnceMessageV2: {
-                message: {
-                  messageContextInfo: {
-                    deviceListMetadataVersion: 2,
-                    deviceListMetadata: {},
-                  },
-                  ...message,
-                },
-              },
-            };
-          }
-
-          return message;
-        },
-      };
-
-      this.endSession = false;
-
-      this.client = makeWASocket(socketConfig);
-
+      this.client = await this.setSocket(number);
       this.eventHandler();
-
       this.phoneNumber = number;
-      
+
       return this.client;
     } catch (error) {
       this.logger.error(error);
@@ -683,33 +681,39 @@ export class WAStartupService {
       },
       database: Database,
     ) => {
-      const received = messages[0];
-      if (
-        type !== 'notify' ||
-        !received?.message ||
-        received.message?.protocolMessage ||
-        received.message.senderKeyDistributionMessage
-      ) {
-        return;
+      for (const received of messages) {
+        if (
+          type !== 'notify' ||
+          !received?.message ||
+          received.message?.protocolMessage ||
+          received.message.senderKeyDistributionMessage
+        ) {
+          return;
+        }
+
+        this.client.sendPresenceUpdate('unavailable');
+
+        if (Long.isLong(received.messageTimestamp)) {
+          received.messageTimestamp = received.messageTimestamp?.toNumber();
+        }
+
+        const messageRaw = new MessageRaw({
+          key: received.key,
+          pushName: received.pushName,
+          message: { ...received.message },
+          messageTimestamp: received.messageTimestamp as number,
+          owner: this.instance.wuid,
+          source: getDevice(received.key.id),
+        });
+
+        this.logger.log(received);
+
+        await this.repository.message.insert(
+          [messageRaw],
+          database.SAVE_DATA.NEW_MESSAGE,
+        );
+        await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
       }
-
-      if (Long.isLong(received.messageTimestamp)) {
-        received.messageTimestamp = received.messageTimestamp?.toNumber();
-      }
-
-      const messageRaw: MessageRaw = {
-        key: received.key,
-        pushName: received.pushName,
-        message: { ...received.message },
-        messageTimestamp: received.messageTimestamp as number,
-        owner: this.instance.wuid,
-        source: getDevice(received.key.id),
-      };
-
-      this.logger.log(received);
-
-      await this.repository.message.insert([messageRaw], database.SAVE_DATA.NEW_MESSAGE);
-      await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
     },
 
     'messages.update': async (args: WAMessageUpdate[], database: Database) => {
@@ -1230,7 +1234,7 @@ export class WAStartupService {
     }
   }
 
-  public async getBase64FromMediaMessage(m: proto.IWebMessageInfo) {
+  public async getMediaMessage(m: proto.IWebMessageInfo, base64 = false) {
     try {
       const msg = m?.message
         ? m
@@ -1271,17 +1275,21 @@ export class WAStartupService {
         },
       );
 
+      const fileName =
+        mediaMessage?.['fileName'] ||
+        `${mediaType}.${mime.extension(mediaMessage?.['mimetype'])}`;
+
       return {
         mediaType,
-        fileName: mediaMessage['fileName'],
-        caption: mediaMessage['caption'],
+        fileName,
+        caption: mediaMessage?.['caption'],
         size: {
-          fileLength: mediaMessage['fileLength'],
-          height: mediaMessage['height'],
-          width: mediaMessage['width'],
+          fileLength: mediaMessage?.['fileLength'],
+          height: mediaMessage?.['height'],
+          width: mediaMessage?.['width'],
         },
-        mimetype: mediaMessage['mimetype'],
-        base64: buffer.toString('base64'),
+        mimetype: mediaMessage?.['mimetype'],
+        media: base64 ? buffer.toString('base64') : buffer,
       };
     } catch (error) {
       this.logger.error(error);

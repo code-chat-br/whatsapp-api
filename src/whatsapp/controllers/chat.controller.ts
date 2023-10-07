@@ -75,13 +75,22 @@ export class ChatController {
     return await this.waMonitor.waInstances[instanceName].fetchContacts(query);
   }
 
+  /**
+   *
+   * @deprecated
+   */
   public async getBase64FromMediaMessage(
     { instanceName }: InstanceDto,
     message: proto.IWebMessageInfo,
   ) {
-    return await this.waMonitor.waInstances[instanceName].getBase64FromMediaMessage(
-      message,
-    );
+    return await this.waMonitor.waInstances[instanceName].getMediaMessage(message, true);
+  }
+
+  public async getBinaryMediaFromMessage(
+    { instanceName }: InstanceDto,
+    message: proto.IWebMessageInfo,
+  ) {
+    return await this.waMonitor.waInstances[instanceName].getMediaMessage(message);
   }
 
   public async fetchMessages({ instanceName }: InstanceDto, query: MessageQuery) {

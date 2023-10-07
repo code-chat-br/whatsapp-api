@@ -53,6 +53,9 @@ class Key {
 }
 
 export class MessageRaw {
+  constructor(props?: MessageRaw) {
+    Object.assign(this, props);
+  }
   _id?: string;
   key?: Key;
   pushName?: string;
