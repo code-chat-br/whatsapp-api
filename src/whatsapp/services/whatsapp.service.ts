@@ -457,7 +457,7 @@ export class WAStartupService {
 
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
   }
-
+  
   private async setSocket(number?: string) {
     this.endSession = false;
 
@@ -470,7 +470,6 @@ export class WAStartupService {
     if (!number) {
       browser = [session.CLIENT, session.NAME, release()];
     }
-    
 
     const socketConfig: UserFacingSocketConfig = {
       auth: {
@@ -507,7 +506,7 @@ export class WAStartupService {
       throw new InternalServerErrorException(error?.toString());
     }
   }
-
+  
   public async connectToWhatsapp(number?: string): Promise<WASocket> {
     try {
       this.loadWebhook();
