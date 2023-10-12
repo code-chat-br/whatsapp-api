@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+export const delay = (ms) => new Promise((res) => setTimeout(res, ms));
 export async function getBroadcastInfo({ broadcast_id, token }) {
   try {
     return await axios.get(
@@ -17,12 +18,11 @@ export async function getBroadcastInfo({ broadcast_id, token }) {
   return null;
 }
 
-export async function updateBroadcastStatus({ broadcast_id, to_phone, token }) {
-
+export async function updateBroadcastStatus({ broadcast_id, to_phone, token, status }) {
   try {
     return await axios.put(
       `https://shopify-sms-staging.herokuapp.com/whatsapp-broadcasts/update-status`,
-      { broadcast_id, to_phone },
+      { broadcast_id, to_phone, status },
       {
         headers: {
           token: `Bearer ${token}`,
@@ -37,7 +37,7 @@ export async function updateBroadcastStatus({ broadcast_id, to_phone, token }) {
 }
 
 export async function sendMessageSlack(params) {
-  console.log(params, 'sahiparams');
+  console.log(params);
 
   try {
     return await axios.post(
@@ -52,21 +52,14 @@ export async function sendMessageSlack(params) {
     return null;
   }
 }
-export async function sendMessageResponse({ id, campaign_execution_id, status, msg_id }) {
+export async function sendMessageResponse({ id, campaign_execution_id, msg_id }) {
   if (!campaign_execution_id) return;
   try {
-    console.log('SENDING MESSAGE CONFIRMATION UPDATE', {
-      id,
-      campaign_execution_id,
-      status,
-      msg_id,
-    });
     const resp = await axios.post(
       'https://shopify-sms-staging.herokuapp.com/whatsapp-status',
       {
         id,
         campaign_execution_id,
-        status,
         msg_id,
       },
     );

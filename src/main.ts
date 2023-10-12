@@ -57,20 +57,7 @@ function bootstrap() {
   const app = express();
 
   app.use(
-    cors({
-      origin(requestOrigin, callback) {
-        const { ORIGIN } = configService.get<Cors>('CORS');
-        if (ORIGIN.includes('*')) {
-          return callback(null, true);
-        }
-        if (ORIGIN.indexOf(requestOrigin) !== -1) {
-          return callback(null, true);
-        }
-        return callback(new Error('Not allowed by CORS'));
-      },
-      methods: [...configService.get<Cors>('CORS').METHODS],
-      credentials: configService.get<Cors>('CORS').CREDENTIALS,
-    }),
+    cors(),
     urlencoded({ extended: true, limit: '50mb' }),
     json({ limit: '50mb' }),
     compression(),

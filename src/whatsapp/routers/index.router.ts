@@ -57,6 +57,7 @@ import {
   sendMessageSlack,
   updateBroadcastStatus,
   getCampaignDetail,
+  delay,
 } from '../../utils';
 enum HttpStatus {
   OK = 200,
@@ -130,7 +131,6 @@ devRouter
       } else {
       }
     };
-    const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
     const sendMessage = async (
       instance,
@@ -183,7 +183,7 @@ devRouter
             await sendMessageResponse(params);
             await sendMessageSlack(params);
             res.send(params);
-            return;
+            // return;
           }
         }
       }
@@ -194,7 +194,7 @@ devRouter
     try {
       const data = Buffer.from(req.body.message_body, 'base64').toString('utf-8');
       const response = await processMessage(data);
-      res.send({ message: 'success', response });
+      // res.send({ message: 'success', response });
     } catch (error) {
       res.send({ message: 'error', error });
     }
@@ -257,6 +257,7 @@ devRouter
             caption,
             message?.text,
           );
+          await delay(30000);
         } else if (image?.url) {
           msg = await sendMediaMessage(
             instance,
@@ -266,6 +267,7 @@ devRouter
             caption,
             'image.jpg',
           );
+          await delay(30000);
         } else if (audio?.url) {
           msg = await sendMediaMessage(
             instance,
@@ -275,6 +277,7 @@ devRouter
             caption,
             message?.text,
           );
+          await delay(30000);
         } else {
           msg = await sendMessageController.sendText(
             { instanceName: instance },
@@ -391,16 +394,20 @@ devRouter
               broadcast_id: broadcast_id,
               to_phone: to_phone_number,
               token: token,
+              status: 'completed',
             });
             sent.push({ message, recipient: recipients[i] });
           } else {
+            await updateBroadcastStatus({
+              broadcast_id: broadcast_id,
+              to_phone: to_phone_number,
+              token: token,
+              status: 'failed',
+            });
             failed.push({
               recipient: recipients[i],
-              reason: result.reason || 'Unknown error',
+              reason: result?.reason || 'Unknown error',
             });
-          }
-          if (remaining_count > 0) {
-            await fetchAndSend();
           }
         }
       } catch (error) {
@@ -412,6 +419,7 @@ devRouter
     res.send({ sucess: 'response' });
   })
   .get('/get-details', async (req, res) => {
+    // getBroadcastInfo();
     try {
       const { id } = req.query;
       const data = await instanceController.fetchInstances({ instanceName: id });
@@ -427,7 +435,7 @@ devRouter
   })
   .get('/on-whatsapp', async (req, res) => {
     const { phone, id } = req.query as {
-      data: string;
+      phone: string;
       id: string;
     };
     try {
@@ -468,7 +476,7 @@ devRouter
     }
   });
 router
-.use('/dev', devRouter)
+  .use('/dev', devRouter)
   .use(
     '/instance',
     new InstanceRouter(configService, ...guards).router,
