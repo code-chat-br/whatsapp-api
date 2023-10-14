@@ -192,6 +192,16 @@ export class ChatRouter extends RouterBroker {
         });
 
         return res.status(HttpStatus.OK).json(response);
+      })
+	  .post(this.routerPath('updatePresence'), ...guards, async (req, res) => {
+        const response = await this.dataValidate<UpdatePresenceDto>({
+          request: req,
+          schema: null,
+          ClassRef: UpdatePresenceDto,
+          execute: (instance, data) => chatController.updatePresence(instance, data),
+        });
+
+        return res.status(HttpStatus.CREATED).json(response);
       });
   }
 

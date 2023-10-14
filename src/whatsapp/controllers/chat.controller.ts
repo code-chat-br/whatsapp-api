@@ -104,4 +104,8 @@ export class ChatController {
   public async fetchChats({ instanceName }: InstanceDto) {
     return await this.waMonitor.waInstances[instanceName].fetchChats();
   }
+  
+  public async updatePresence({ instanceName }: InstanceDto, data: UpdatePresenceDto) {
+    return await this.waMonitor.waInstances[instanceName].updatePresence(data);
+  }
 }

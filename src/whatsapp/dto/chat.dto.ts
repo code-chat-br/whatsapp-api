@@ -78,3 +78,8 @@ export class DeleteMessage {
   remoteJid: string;
   participant?: string;
 }
+
+export class UpdatePresenceDto {
+  number: string;
+  presence: string;
+}

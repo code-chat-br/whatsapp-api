@@ -1156,6 +1156,41 @@ export class WAStartupService {
 
     return onWhatsapp;
   }
+  
+  public async updatePresence(data: UpdatePresenceDto) {
+    
+	const jid = this.createJid(data.number);
+    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+    if (!isWA.exists && !isJidGroup(isWA.jid)) {
+      throw new BadRequestException(isWA);
+    }
+
+    const sender = isJidGroup(jid) ? jid : isWA.jid;
+
+    if (isJidGroup(sender)) {
+      try {
+        await this.client.groupMetadata(sender);
+      } catch (error) {
+        throw new NotFoundException('Group not found');
+      }
+    }
+	
+	try{
+		
+		await this.client.presenceSubscribe(sender);
+        await this.client.sendPresenceUpdate(data.presence, jid);        
+		
+		return {
+			status: 200,
+			presence: data.presence
+		};
+		
+	}catch(error){		
+		this.logger.error(error);
+		throw new BadRequestException(error.toString());		
+	}
+	
+  }
 
   public async markMessageAsRead(data: ReadMessageDto) {
     try {
