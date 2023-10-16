@@ -190,7 +190,7 @@ export class WAStartupService {
               '-instances',
           )
           .collection(this.instanceName);
-        const data = await collection.findOne({ _id: 'creds' });
+        const data = await collection.findOne({ _id: 'creds' } as any);
         if (data) {
           const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
           profileName = creds.me?.name || creds.me?.verifiedName;
@@ -458,10 +458,10 @@ export class WAStartupService {
         creds: this.instance.authState.state.creds,
         keys: makeCacheableSignalKeyStore(
           this.instance.authState.state.keys,
-          P({ level: 'error' }),
+          P({ level: 'silent' }) as any,
         ),
       },
-      logger: P({ level: 'error' }),
+      logger: P({ level: 'silent' }) as any,
       printQRInTerminal: false,
       browser,
       version,
@@ -1250,7 +1250,7 @@ export class WAStartupService {
         'buffer',
         {},
         {
-          logger: P({ level: 'error' }),
+          logger: P({ level: 'silent' }) as any,
           reuploadRequest: this.client.updateMediaMessage,
         },
       );
