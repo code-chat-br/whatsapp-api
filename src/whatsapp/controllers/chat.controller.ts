@@ -41,6 +41,7 @@ import {
   NumberDto,
   ReadMessageDto,
   WhatsAppNumberDto,
+  UpdatePresenceDto,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { ContactQuery } from '../repository/contact.repository';

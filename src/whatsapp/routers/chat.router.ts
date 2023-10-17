@@ -44,6 +44,7 @@ import {
   profilePictureSchema,
   readMessageSchema,
   whatsappNumberSchema,
+  updatePresenceSchema,
 } from '../../validate/validate.schema';
 import {
   ArchiveChatDto,
@@ -51,6 +52,7 @@ import {
   NumberDto,
   ReadMessageDto,
   WhatsAppNumberDto,
+  UpdatePresenceDto,
 } from '../dto/chat.dto';
 import { ContactQuery } from '../repository/contact.repository';
 import { MessageQuery } from '../repository/message.repository';
@@ -196,7 +198,7 @@ export class ChatRouter extends RouterBroker {
 	  .post(this.routerPath('updatePresence'), ...guards, async (req, res) => {
         const response = await this.dataValidate<UpdatePresenceDto>({
           request: req,
-          schema: null,
+          schema: updatePresenceSchema,
           ClassRef: UpdatePresenceDto,
           execute: (instance, data) => chatController.updatePresence(instance, data),
         });

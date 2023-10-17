@@ -114,6 +114,7 @@ import {
   OnWhatsAppDto,
   ReadMessageDto,
   WhatsAppNumberDto,
+  UpdatePresenceDto,
 } from '../dto/chat.dto';
 import { MessageQuery } from '../repository/message.repository';
 import { ContactQuery } from '../repository/contact.repository';
@@ -190,7 +191,7 @@ export class WAStartupService {
               '-instances',
           )
           .collection(this.instanceName);
-        const data = await collection.findOne({ _id: 'creds' });
+        const data = await collection.findOne({ _id: 'creds' } as any);
         if (data) {
           const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
           profileName = creds.me?.name || creds.me?.verifiedName;
@@ -458,10 +459,10 @@ export class WAStartupService {
         creds: this.instance.authState.state.creds,
         keys: makeCacheableSignalKeyStore(
           this.instance.authState.state.keys,
-          P({ level: 'error' }),
+          P({ level: 'silent' }) as any,
         ),
       },
-      logger: P({ level: 'error' }),
+      logger: P({ level: 'silent' }) as any,
       printQRInTerminal: false,
       browser,
       version,
@@ -1178,7 +1179,7 @@ export class WAStartupService {
 	try{
 		
 		await this.client.presenceSubscribe(sender);
-        await this.client.sendPresenceUpdate(data.presence, jid);        
+        await this.client.sendPresenceUpdate(data.presence, jid);  
 		
 		return {
 			status: 200,
@@ -1186,7 +1187,6 @@ export class WAStartupService {
 		};
 		
 	}catch(error){		
-		this.logger.error(error);
 		throw new BadRequestException(error.toString());		
 	}
 	
@@ -1285,7 +1285,7 @@ export class WAStartupService {
         'buffer',
         {},
         {
-          logger: P({ level: 'error' }),
+          logger: P({ level: 'silent' }) as any,
           reuploadRequest: this.client.updateMediaMessage,
         },
       );

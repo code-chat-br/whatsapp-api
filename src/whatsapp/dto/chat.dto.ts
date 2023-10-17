@@ -37,6 +37,8 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
+import { WAPresence } from '@whiskeysockets/baileys';
+
 export class OnWhatsAppDto {
   constructor(
     public readonly jid: string,
@@ -81,5 +83,5 @@ export class DeleteMessage {
 
 export class UpdatePresenceDto {
   number: string;
-  presence: string;
+  presence: WAPresence;
 }

@@ -432,6 +432,19 @@ export const messageUpSchema: JSONSchema7 = {
   },
 };
 
+export const updatePresenceSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    presence: {
+      type: 'string',
+      enum: ['unavailable', 'available', 'composing', 'recording', 'paused'],
+    }, 
+  },
+  required: ['presence', 'number'],
+};
+
 // Group Schema
 export const createGroupSchema: JSONSchema7 = {
   $id: v4(),
