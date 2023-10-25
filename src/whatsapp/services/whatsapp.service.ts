@@ -192,7 +192,7 @@ export class WAStartupService {
               '-instances',
           )
           .collection(this.instanceName);
-        const data = await collection.findOne({ _id: 'creds' });
+        const data = await collection.findOne({ _id: 'creds' } as any);
         if (data) {
           const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
           profileName = creds.me?.name || creds.me?.verifiedName;
@@ -446,43 +446,55 @@ export class WAStartupService {
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
   }
 
+  private async setSocket() {
+    this.endSession = false;
+
+    this.instance.authState = await this.defineAuthState();
+
+    const { version } = await fetchLatestBaileysVersion();
+    const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
+    const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+
+    const socketConfig: UserFacingSocketConfig = {
+      auth: {
+        creds: this.instance.authState.state.creds,
+        keys: makeCacheableSignalKeyStore(
+          this.instance.authState.state.keys,
+          P({ level: 'silent' }) as any,
+        ),
+      },
+      logger: P({ level: 'silent' }) as any,
+      printQRInTerminal: false,
+      browser,
+      version,
+      connectTimeoutMs: 60_000,
+      qrTimeout: 10_000,
+      emitOwnEvents: false,
+      msgRetryCounterCache: this.msgRetryCounterCache,
+      getMessage: this.getMessage as any,
+      generateHighQualityLinkPreview: true,
+      syncFullHistory: true,
+      userDevicesCache: this.userDevicesCache,
+      transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
+    };
+
+    return makeWASocket(socketConfig);
+  }
+
+  public async reloadConnection(): Promise<WASocket> {
+    try {
+      this.client = await this.setSocket();
+      return this.client;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(error?.toString());
+    }
+  }
+
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
       this.loadWebhook();
-
-      this.instance.authState = await this.defineAuthState();
-
-      const { version } = await fetchLatestBaileysVersion();
-      const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-      const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
-
-      const socketConfig: UserFacingSocketConfig = {
-        auth: {
-          creds: this.instance.authState.state.creds,
-          keys: makeCacheableSignalKeyStore(
-            this.instance.authState.state.keys,
-            P({ level: 'error' }),
-          ),
-        },
-        logger: P({ level: 'error' }),
-        printQRInTerminal: false,
-        browser,
-        version,
-        connectTimeoutMs: 60_000,
-        qrTimeout: 40_000,
-        emitOwnEvents: false,
-        msgRetryCounterCache: this.msgRetryCounterCache,
-        getMessage: this.getMessage as any,
-        generateHighQualityLinkPreview: true,
-        syncFullHistory: true,
-        userDevicesCache: this.userDevicesCache,
-        transactionOpts: { maxCommitRetries: 3, delayBetweenTriesMs: 10 },
-      };
-
-      this.endSession = false;
-
-      this.client = makeWASocket(socketConfig);
-
+      this.client = await this.setSocket();
       this.eventHandler();
 
       return this.client;
@@ -651,35 +663,39 @@ export class WAStartupService {
       },
       database: Database,
     ) => {
-      const received = messages[0];
-      if (
-        type !== 'notify' ||
-        !received?.message ||
-        received.message?.protocolMessage ||
-        received.message.senderKeyDistributionMessage
-      ) {
-        return;
+      for (const received of messages) {
+        if (
+          type !== 'notify' ||
+          !received?.message ||
+          received.message?.protocolMessage ||
+          received.message.senderKeyDistributionMessage
+        ) {
+          return;
+        }
+
+        this.client.sendPresenceUpdate('unavailable');
+
+        if (Long.isLong(received.messageTimestamp)) {
+          received.messageTimestamp = received.messageTimestamp?.toNumber();
+        }
+
+        const messageRaw = new MessageRaw({
+          key: received.key,
+          pushName: received.pushName,
+          message: { ...received.message },
+          messageTimestamp: received.messageTimestamp as number,
+          owner: this.instance.wuid,
+          source: getDevice(received.key.id),
+        });
+
+        this.logger.log(received);
+
+        await this.repository.message.insert(
+          [messageRaw],
+          database.SAVE_DATA.NEW_MESSAGE,
+        );
+        await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
       }
-
-      this.client.sendPresenceUpdate('unavailable');
-
-      if (Long.isLong(received.messageTimestamp)) {
-        received.messageTimestamp = received.messageTimestamp?.toNumber();
-      }
-
-      const messageRaw: MessageRaw = {
-        key: received.key,
-        pushName: received.pushName,
-        message: { ...received.message },
-        messageTimestamp: received.messageTimestamp as number,
-        owner: this.instance.wuid,
-        source: getDevice(received.key.id),
-      };
-
-      this.logger.log(received);
-
-      await this.repository.message.insert([messageRaw], database.SAVE_DATA.NEW_MESSAGE);
-      await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
     },
 
     'messages.update': async (args: WAMessageUpdate[], database: Database) => {
@@ -1236,7 +1252,7 @@ export class WAStartupService {
         'buffer',
         {},
         {
-          logger: P({ level: 'error' }),
+          logger: P({ level: 'silent' }) as any,
           reuploadRequest: this.client.updateMediaMessage,
         },
       );
