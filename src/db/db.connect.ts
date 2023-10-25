@@ -46,7 +46,7 @@ export const dbserver = (() => {
     });
     logger.info('ON - dbName: ' + dbs['$dbName']);
     process.on('beforeExit', () => {
-      dbserver.destroy(true, (error) => logger.error(error));
+      dbserver.destroy(true);
     });
 
     return dbs;
