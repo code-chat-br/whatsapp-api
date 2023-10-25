@@ -896,10 +896,11 @@ export class WAStartupService {
 
     try {
       if (options?.delay) {
-        await this.client.presenceSubscribe(sender);
-        await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
+        // console.log('..... typing ....');
+        // await this.client.presenceSubscribe(sender);
+        // await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
         await delay(options.delay);
-        await this.client.sendPresenceUpdate('paused', sender);
+        // await this.client.sendPresenceUpdate('paused', sender);
       }
 
       const messageSent = await (async () => {

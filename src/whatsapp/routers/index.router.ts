@@ -137,14 +137,14 @@ devRouter
       instance,
       message,
       phoneNumber,
-      maxRetries = 10,
+      maxRetries = 20,
       callback_params = null,
       callback_url = null,
     ) => {
       let params;
       let isSent = false;
 
-      for (let i = 0; i < maxRetries; i++) {
+      for await (const i of Array.from(Array(maxRetries).keys())) {
         console.log(`messagecalled ${i} `);
         if (isSent) break;
         try {
@@ -170,7 +170,7 @@ devRouter
           isSent = true;
           return;
         } catch (error) {
-          const delayTime = (i + 1) * 1000;
+          const delayTime = (i + 1) * 300;
           await delay(delayTime); // Adding delay here
 
           if (i === maxRetries - 1) {
@@ -181,9 +181,9 @@ devRouter
               msg_id: null,
               error,
             };
-            await sendMessageResponse(params);
-            await sendMessageSlack(params);
-            res.send(params);
+            await sendMessageResponse(error);
+            await sendMessageSlack(error);
+            res.status(error.status).send({ error });
             // return;
           }
         }

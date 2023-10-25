@@ -41,7 +41,7 @@ export async function sendMessageSlack(params) {
 
   try {
     return await axios.post(
-      'https://hooks.slack.com/services/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',
+      'https://hooks.slack.com/services/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',
       {
         type: 'mrkdwn',
         text: `${JSON.stringify(params, null, 2)}`,
