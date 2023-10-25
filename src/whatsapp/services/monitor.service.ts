@@ -122,7 +122,7 @@ export class WAMonitoringService {
             $or: [
               { _id: { $regex: /^app.state.*/ } },
               { _id: { $regex: /^session-.*/ } },
-            ],
+            ] as any[],
           });
         });
       } else if (this.redis.ENABLED) {
@@ -235,7 +235,7 @@ export class WAMonitoringService {
   private noConnection() {
     this.eventEmitter.on('no.connection', async (instanceName) => {
       const del = this.configService.get<DelInstance>('DEL_INSTANCE');
-      if(del) {
+      if (del) {
         try {
           this.waInstances[instanceName] = undefined;
           this.cleaningUp(instanceName);

@@ -48,12 +48,9 @@
 
       $('#gen-qrcode').click(() => {
 
-         const header = '{{type}}' === 'apikey'
+         const headers = '{{type}}' === 'apikey'
             ? { apikey: '{{auth.apikey}}' }
             : { authorization: 'Bearer {{auth.jwt}}' };
-         
-         log({header})
-         return
 
          $.ajax({
             url: `/instance/connect/{{instanceName}}`,

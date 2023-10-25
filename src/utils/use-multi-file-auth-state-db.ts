@@ -58,7 +58,7 @@ export async function useMultiFileAuthStateDb(coll: string): Promise<AuthState> 
     try {
       await client.connect();
       return await collection.replaceOne(
-        { _id: key },
+        { _id: key } as any,
         JSON.parse(JSON.stringify(data, BufferJSON.replacer)),
         { upsert: true },
       );
@@ -68,7 +68,7 @@ export async function useMultiFileAuthStateDb(coll: string): Promise<AuthState> 
   const readData = async (key: string): Promise<any> => {
     try {
       await client.connect();
-      const data = await collection.findOne({ _id: key });
+      const data = await collection.findOne({ _id: key } as any);
       const creds = JSON.stringify(data);
       return JSON.parse(creds, BufferJSON.reviver);
     } catch {}
@@ -77,7 +77,7 @@ export async function useMultiFileAuthStateDb(coll: string): Promise<AuthState> 
   const removeData = async (key: string) => {
     try {
       await client.connect();
-      return await collection.deleteOne({ _id: key });
+      return await collection.deleteOne({ _id: key } as any);
     } catch {}
   };
 
