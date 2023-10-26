@@ -140,6 +140,8 @@ import { useMultiFileAuthStateRedisDb } from '../../utils/use-multi-file-auth-st
 import { RedisCache } from '../../db/redis.client';
 import mime from 'mime-types';
 
+const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+
 export class WAStartupService {
   constructor(
     private readonly configService: ConfigService,
@@ -385,12 +387,12 @@ export class WAStartupService {
       this.instance.profilePictureUrl = (
         await this.profilePicture(this.instance.wuid)
       ).profilePictureUrl;
-      this.logger.info(
-        `
-        ┌──────────────────────────────┐
-        │    CONNECTED TO WHATSAPP     │
-        └──────────────────────────────┘`.replace(/^ +/gm, '  '),
-      );
+      // this.logger.info(
+      //   `
+      //   ┌──────────────────────────────┐
+      //   │    CONNECTED TO WHATSAPP     │
+      //   └──────────────────────────────┘`.replace(/^ +/gm, '  '),
+      // );
     }
   }
 
@@ -412,21 +414,24 @@ export class WAStartupService {
     const store = this.configService.get<StoreConf>('STORE');
     const database = this.configService.get<Database>('DATABASE');
     if (store?.CLEANING_INTERVAL && !database.ENABLED) {
-      setInterval(() => {
-        try {
-          for (const [key, value] of Object.entries(store)) {
-            if (value === true) {
-              execSync(
-                `rm -rf ${join(
-                  this.storePath,
-                  key.toLowerCase(),
-                  this.instance.wuid,
-                )}/*.json`,
-              );
+      setInterval(
+        () => {
+          try {
+            for (const [key, value] of Object.entries(store)) {
+              if (value === true) {
+                execSync(
+                  `rm -rf ${join(
+                    this.storePath,
+                    key.toLowerCase(),
+                    this.instance.wuid,
+                  )}/*.json`,
+                );
+              }
             }
-          }
-        } catch (error) {}
-      }, (store?.CLEANING_INTERVAL ?? 3600) * 1000);
+          } catch (error) {}
+        },
+        (store?.CLEANING_INTERVAL ?? 3600) * 1000,
+      );
     }
   }
 
@@ -891,67 +896,147 @@ export class WAStartupService {
     }
   }
 
+  // private async sendMessageWithTypingDuplicate<T = proto.IMessage>(
+  //   number: string,
+  //   message: T,
+  //   options?: Options,
+  // ) {
+  //   const jid = this.createJid(number);
+  //   const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+  //   if (!isWA.exists && !isJidGroup(isWA.jid)) {
+  //     throw new BadRequestException(isWA);
+  //   }
+
+  //   const sender = isJidGroup(jid) ? jid : isWA.jid;
+
+  //   if (isJidGroup(sender)) {
+  //     try {
+  //       await this.client.groupMetadata(sender);
+  //     } catch (error) {
+  //       throw new NotFoundException('Group not found');
+  //     }
+  //   }
+
+  //   try {
+  //     if (options?.delay) {
+  //       // console.log('..... typing ....');
+  //       // await this.client.presenceSubscribe(sender);
+  //       // await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
+  //       await delay(options.delay);
+  //       // await this.client.sendPresenceUpdate('paused', sender);
+  //     }
+
+  //     const messageSent = await (async () => {
+  //       if (!message['audio']) {
+  //         return await this.client.sendMessage(sender, {
+  //           forward: {
+  //             key: { remoteJid: this.instance.wuid, fromMe: true },
+  //             message,
+  //           },
+  //         });
+  //       }
+
+  //       return await this.client.sendMessage(
+  //         sender,
+  //         message as unknown as AnyMessageContent,
+  //       );
+  //     })();
+
+  //     this.sendDataWebhook(Events.SEND_MESSAGE, messageSent).catch((error) =>
+  //       this.logger.error(error),
+  //     );
+  //     this.repository.message
+  //       .insert(
+  //         [{ ...messageSent, owner: this.instance.wuid }],
+  //         this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE,
+  //       )
+  //       .catch((error) => this.logger.error(error));
+
+  //     return messageSent;
+  //   } catch (error) {
+  //     this.logger.error(error);
+  //     throw new BadRequestException(error.toString());
+  //   }
+  // }
+
   private async sendMessageWithTyping<T = proto.IMessage>(
     number: string,
     message: T,
     options?: Options,
   ) {
-    const jid = this.createJid(number);
-    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists && !isJidGroup(isWA.jid)) {
-      throw new BadRequestException(isWA);
-    }
-
-    const sender = isJidGroup(jid) ? jid : isWA.jid;
-
-    if (isJidGroup(sender)) {
+    let i = 0;
+    const callWithRetry = async (retries = 20, depth = 0) => {
       try {
-        await this.client.groupMetadata(sender);
-      } catch (error) {
-        throw new NotFoundException('Group not found');
-      }
-    }
-
-    try {
-      if (options?.delay) {
-        // console.log('..... typing ....');
-        // await this.client.presenceSubscribe(sender);
-        // await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
-        await delay(options.delay);
-        // await this.client.sendPresenceUpdate('paused', sender);
-      }
-
-      const messageSent = await (async () => {
-        if (!message['audio']) {
-          return await this.client.sendMessage(sender, {
-            forward: {
-              key: { remoteJid: this.instance.wuid, fromMe: true },
-              message,
-            },
-          });
+        const jid = this.createJid(number);
+        const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+        if (!isWA.exists && !isJidGroup(isWA.jid)) {
+          throw new BadRequestException(isWA);
         }
 
-        return await this.client.sendMessage(
-          sender,
-          message as unknown as AnyMessageContent,
+        const sender = isJidGroup(jid) ? jid : isWA.jid;
+        console.log('i am retrying', i);
+        i++;
+        if (isJidGroup(sender)) {
+          try {
+            await this.client.groupMetadata(sender);
+          } catch (error) {
+            throw new NotFoundException('Group not found');
+          }
+        }
+
+        if (options?.delay) {
+          // console.log('..... typing ....');
+          // await this.client.presenceSubscribe(sender);
+          // await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
+          await delay(options.delay);
+          // await this.client.sendPresenceUpdate('paused', sender);
+        }
+
+        const messageSent = await (async () => {
+          if (!message['audio']) {
+            return await this.client.sendMessage(sender, {
+              forward: {
+                key: { remoteJid: this.instance.wuid, fromMe: true },
+                message,
+              },
+            });
+          }
+
+          return await this.client.sendMessage(
+            sender,
+            message as unknown as AnyMessageContent,
+          );
+        })();
+
+        this.sendDataWebhook(Events.SEND_MESSAGE, messageSent).catch((error) =>
+          this.logger.error(error),
         );
-      })();
+        this.repository.message
+          .insert(
+            [{ ...messageSent, owner: this.instance.wuid }],
+            this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE,
+          )
+          .catch((error) => this.logger.error(error));
 
-      this.sendDataWebhook(Events.SEND_MESSAGE, messageSent).catch((error) =>
-        this.logger.error(error),
-      );
-      this.repository.message
-        .insert(
-          [{ ...messageSent, owner: this.instance.wuid }],
-          this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE,
-        )
-        .catch((error) => this.logger.error(error));
+        return messageSent;
+      } catch (e) {
+        this.logger.error(e);
 
-      return messageSent;
-    } catch (error) {
-      this.logger.error(error);
-      throw new BadRequestException(error.toString());
-    }
+        console.log(
+          'Retry................................',
+          depth,
+          '.....................................',
+        );
+
+        if (depth > retries) {
+          throw new BadRequestException(e.toString());
+        }
+        await wait(depth * 200);
+        return callWithRetry(retries, depth + 1);
+      }
+    };
+
+    return await callWithRetry();
   }
 
   // Instance Controller

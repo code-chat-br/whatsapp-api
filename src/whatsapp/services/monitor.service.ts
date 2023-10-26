@@ -49,6 +49,21 @@ import { NotFoundException } from '../../exceptions';
 import { Db } from 'mongodb';
 import { RedisCache } from '../../db/redis.client';
 
+const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+
+const callWithRetry = async (fn, retries = 10, depth = 0) => {
+  try {
+    return await fn();
+  } catch (e) {
+    if (depth > retries) {
+      throw e;
+    }
+    await wait(2 ** depth * 10);
+
+    return callWithRetry(fn, retries, depth + 1);
+  }
+};
+
 export class WAMonitoringService {
   constructor(
     private readonly eventEmitter: EventEmitter2,
@@ -79,72 +94,155 @@ export class WAMonitoringService {
   public delInstanceTime(instance: string) {
     const time = this.configService.get<DelInstance>('DEL_INSTANCE');
     if (typeof time === 'number' && time > 0) {
-      setTimeout(() => {
-        if (this.waInstances[instance]?.connectionStatus?.state !== 'open') {
-          delete this.waInstances[instance];
-        }
-      }, 1000 * 60 * time);
+      setTimeout(
+        () => {
+          if (this.waInstances[instance]?.connectionStatus?.state !== 'open') {
+            delete this.waInstances[instance];
+          }
+        },
+        1000 * 60 * time,
+      );
     }
   }
 
   public async instanceInfo(instanceName?: string) {
+    console.log('===============INSTA=========================', instanceName);
+
     if (instanceName && !this.waInstances[instanceName]) {
       throw new NotFoundException(`Instance "${instanceName}" not found`);
     }
 
     const instances: any[] = [];
+    // console.log(Object.entries(this.waInstances), 'this.waInstances');
 
+    // const filteredInstances = Object.entries(this.waInstances).filter((i) => i === instanceName)
+    const filteredInstances: WAStartupService[] = [];
     for await (const [key, value] of Object.entries(this.waInstances)) {
-      if (value && value.connectionStatus.state === 'open') {
-        const auth = await this.repository.auth.find(key);
-        instances.push({
-          instance: {
-            instanceName: key,
-            owner: value.wuid,
-            profileName: (await value.getProfileName()) || 'not loaded',
-            profilePictureUrl: value.profilePictureUrl,
-          },
-          auth,
-        });
+      if (value && value.instanceName === instanceName) {
+        filteredInstances.push(value);
       }
     }
+    const checkConnection = async () => {
+      if (filteredInstances[0].connectionStatus.state === 'open') {
+        console.log('PAPERLONDON..................................');
 
-    return instances;
+        return {
+          instance: {
+            instanceName: filteredInstances[0].instanceName,
+            owner: filteredInstances[0].wuid,
+            profileName: (await filteredInstances[0].getProfileName()) || 'not loaded',
+            profilePictureUrl: filteredInstances[0].profilePictureUrl,
+          },
+        };
+      } else {
+        throw 'instance not connected';
+      }
+    };
+
+    const conn = await callWithRetry(checkConnection, 10);
+    instances.push(conn);
+
+    return instances.find((i) => i.instance.instanceName === instanceName);
+  }
+
+  public async instanceInfoOld(instanceName?: string, maxRetries = 10) {
+    if (instanceName && !this.waInstances[instanceName]) {
+      return null; // Return null when the instance is not found
+    }
+
+    try {
+      const instances: any[] = [];
+
+      for await (const [key, value] of Object.entries(this.waInstances)) {
+        if (value) {
+          const auth = await this.repository.auth.find(key);
+          instances.push({
+            instance: {
+              instanceName: key,
+              owner: value.wuid,
+              profileName: (await value.getProfileName()) || 'not loaded',
+              profilePictureUrl: value.profilePictureUrl,
+            },
+            auth,
+          });
+        }
+      }
+
+      // const filteredInstances =
+
+      for await (const [key, value] of Object.entries(this.waInstances)) {
+        if (value && value.connectionStatus.state === 'open') {
+          const auth = await this.repository.auth.find(key);
+          instances.push({
+            instance: {
+              instanceName: key,
+              owner: value.wuid,
+              profileName: (await value.getProfileName()) || 'not loaded',
+              profilePictureUrl: value.profilePictureUrl,
+            },
+            auth,
+          });
+        }
+      }
+      const foundInstance = instances.find(
+        (i) => i.instance.instanceName === instanceName,
+      );
+
+      return foundInstance;
+    } catch (error) {
+      return null;
+    }
+
+    // const wait = (ms) => new Promise((res) => setTimeout(res, ms));
+
+    // const callWithRetry = async (retries = 10, depth = 0) => {
+    //   try {
+
+    //     if (retry < maxRetries - 1) {
+    //       await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second (adjust as needed)
+    //     }
+    //   }
+    // }
+
+    // return null; // Return null if the instance is not found after all retry attempts
   }
 
   private delInstanceFiles() {
-    setInterval(async () => {
-      if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-        const collections = await this.dbInstance.collections();
-        collections.forEach(async (collection) => {
-          const name = collection.namespace.replace(/^[\w-]+./, '');
-          await this.dbInstance.collection(name).deleteMany({
-            $or: [
-              { _id: { $regex: /^app.state.*/ } },
-              { _id: { $regex: /^session-.*/ } },
-            ] as any[],
+    setInterval(
+      async () => {
+        if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
+          const collections = await this.dbInstance.collections();
+          collections.forEach(async (collection) => {
+            const name = collection.namespace.replace(/^[\w-]+./, '');
+            await this.dbInstance.collection(name).deleteMany({
+              $or: [
+                { _id: { $regex: /^app.state.*/ } },
+                { _id: { $regex: /^session-.*/ } },
+              ] as any[],
+            });
           });
-        });
-      } else if (this.redis.ENABLED) {
-      } else {
-        const dir = opendirSync(INSTANCE_DIR, { encoding: 'utf-8' });
-        for await (const dirent of dir) {
-          if (dirent.isDirectory()) {
-            const files = readdirSync(join(INSTANCE_DIR, dirent.name), {
-              encoding: 'utf-8',
-            });
-            files.forEach(async (file) => {
-              if (file.match(/^app.state.*/) || file.match(/^session-.*/)) {
-                rmSync(join(INSTANCE_DIR, dirent.name, file), {
-                  recursive: true,
-                  force: true,
-                });
-              }
-            });
+        } else if (this.redis.ENABLED) {
+        } else {
+          const dir = opendirSync(INSTANCE_DIR, { encoding: 'utf-8' });
+          for await (const dirent of dir) {
+            if (dirent.isDirectory()) {
+              const files = readdirSync(join(INSTANCE_DIR, dirent.name), {
+                encoding: 'utf-8',
+              });
+              files.forEach(async (file) => {
+                if (file.match(/^app.state.*/) || file.match(/^session-.*/)) {
+                  rmSync(join(INSTANCE_DIR, dirent.name, file), {
+                    recursive: true,
+                    force: true,
+                  });
+                }
+              });
+            }
           }
         }
-      }
-    }, 3600 * 1000 * 2);
+      },
+      3600 * 1000 * 2,
+    );
   }
 
   private async cleaningUp(instanceName: string) {
