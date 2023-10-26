@@ -123,7 +123,7 @@ devRouter
       const instanceExists = await instanceController.fetchInstances({
         instanceName: instance,
       });
-      if (true) {
+      if (instanceExists.instance.instanceName) {
         try {
           const response = await sendMessage(instance, message, phoneNumber);
         } catch (error) {
@@ -137,56 +137,37 @@ devRouter
       instance,
       message,
       phoneNumber,
-      maxRetries = 10,
       callback_params = null,
       callback_url = null,
     ) => {
       let params;
-      let isSent = false;
+      try {
+        const msg = await sendMessageController.sendText(
+          { instanceName: instance },
+          {
+            textMessage: { text: message.text },
+            number: phoneNumber,
+            options: { delay: 1200 },
+          },
+        );
 
-      for (let i = 0; i < maxRetries; i++) {
-        console.log(`messagecalled ${i} `);
-        if (isSent) break;
-        try {
-          const msg = await sendMessageController.sendText(
-            { instanceName: instance },
-            {
-              textMessage: { text: message.text },
-              number: phoneNumber,
-              options: { delay: 1200 },
-            },
-          );
+        params = {
+          id: instance,
+          status: 'sent',
+          msg_id: msg?.key?.id,
+          ...callback_params,
+        };
 
-          params = {
-            id: instance,
-            status: 'sent',
-            msg_id: msg?.key?.id,
-            ...callback_params,
-          };
-
-          await sendCallback(callback_url, params);
-          await sendMessageSlack(params);
-          res.send(msg);
-          isSent = true;
-          return;
-        } catch (error) {
-          const delayTime = (i + 1) * 1000;
-          await delay(delayTime); // Adding delay here
-
-          if (i === maxRetries - 1) {
-            params = {
-              id: instance,
-              campaign_execution_id: null,
-              status: 'auth_failure',
-              msg_id: null,
-              error,
-            };
-            await sendMessageResponse(params);
-            await sendMessageSlack(params);
-            res.send(params);
-            // return;
-          }
-        }
+        await sendCallback(callback_url, params);
+        await sendMessageSlack(params);
+        res.send(msg);
+        return;
+      } catch (error) {
+        console.log('eror', error);
+        await sendMessageResponse(error);
+        await sendMessageSlack(error);
+        console.log(error, 'error');
+        res.status(error.status).send({ error });
       }
 
       return params;
@@ -258,7 +239,6 @@ devRouter
             caption,
             message?.text,
           );
-          await delay(30000);
         } else if (image?.url) {
           msg = await sendMediaMessage(
             instance,
@@ -268,7 +248,6 @@ devRouter
             caption,
             'image.jpg',
           );
-          await delay(30000);
         } else if (audio?.url) {
           msg = await sendMediaMessage(
             instance,
@@ -278,7 +257,6 @@ devRouter
             caption,
             message?.text,
           );
-          await delay(30000);
         } else {
           msg = await sendMessageController.sendText(
             { instanceName: instance },
@@ -291,7 +269,6 @@ devRouter
             },
           );
         }
-        return { sucess: true };
       } catch (error) {
         return { sucess: false };
       }
