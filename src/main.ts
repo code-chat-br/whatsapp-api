@@ -105,7 +105,7 @@ function bootstrap() {
   ServerUP.app = app;
   const server = ServerUP[httpServer.TYPE];
 
-  server.listen(httpServer.PORT, () => {
+  server.listen(httpServer.PORT, '0.0.0.0', () => {
     logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT + '\n\n');
     new Logger('Swagger Docs').warn(
       `
