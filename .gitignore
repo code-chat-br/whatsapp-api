@@ -32,3 +32,4 @@ lerna-debug.log*
 /src/env.yml
 /store
 /public2
+.env
