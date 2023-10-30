@@ -56,6 +56,8 @@ function bootstrap() {
   const logger = new Logger('SERVER');
   const app = express();
 
+  console.log('ENV', process.env);
+
   app.use(
     cors(),
     urlencoded({ extended: true, limit: '50mb' }),
