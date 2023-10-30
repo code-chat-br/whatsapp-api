@@ -28,9 +28,11 @@ COPY --from=build ./codechat/dist .
 COPY --from=build ./codechat/public ./public
 COPY --from=build ./codechat/src/docs/swagger.yaml ./src/docs/
 RUN mkdir instances
-
+RUN mkdir store
 
 ENV DOCKER_ENV=true
+
+
 
 # Run the built application when the container starts.
 EXPOSE 8083
