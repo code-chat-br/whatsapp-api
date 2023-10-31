@@ -33,3 +33,6 @@ lerna-debug.log*
 /store
 /public2
 .env
+
+# Sentry Config File
+.sentryclirc
