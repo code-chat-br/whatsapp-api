@@ -100,6 +100,10 @@ function bootstrap() {
   app.set('views', join(ROOT_DIR, 'views'));
   app.use(express.static(join(ROOT_DIR, 'public')));
 
+  app.get('/debug-sentry', function mainHandler(req, res) {
+    throw new Error('My first Sentry error!');
+  });
+
   app.use('/', router);
   app.use(swaggerRouter);
 
@@ -126,10 +130,6 @@ function bootstrap() {
 
   ServerUP.app = app;
   const server = ServerUP[httpServer.TYPE];
-
-  app.get('/debug-sentry', function mainHandler(req, res) {
-    throw new Error('My first Sentry error!');
-  });
 
   // The error handler must be registered before any other error middleware and after all controllers
   app.use(Sentry.Handlers.errorHandler());

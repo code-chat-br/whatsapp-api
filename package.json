@@ -5,7 +5,7 @@
   "main": "./dist/src/main.js",
   "scripts": {
     "build": "tsc && yarn sentry:sourcemaps",
-    "start": "ts-node --files --transpile-only ./src/main.ts",
+    "start" : "npx ts-node -r dotenv/config --files --transpile-only ./src/main.ts",
     "start:prod": "bash start.sh",
     "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts",
@@ -53,6 +53,7 @@
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.7",
+    "dotenv": "^16.3.1",
     "eventemitter2": "^6.4.9",
     "express": "^4.18.2",
     "express-async-errors": "^3.1.1",
