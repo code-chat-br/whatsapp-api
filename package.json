@@ -4,11 +4,12 @@
   "description": "Rest api for communication with WhatsApp",
   "main": "./dist/src/main.js",
   "scripts": {
-    "build": "tsc",
-    "start": "ts-node --files --transpile-only ./src/main.ts",
+    "build": "tsc && yarn sentry:sourcemaps",
+    "start" : "npx ts-node -r dotenv/config --files --transpile-only ./src/main.ts",
     "start:prod": "bash start.sh",
     "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
-    "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
+    "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org f22labs --project node ./dist && sentry-cli sourcemaps upload --org f22labs --project node ./dist"
   },
   "repository": {
     "type": "git",
@@ -43,17 +44,21 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
+    "@sentry/node": "^7.76.0",
+    "@sentry/profiling-node": "^1.2.3",
     "@whiskeysockets/baileys": "^6.4.0",
-    "axios": "^1.3.5",
+    "axios": "^1.6.0",
     "class-validator": "^0.14.0",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.7",
+    "dotenv": "^16.3.1",
     "eventemitter2": "^6.4.9",
     "express": "^4.18.2",
     "express-async-errors": "^3.1.1",
     "express-session": "^1.17.3",
+    "geotiff": "^2.1.0",
     "hbs": "^4.2.0",
     "jimp": "^0.22.10",
     "join": "^3.0.0",

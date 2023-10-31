@@ -47,6 +47,8 @@ import 'express-async-errors';
 import { ServerUP } from './utils/server-up';
 import { swaggerRouter } from './docs/swagger.conf';
 import session from 'express-session';
+import * as Sentry from '@sentry/node';
+import { ProfilingIntegration } from '@sentry/profiling-node';
 
 function initWA() {
   waMonitor.loadInstance();
@@ -55,6 +57,28 @@ function initWA() {
 function bootstrap() {
   const logger = new Logger('SERVER');
   const app = express();
+
+  console.log('ENV', process.env);
+
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    integrations: [
+      // enable HTTP calls tracing
+      new Sentry.Integrations.Http({ tracing: true }),
+      // enable Express.js middleware tracing
+      new Sentry.Integrations.Express({ app }),
+      new ProfilingIntegration(),
+    ],
+    // Performance Monitoring
+    tracesSampleRate: 1.0,
+    // Set sampling rate for profiling - this is relative to tracesSampleRate
+    profilesSampleRate: 1.0,
+  });
+  // The request handler must be the first middleware on the app
+  app.use(Sentry.Handlers.requestHandler());
+
+  // TracingHandler creates a trace for every incoming request
+  app.use(Sentry.Handlers.tracingHandler());
 
   app.use(
     cors(),
@@ -75,6 +99,10 @@ function bootstrap() {
   app.set('view engine', 'hbs');
   app.set('views', join(ROOT_DIR, 'views'));
   app.use(express.static(join(ROOT_DIR, 'public')));
+
+  app.get('/debug-sentry', function mainHandler(req, res) {
+    throw new Error('My first Sentry error!');
+  });
 
   app.use('/', router);
   app.use(swaggerRouter);
@@ -103,7 +131,18 @@ function bootstrap() {
   ServerUP.app = app;
   const server = ServerUP[httpServer.TYPE];
 
-  server.listen(httpServer.PORT, () => {
+  // The error handler must be registered before any other error middleware and after all controllers
+  app.use(Sentry.Handlers.errorHandler());
+
+  // Optional fallthrough error handler
+  app.use(function onError(err, req, res, next) {
+    // The error id is attached to `res.sentry` to be returned
+    // and optionally displayed to the user for support.
+    res.statusCode = 500;
+    res.end(res.sentry + '\n');
+  });
+
+  server.listen(httpServer.PORT, '0.0.0.0', () => {
     logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT + '\n\n');
     new Logger('Swagger Docs').warn(
       `
