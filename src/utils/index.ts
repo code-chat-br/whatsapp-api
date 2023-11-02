@@ -39,7 +39,7 @@ export async function updateBroadcastStatus({ broadcast_id, to_phone, token, sta
 export async function sendMessageSlack(params) {
   try {
     return await axios.post(
-      'https://hooks.slack.com/services/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',
+      'https://hooks.slack.com/services/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',
       {
         type: 'mrkdwn',
         text: `${JSON.stringify(params, null, 2)}`,
