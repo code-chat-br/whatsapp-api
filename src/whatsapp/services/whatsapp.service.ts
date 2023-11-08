@@ -56,6 +56,7 @@ import makeWASocket, {
   isJidUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
+  MiscMessageGenerationOptions,
   ParticipantAction,
   prepareWAMessageMedia,
   proto,
@@ -63,6 +64,7 @@ import makeWASocket, {
   UserFacingSocketConfig,
   WABrowserDescription,
   WAMediaUpload,
+  WAMessage,
   WAMessageUpdate,
   WASocket,
 } from '@whiskeysockets/baileys';
@@ -187,7 +189,7 @@ export class WAStartupService {
           .getClient()
           .db(
             this.configService.get<Database>('DATABASE').CONNECTION.DB_PREFIX_NAME +
-              '-instances',
+            '-instances',
           )
           .collection(this.instanceName);
         const data = await collection.findOne({ _id: 'creds' } as any);
@@ -346,7 +348,7 @@ export class WAStartupService {
       qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
         this.logger.log(
           `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
-            qrcode,
+          qrcode,
         ),
       );
     }
@@ -423,7 +425,7 @@ export class WAStartupService {
               );
             }
           }
-        } catch (error) {}
+        } catch (error) { }
       }, (store?.CLEANING_INTERVAL ?? 3600) * 1000);
     }
   }
@@ -918,15 +920,41 @@ export class WAStartupService {
         await this.client.sendPresenceUpdate('paused', sender);
       }
 
-      const messageSent = await (async () => {
-        if (!message['audio']) {
-          return await this.client.sendMessage(sender, {
-            forward: {
-              key: { remoteJid: this.instance.wuid, fromMe: true },
-              message,
-            },
-          });
+      let quoted: WAMessage;
+
+      if (options?.quoted) {
+        const m = options?.quoted;
+
+        const msg = m?.message ? m : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
+
+        if (!msg) {
+          throw 'Message not found';
         }
+
+        quoted = msg;
+        this.logger.verbose('Quoted message');
+      }
+
+      const messageSent = await (async () => {
+        const option = {
+          quoted,
+        };
+
+        if (!message['audio']) {
+          return await this.client.sendMessage(
+            sender,
+            {
+              forward: {
+                key: { remoteJid: this.instance.wuid, fromMe: true },
+                message,
+              },
+            },
+            option as unknown as MiscMessageGenerationOptions,
+          );
+        }
+
+
+
 
         return await this.client.sendMessage(
           sender,
