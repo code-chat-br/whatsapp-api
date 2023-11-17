@@ -87,33 +87,23 @@ Cloning the Repository
 git clone https://github.com/code-chat-br/whatsapp-api.git
 ```
 
-Go to the project directory and install all dependencies.
-
->
-> Give preference to **npm** as it has greater compatibility.
->
-
+Go to the project directory and install all dependencies.</br>
 ```sh
-cd whatsapp-api-v2
+cd whatsapp-api
 
-yarn install
-# OR
-npm install
+yarn i
 ```
 
 Finally, run the command below to start the application:
 ```sh
 # Under development
 yarn start
-npm start
 
 # In production
 yarn start:prod
-npm run start:prod
 
 # pm2
 pm2 start 'yarn start:prod' --name ApiCodechat
-pm2 start 'npm run start:prod' --name ApiCodechat
 ```
 
 ## Swagger - OpenAPI 3.0.0

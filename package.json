@@ -97,8 +97,5 @@
     "prettier": "^3.0.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.2.2"
-  },
-  "overrides": {
-    "cache-manager": "5.2.2"
   }
 }
