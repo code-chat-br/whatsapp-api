@@ -59,6 +59,7 @@ import {
   updateBroadcastStatus,
   getCampaignDetail,
   delay,
+  sendmessageCallback,
 } from '../../utils';
 enum HttpStatus {
   OK = 200,
@@ -101,8 +102,16 @@ devRouter
   })
   .post('/send-message', async (req, res) => {
     const processMessage = async (datamessage) => {
-      const { id, message, to_phone } = JSON.parse(datamessage);
-      const response = await checkPhoneNumberHandler(message, to_phone, id);
+      const { id, message, to_phone, callback_url, callback_params, token } =
+        JSON.parse(datamessage);
+      const response = await checkPhoneNumberHandler(
+        message,
+        to_phone,
+        id,
+        callback_url,
+        callback_params,
+        token,
+      );
       return response;
     };
 
@@ -118,14 +127,28 @@ devRouter
       }
     };
 
-    const checkPhoneNumberHandler = async (message, phoneNumber, instance) => {
+    const checkPhoneNumberHandler = async (
+      message,
+      phoneNumber,
+      instance,
+      callback_url,
+      callback_params,
+      token,
+    ) => {
       const numberExists = await checkPhoneNumberExistence(instance, phoneNumber);
       const instanceExists = await instanceController.fetchInstances({
         instanceName: instance,
       });
       if (instanceExists.instance.instanceName) {
         try {
-          const response = await sendMessage(instance, message, phoneNumber);
+          const response = await sendMessage(
+            instance,
+            message,
+            phoneNumber,
+            callback_url,
+            callback_params,
+            token,
+          );
         } catch (error) {
           console.log(error);
         }
@@ -137,8 +160,9 @@ devRouter
       instance,
       message,
       phoneNumber,
-      callback_params = null,
-      callback_url = null,
+      callback_url,
+      callback_params,
+      token,
     ) => {
       let params;
       try {
@@ -160,6 +184,7 @@ devRouter
 
         await sendCallback(callback_url, params);
         await sendMessageSlack(params);
+        await sendmessageCallback(callback_url, callback_params, token, 'completed');
         res.send(msg);
         return;
       } catch (error) {
@@ -167,6 +192,7 @@ devRouter
         await sendMessageResponse(error);
         await sendMessageSlack(error);
         console.log(error, 'error');
+        await sendmessageCallback(callback_url, callback_params, token, 'failed');
         res.status(error.status).send({ error });
       }
 

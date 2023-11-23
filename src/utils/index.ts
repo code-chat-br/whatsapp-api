@@ -100,3 +100,26 @@ export async function sendCallback(callback_url, callback_params) {
     console.log(e);
   }
 }
+
+export async function sendmessageCallback(callback_url, callback_params, token, status) {
+  try {
+    const resp = await axios.put(
+      callback_url,
+      {
+        ...callback_params,
+        status,
+      },
+      {
+        headers: {
+          token: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      },
+    );
+    console.log('RESPONSE INFO AFTER WHATSAPP STATUS UPDATE', {
+      data: resp?.data,
+    });
+  } catch (e) {
+    console.log(e);
+  }
+}
