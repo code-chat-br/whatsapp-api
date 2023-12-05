@@ -305,10 +305,14 @@ export class WAStartupService {
           statusCode: DisconnectReason.badSession,
         });
 
-        this.sendDataWebhook(Events.CONNECTION_UPDATE, {
-          instance: this.instance.name,
+        this.stateConnection = {
           state: 'refused',
           statusReason: DisconnectReason.connectionClosed,
+        }
+
+        this.sendDataWebhook(Events.CONNECTION_UPDATE, {
+          instance: this.instance.name,
+          ...this.stateConnection,
         });
 
         this.sendDataWebhook(Events.STATUS_INSTANCE, {
