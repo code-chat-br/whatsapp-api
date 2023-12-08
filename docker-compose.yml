@@ -11,7 +11,7 @@ volumes:
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:v1.2.6
+    image: codechat/api:v1.2.8
     restart: unless-stopped
     ports:
       - 8083:8083
