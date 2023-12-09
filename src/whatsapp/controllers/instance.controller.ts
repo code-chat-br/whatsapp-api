@@ -64,7 +64,10 @@ export class InstanceController {
 
   private readonly logger = new Logger(InstanceController.name);
 
-  public async createInstance({ instanceName }: InstanceDto, req: Request) {
+  public async createInstance({
+    instanceName,
+    number
+  }: InstanceDto, req: Request) {
     try {
       const instance = new WAStartupService(
         this.configService,
@@ -114,14 +117,14 @@ export class InstanceController {
     }
   }
 
-  public async connectToWhatsapp({ instanceName }: InstanceDto) {
+  public async connectToWhatsapp({ instanceName, number = null }: InstanceDto) {
     try {
       const instance = this.waMonitor.waInstances[instanceName];
       const state = instance?.connectionStatus?.state;
 
       switch (state) {
         case 'close':
-          await instance.connectToWhatsapp();
+          await instance.connectToWhatsapp(number);
           await delay(2000);
           return instance.qrCode;
         case 'connecting':

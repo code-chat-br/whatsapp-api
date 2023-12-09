@@ -158,6 +158,8 @@ export class WAStartupService {
   private readonly msgRetryCounterCache: CacheStore = new NodeCache();
   private readonly userDevicesCache: CacheStore = new NodeCache();
   private endSession = false;
+  
+  private phoneNumber: string;
 
   public set instanceName(name: string) {
     if (!name) {
@@ -213,6 +215,7 @@ export class WAStartupService {
 
   public get qrCode(): wa.QrCode {
     return {
+      pairingCode: this.instance.qrcode?.pairingCode,
       code: this.instance.qrcode?.code,
       base64: this.instance.qrcode?.base64,
     };
@@ -333,6 +336,12 @@ export class WAStartupService {
         color: { light: '#ffffff', dark: '#198754' },
       };
 
+      if (this.phoneNumber) {
+        this.instance.qrcode.pairingCode = await this.client.requestPairingCode(this.phoneNumber);
+      } else {
+        this.instance.qrcode.pairingCode = null;
+      }
+
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
         if (error) {
           this.logger.error('Qrcode generate failed:' + error.toString());
@@ -343,13 +352,18 @@ export class WAStartupService {
         this.instance.qrcode.code = qr;
 
         this.sendDataWebhook(Events.QRCODE_UPDATED, {
-          qrcode: { instance: this.instance.name, code: qr, base64 },
+          qrcode: {
+            instance: this.instance.name,
+            pairingCode: this.instance.qrcode.pairingCode,
+            code: qr,
+            base64
+          },
         });
       });
 
       qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
         this.logger.log(
-          `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
+          `\n{ instance: ${this.instance.name} pairingCode: ${this.instance.qrcode.pairingCode}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
             qrcode,
         ),
       );
@@ -447,15 +461,19 @@ export class WAStartupService {
 
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
   }
-
-  private async setSocket() {
+  
+  private async setSocket(number?: string) {
     this.endSession = false;
 
     this.instance.authState = await this.defineAuthState();
 
     const { version } = await fetchLatestBaileysVersion();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-    const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+
+    let browser: WABrowserDescription = [session.NAME, '', ''];
+    if (!number) {
+      browser = [session.CLIENT, session.NAME, release()];
+    }
 
     const socketConfig: UserFacingSocketConfig = {
       auth: {
@@ -492,12 +510,13 @@ export class WAStartupService {
       throw new InternalServerErrorException(error?.toString());
     }
   }
-
-  public async connectToWhatsapp(): Promise<WASocket> {
+  
+  public async connectToWhatsapp(number?: string): Promise<WASocket> {
     try {
       this.loadWebhook();
-      this.client = await this.setSocket();
+      this.client = await this.setSocket(number);
       this.eventHandler();
+      this.phoneNumber = number;
 
       return this.client;
     } catch (error) {

@@ -133,7 +133,7 @@ WEBHOOK:
 CONFIG_SESSION_PHONE:
   # Name that will be displayed on smartphone connection
   CLIENT: CodeChat
-  NAME: Chrome # firefox | edge | opera | safari
+  NAME: Chrome (Linux) # Chrome (Linux) --> para autenticação com número. firefox | edge | opera | safari
 
 # Set qrcode display limit
 QRCODE:
