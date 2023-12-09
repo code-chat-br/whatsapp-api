@@ -24,7 +24,7 @@
  * │ limitations under the License.                                               │
  * │                                                                              │
  * │ @type {AuthState}                                                            │
- * │ @function useMultiFileAuthStateRedisDb @param {RedisCache} cache             │
+ * │ @function useMultiFileAuthStateRedisDb                                       │
  * │ @returns {Promise<AuthState>}                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
@@ -34,87 +34,103 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-type AuthState = { state: AuthenticationState; saveCreds: () => Promise<void> };
+export type AuthState = { state: AuthenticationState; saveCreds: () => Promise<void> };
 
 import {
   AuthenticationCreds,
   AuthenticationState,
+  BufferJSON,
   initAuthCreds,
   proto,
   SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
-import { RedisCache } from '../db/redis.client';
 import { Logger } from '../config/logger.config';
+import { ConfigService, Redis } from '../config/env.config';
+import { RedisCache } from '../cache/redis';
 
-export async function useMultiFileAuthStateRedisDb(
-  cache: RedisCache,
-): Promise<AuthState> {
-  const logger = new Logger(useMultiFileAuthStateRedisDb.name);
+export class AuthStateRedis {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly redisCache: RedisCache,
+  ) {}
 
-  const writeData = async (data: any, key: string): Promise<any> => {
-    try {
-      return await cache.writeData(key, data);
-    } catch (error) {
-      return logger.error({ localError: 'writeData', error });
-    }
-  };
+  private readonly logger = new Logger(this.configService, AuthStateRedis.name);
+  private readonly config = Object.freeze(this.configService.get<Redis>('REDIS'));
 
-  const readData = async (key: string): Promise<any> => {
-    try {
-      return await cache.readData(key);
-    } catch (error) {
-      logger.error({ readData: 'writeData', error });
-      return;
-    }
-  };
+  public async authStateRedisDb(instance: string): Promise<AuthState> {
+    const defaultKey = `${this.config.PREFIX_KEY}:${instance}`;
 
-  const removeData = async (key: string) => {
-    try {
-      return await cache.removeData(key);
-    } catch (error) {
-      logger.error({ readData: 'removeData', error });
-    }
-  };
+    const writeData = async (data: any, key: string): Promise<any> => {
+      try {
+        const json = JSON.stringify(data, BufferJSON.replacer);
+        return await this.redisCache.client.hSet(defaultKey, key, json);
+      } catch (error) {
+        this.logger.error({ localError: 'writeData', error });
+        return;
+      }
+    };
 
-  const creds: AuthenticationCreds = (await readData('creds')) || initAuthCreds();
+    const readData = async (key: string): Promise<any> => {
+      try {
+        const data = await this.redisCache.client.hGet(defaultKey, key);
+        if (data) {
+          return JSON.parse(data, BufferJSON.reviver);
+        }
+      } catch (error) {
+        this.logger.error({ readData: 'writeData', error });
+        return;
+      }
+    };
 
-  return {
-    state: {
-      creds,
-      keys: {
-        get: async (type, ids: string[]) => {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const data: { [_: string]: SignalDataTypeMap[type] } = {};
-          await Promise.all(
-            ids.map(async (id) => {
-              let value = await readData(`${type}-${id}`);
-              if (type === 'app-state-sync-key' && value) {
-                value = proto.Message.AppStateSyncKeyData.fromObject(value);
+    const removeData = async (key: string) => {
+      try {
+        return await this.redisCache.client.hDel(defaultKey, key);
+      } catch (error) {
+        this.logger.error({ readData: 'removeData', error });
+        return;
+      }
+    };
+
+    const creds: AuthenticationCreds = (await readData('creds')) || initAuthCreds();
+
+    return {
+      state: {
+        creds,
+        keys: {
+          get: async (type, ids: string[]) => {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            const data: { [_: string]: SignalDataTypeMap[type] } = {};
+            await Promise.all(
+              ids.map(async (id) => {
+                let value = await readData(`${type}-${id}`);
+                if (type === 'app-state-sync-key' && value) {
+                  value = proto.Message.AppStateSyncKeyData.fromObject(value);
+                }
+
+                data[id] = value;
+              }),
+            );
+
+            return data;
+          },
+          set: async (data: any) => {
+            const tasks: Promise<void>[] = [];
+            for (const category in data) {
+              for (const id in data[category]) {
+                const value = data[category][id];
+                const key = `${category}-${id}`;
+                tasks.push(value ? await writeData(value, key) : await removeData(key));
               }
-
-              data[id] = value;
-            }),
-          );
-
-          return data;
-        },
-        set: async (data: any) => {
-          const tasks: Promise<void>[] = [];
-          for (const category in data) {
-            for (const id in data[category]) {
-              const value = data[category][id];
-              const key = `${category}-${id}`;
-              tasks.push(value ? await writeData(value, key) : await removeData(key));
             }
-          }
 
-          await Promise.all(tasks);
+            await Promise.all(tasks);
+          },
         },
       },
-    },
-    saveCreds: async () => {
-      return await writeData(creds, 'creds');
-    },
-  };
+      saveCreds: async () => {
+        return await writeData(creds, 'creds');
+      },
+    };
+  }
 }
