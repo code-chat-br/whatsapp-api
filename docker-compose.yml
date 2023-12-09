@@ -7,7 +7,7 @@ networks:
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:v1.3.0
+    image: codechat/api:v1.2.6
     restart: unless-stopped
     ports:
       - 8084:8083
@@ -21,7 +21,7 @@ services:
       - LOG_COLOR=true
 
       - DATABASE_ENABLED=true
-      - DATABASE_URL=postgres://postgres:303e7BQYF3V6uEzXS@data.srv.codechat.com.br:5433/codechat_api_v1
+      - DATABASE_URL=postgres://<USER>:<PASS>@<HOST>/codechat_api_v1
       - DATABASE_SYNC_MESSAGES=true
       - DATABASE_SAVE_DATA_NEW_MESSAGE=true
       - DATABASE_SAVE_MESSAGE_UPDATE=true
@@ -58,36 +58,36 @@ services:
       - S3_USE_SSL=true
     networks:
       - public-network
-  #   depends_on:
-  #     - postgres_server
+    depends_on:
+      - postgres_server
 
-  # postgres_server:
-  #   image: postgres:latest
-  #   container_name: postgres_server
-  #   environment:
-  #     POSTGRES_PASSWORD: pass
-  #   volumes:
-  #     - postgres_data:/var/lib/postgresql/data
-  #   ports:
-  #     - "5432:5432"
-  #   networks:
-  #     - public_network
+  postgres_server:
+    image: postgres:latest
+    container_name: postgres_server
+    environment:
+      POSTGRES_PASSWORD: pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - public_network
   
-  # redis_cache:
-  #   image: redis:latest
-  #   container_name: redis_cache
-  #   volumes:
-  #     - redis_data:/data
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - public_network
+  redis_cache:
+    image: redis:latest
+    container_name: redis_cache
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - public_network
 
 volumes:
   instances_connecteds:
     driver: local
-  # postgres_data:
-  #   driver: local
-  # redis_data:
-  #   driver: local
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
 
