@@ -379,7 +379,8 @@ export class TypebotSessionService {
       );
     } catch (error) {
       if (error?.response?.data?.message === 'Session not found.') {
-        const { id, keyRemoteJid, keyFromMe, keyId, messageType, pushName } = newMessage;
+        const { id, keyRemoteJid, keyFromMe, keyId, messageType, pushName, instanceId } =
+          newMessage;
 
         response = await axios.post<Response>(
           `${typebot.typebotUrl}/api/v1/typebots/${typebot.publicId}/startChat`,
@@ -393,6 +394,7 @@ export class TypebotSessionService {
               keyId,
               messageType,
               pushName,
+              instanceId,
             },
           },
           {
