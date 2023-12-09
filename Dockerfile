@@ -7,7 +7,7 @@ FROM base AS builder
 WORKDIR /codechat
 
 COPY package*.json ./
-RUN npm i --force
+RUN npm i --no-optional
 
 COPY tsconfig.json .
 COPY ./src ./src
