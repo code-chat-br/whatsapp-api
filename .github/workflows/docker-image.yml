@@ -1,4 +1,4 @@
-name: CodeChat Doker Image CI
+name: CodeChat Docker Image CI
 
 on:
   push:
@@ -17,6 +17,12 @@ jobs:
     - name: Get package version
       id: get_version
       run: echo "::set-output name=version::$(jq -r .version package.json)"
+
+    - name: Debug Pre-Build Information
+      run: |
+        docker run --rm node:latest node -v
+        docker run --rm node:latest npm -v
+        docker run --rm node:latest git --version
 
     - name: Build and tag Docker image
       run: |
