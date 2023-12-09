@@ -1,0 +1,202 @@
+//  ┌──────────────────────────────────────────────────────────────────────────────┐
+//  │ @author jrCleber                                                             │
+//  │ @filename message.model.ts                                                   │
+//  │ Developed by: Cleber Wilson                                                  │
+//  │ Creation date: Dez 02, 2023                                                  │
+//  │ Contact: contato@codechat.dev                                                │
+//  ├──────────────────────────────────────────────────────────────────────────────┤
+//  │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
+//  │ Licensed under the Apache License, Version 2.0                               │
+//  │                                                                              │
+//  │  @license "https://github.com/code-chat-br/whatsapp-api/blob/main/LICENSE"   │
+//  │                                                                              │
+//  │ You may not use this file except in compliance with the License.             │
+//  │ You may obtain a copy of the License at                                      │
+//  │                                                                              │
+//  │    http://www.apache.org/licenses/LICENSE-2.0                                │
+//  │                                                                              │
+//  │ Unless required by applicable law or agreed to in writing, software          │
+//  │ distributed under the License is distributed on an "AS IS" BASIS,            │
+//  │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.     │
+//  │                                                                              │
+//  │ See the License for the specific language governing permissions and          │
+//  │ limitations under the License.                                               │
+//  │                                                                              │                                                        │
+//  ├──────────────────────────────────────────────────────────────────────────────┤
+//  │ @important                                                                   │
+//  │ For any future changes to the code in this file, it is recommended to        │
+//  │ contain, together with the modification, the information of the developer    │
+//  │ who changed it and the date of modification.                                 │
+//  └──────────────────────────────────────────────────────────────────────────────┘
+
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum InstanceConnectionStatus {
+  ONLINE
+  OFFLINE
+}
+
+model Instance {
+  id               Int                       @id @default(autoincrement())
+  name             String                    @unique @db.VarChar(255)
+  description      String?                   @db.VarChar(255)
+  connectionStatus InstanceConnectionStatus? @default(OFFLINE)
+  ownerJid         String?                   @unique @db.VarChar(100)
+  profilePicUrl    String?                   @db.VarChar(500)
+  createdAt        DateTime?                 @default(now()) @db.Date
+  updatedAt        DateTime?                 @updatedAt @db.Date
+  Auth             Auth?
+  Chat             Chat[]
+  Contact          Contact[]
+  Webhook          Webhook?
+  Typebot          Typebot?
+  ActivityLogs     ActivityLogs[]
+  Message          Message[]
+}
+
+model Auth {
+  id         Int       @id @default(autoincrement())
+  token      String    @unique
+  createdAt  DateTime? @default(now()) @db.Date
+  updatedAt  DateTime? @updatedAt @db.Date
+  Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId Int       @unique @db.Integer
+}
+
+enum MessageSource {
+  ios
+  android
+  web
+}
+
+enum DeviceMessage {
+  ios
+  android
+  web
+}
+
+model Message {
+  id               Int             @id @default(autoincrement())
+  keyId            String          @db.VarChar(100)
+  keyRemoteJid     String          @db.VarChar(100)
+  keyFromMe        Boolean         @db.Boolean
+  keyParticipant   String?         @db.VarChar(100)
+  pushName         String?         @db.VarChar(100)
+  messageType      String          @db.VarChar(100)
+  content          Json            @db.JsonB
+  messageTimestamp Int             @db.Integer
+  device           DeviceMessage
+  isGroup          Boolean?        @db.Boolean
+  Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId       Int
+  TypebotSession   TypebotSession? @relation(fields: [typebotSessionId], references: [id], onDelete: Cascade)
+  typebotSessionId Int?
+  MessageUpdate    MessageUpdate[]
+  Media            Media?
+
+  @@index([keyId], name: "keyId")
+}
+
+model Media {
+  id        Int       @id @default(autoincrement())
+  fileName  String    @unique @db.VarChar(500)
+  type      String    @db.VarChar(100)
+  mimetype  String    @db.VarChar(100)
+  createdAt DateTime? @default(now()) @db.Date
+  Message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId Int       @unique
+}
+
+model MessageUpdate {
+  id        Int      @id @default(autoincrement())
+  dateTime  DateTime @db.Date
+  status    String   @db.VarChar(30)
+  Message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId Int
+}
+
+model Chat {
+  id         Int       @id @default(autoincrement())
+  remoteJid  String    @db.VarChar(100)
+  createdAt  DateTime? @default(now()) @db.Date
+  updatedAt  DateTime? @updatedAt @db.Date
+  Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId Int
+}
+
+model Contact {
+  id            Int       @id @default(autoincrement())
+  remoteJid     String    @db.VarChar(100)
+  pushName      String?   @db.VarChar(100)
+  profilePicUrl String?   @db.VarChar(500)
+  createdAt     DateTime? @default(now()) @db.Date
+  updatedAt     DateTime? @updatedAt @db.Date
+  Instance      Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId    Int
+}
+
+model Webhook {
+  id         Int       @id @default(autoincrement())
+  url        String    @db.VarChar(500)
+  enabled    Boolean?  @default(true) @db.Boolean
+  events     Json?     @db.JsonB
+  createdAt  DateTime? @default(now()) @db.Date
+  updatedAt  DateTime  @updatedAt @db.Date
+  Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId Int       @unique
+}
+
+model Typebot {
+  id             Int              @id @default(autoincrement())
+  publicId       String           @db.VarChar(200)
+  typebotUrl     String           @db.VarChar(500)
+  enabled        Boolean?         @default(true) @db.Boolean
+  enableGroup    Boolean?         @default(false) @db.Boolean
+  createdAt      DateTime?        @default(now()) @db.Date
+  updatedAt      DateTime?        @updatedAt @db.Date
+  Instance       Instance         @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId     Int              @unique
+  TypebotSession TypebotSession[]
+}
+
+enum TypebotSessionStatus {
+  open
+  closed
+  paused
+}
+
+model TypebotSession {
+  id        Int                  @id @default(autoincrement())
+  sessionId String               @unique @db.VarChar(200)
+  remoteJid String               @db.VarChar(100)
+  status    TypebotSessionStatus @default(open)
+  Typebot   Typebot              @relation(fields: [typebotId], references: [id], onDelete: Cascade)
+  typebotId Int
+  Message   Message[]
+}
+
+enum StartConversationAs {
+  open
+  pending
+}
+
+model ActivityLogs {
+  id          Int       @id @default(autoincrement())
+  dateTime    DateTime? @default(now()) @db.Date
+  context     String?   @db.VarChar(100)
+  type        String?   @db.VarChar(100)
+  content     Json?     @db.JsonB
+  description String?   @db.VarChar(500)
+  Instance    Instance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId  Int?      @db.Integer
+}
