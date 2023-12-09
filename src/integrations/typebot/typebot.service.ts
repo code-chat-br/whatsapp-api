@@ -390,7 +390,6 @@ export class TypebotSessionService {
             prefilledVariables: {
               messageId: id,
               keyRemoteJid,
-              keyFromMe,
               keyId,
               messageType,
               pushName,
