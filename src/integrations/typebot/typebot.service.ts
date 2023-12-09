@@ -387,7 +387,7 @@ export class TypebotSessionService {
             isStreamEnabled: true,
             isOnlyRegistering: false,
             prefilledVariables: {
-              id,
+              messageId: id,
               keyRemoteJid,
               keyFromMe,
               keyId,
