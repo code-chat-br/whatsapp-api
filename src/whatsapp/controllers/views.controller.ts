@@ -38,15 +38,15 @@
 import { Request, Response } from 'express';
 import { BadRequestException } from '../../exceptions';
 import { InstanceDto } from '../dto/instance.dto';
-import { HttpStatus } from '../routers/index.router';
 import { WAMonitoringService } from '../services/monitor.service';
-import { AuthRaw } from '../models';
-import { RepositoryBroker } from '../repository/repository.manager';
+import { Repository } from '../../repository/repository.service';
+import { Auth } from '@prisma/client';
+import { HttpStatus } from '../../app.module';
 
 export class ViewsController {
   constructor(
     private readonly waMonit: WAMonitoringService,
-    private readonly repository: RepositoryBroker,
+    private readonly repository: Repository,
   ) {}
 
   public async qrcode(request: Request, response: Response) {
@@ -57,21 +57,21 @@ export class ViewsController {
         throw new BadRequestException('The instance is already connected');
       }
 
-      let auth: AuthRaw;
+      let auth: Auth;
 
       if (!request?.session?.[param.instanceName]) {
-        auth = await this.repository.auth.find(param.instanceName);
+        auth = await this.repository.auth.findFirst({
+          where: { Instance: { name: param.instanceName } },
+        });
       } else {
         auth = JSON.parse(
           Buffer.from(request.session[param.instanceName], 'base64').toString('utf8'),
-        ) as AuthRaw;
+        ) as Auth;
       }
-
-      const type = auth?.jwt ? 'jwt' : 'apikey';
 
       return response.status(HttpStatus.OK).render('qrcode', {
         ...param,
-        type,
+        type: 'jwt',
         auth,
         connectionState: instance.connectionStatus.state,
       });

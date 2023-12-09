@@ -36,7 +36,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { configService, Log } from './env.config';
+import { ConfigService, Log } from './env.config';
 import dayjs from 'dayjs';
 
 const formatDateLog = (timestamp: number) =>
@@ -92,11 +92,20 @@ enum Background {
 }
 
 export class Logger {
-  private readonly configService = configService;
-  constructor(private context = 'Logger') {}
+  constructor(
+    private readonly configService: ConfigService,
+    private context = 'Logger',
+  ) {}
+
+  private subCtx: string;
 
   public setContext(value: string) {
     this.context = value;
+  }
+
+  public subContext(value?: string) {
+    if (!value) return (this.subCtx = undefined);
+    this.subCtx = value;
   }
 
   private console(value: any, type: Type) {
@@ -107,7 +116,7 @@ export class Logger {
     const typeValue = typeof value;
 
     if (types.includes(type)) {
-      if (configService.get<Log>('LOG').COLOR) {
+      if (this.configService.get<Log>('LOG').COLOR) {
         console.log(
           /*Command.UNDERSCORE +*/ Command.BRIGHT + Level[type],
           '[CodeChat]',
@@ -124,12 +133,12 @@ export class Logger {
           Color.WARN + Command.BRIGHT,
           `[${this.context}]` + Command.RESET,
           Color[type] + Command.BRIGHT,
-          `[${typeValue}]` + Command.RESET,
+          `[${this.subCtx || typeValue}]` + Command.RESET,
           Color[type],
           typeValue !== 'object' ? value : '',
           Command.RESET,
         );
-        typeValue === 'object' ? console.log(/*Level.DARK,*/ value, '\n') : '';
+        typeValue === 'object' ? console.log(Level.DARK, value, '\n') : '';
       } else {
         console.log(
           '[CodeChat]',
@@ -143,33 +152,35 @@ export class Logger {
         );
       }
     }
+
+    return value;
   }
 
-  public log(value: any) {
-    this.console(value, Type.LOG);
+  public log<T>(value: T): T {
+    return this.console(value, Type.LOG);
   }
 
-  public info(value: any) {
-    this.console(value, Type.INFO);
+  public info<T>(value: T): T {
+    return this.console(value, Type.INFO);
   }
 
-  public warn(value: any) {
-    this.console(value, Type.WARN);
+  public warn<T>(value: T): T {
+    return this.console(value, Type.WARN);
   }
 
-  public error(value: any) {
-    this.console(value, Type.ERROR);
+  public error<T>(value: T): T {
+    return this.console(value, Type.ERROR);
   }
 
-  public verbose(value: any) {
-    this.console(value, Type.VERBOSE);
+  public verbose<T>(value: T): T {
+    return this.console(value, Type.VERBOSE);
   }
 
-  public debug(value: any) {
-    this.console(value, Type.DEBUG);
+  public debug<T>(value: T): T {
+    return this.console(value, Type.DEBUG);
   }
 
-  public dark(value: any) {
-    this.console(value, Type.DARK);
+  public dark<T>(value: T): T {
+    return this.console(value, Type.DARK);
   }
 }

@@ -4,97 +4,90 @@ networks:
   public-network:
     driver: bridge
 
-volumes:
-  mongo_data:
-  redis_data:
-
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:v1.2.6
+    image: codechat/api:v1.3.0
     restart: unless-stopped
     ports:
-      - 8083:8083
+      - 8084:8083
     volumes:
-      - ./instances:/codechat/instances
-      - ./src/env.yml:/codechat/src/env.yml:ro
-    # environment:
-    #   - DOCKER_ENV=true
-    #   - LOG_LEVEL='ERROR,WARN,DEBUG,INFO,LOG,VERBOSE,DARK'
-    #   - LOG_COLOR=true
+      - instances_connecteds:/codechat/instances
+    environment:
+      - SERVER_PORT=8083
+      - SESSION_SECRET=W0NvZGVDaGF0XTpbU2Vzc
 
-    #   - DEL_INSTANCE=5
+      - LOG_LEVEL=ERROR|WARN|INFO|DEBUG|LOG|VERBOSE|DARK
+      - LOG_COLOR=true
 
-    #   - STORE_CLEANING_INTERVAL=7200 
-    #   - STORE_MESSAGE=true
-    #   - STORE_CONTACTS=false
-    #   - STORE_CHATS=false
+      - DATABASE_ENABLED=true
+      - DATABASE_URL=postgres://postgres:303e7BQYF3V6uEzXS@data.srv.codechat.com.br:5433/codechat_api_v1
+      - DATABASE_SYNC_MESSAGES=true
+      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
+      - DATABASE_SAVE_MESSAGE_UPDATE=true
+      - DATABASE_SAVE_DATA_CONTACTS=true
+      - DATABASE_SAVE_DATA_CHATS=true
 
-    #   - DATABASE_ENABLED=false
-    #   - DATABASE_CONNECTION_URI='mongodb://<USER>:<PASSWORD>@<HOST>/?authSource=admin&readPreference=primary&ssl=false&directConnection=true'
-    #   - DATABASE_CONNECTION_DB_PREFIX_NAME='codechat'
-    #   - DATABASE_SAVE_DATA_INSTANCE=false
-    #   - DATABASE_SAVE_DATA_OLD_MESSAGE=false
-    #   - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-    #   - DATABASE_SAVE_MESSAGE_UPDATE=true
-    #   - DATABASE_SAVE_DATA_CONTACTS=true
-    #   - DATABASE_SAVE_DATA_CHATS=true
+      - GLOBAL_WEBHOOK_URL=url
+      - GLOBAL_WEBHOOK_ENABLED=false
 
-    #   - REDIS_ENABLED=false
-    #   - REDIS_URI='redis://<HOST>/1'
-    #   - REDIS_PREFIX_KEY='codechat'
+      - INSTANCE_EXPIRATION_TIME=false
 
-    #   - WEBHOOK_GLOBAL_URL='<url>'
-    #   - WEBHOOK_GLOBAL_ENABLED=false
-    #   - WEBHOOK_EVENTS_STATUS_INSTANCE=true
-    #   - WEBHOOK_EVENTS_QRCODE_UPDATED=true
-    #   - WEBHOOK_EVENTS_MESSAGES_SET=true
-    #   - WEBHOOK_EVENTS_MESSAGES_UPDATE=true
-    #   - WEBHOOK_EVENTS_MESSAGES_UPSERT=true
-    #   - WEBHOOK_EVENTS_SEND_MESSAGE=true
-    #   - WEBHOOK_EVENTS_CONTACTS_SET=true
-    #   - WEBHOOK_EVENTS_CONTACTS_UPSERT=true
-    #   - WEBHOOK_EVENTS_CONTACTS_UPDATE=true
-    #   - WEBHOOK_EVENTS_PRESENCE_UPDATE=true
-    #   - WEBHOOK_EVENTS_CHATS_SET=true
-    #   - WEBHOOK_EVENTS_CHATS_UPSERT=true
-    #   - WEBHOOK_EVENTS_CHATS_UPDATE=true
-    #   - WEBHOOK_EVENTS_CONNECTION_UPDATE=true
-    #   - WEBHOOK_EVENTS_GROUPS_UPSERT=false
-    #   - WEBHOOK_EVENTS_GROUPS_UPDATE=false
-    #   - WEBHOOK_EVENTS_GROUP_PARTICIPANTS_UPDATE=false
-    #   - WEBHOOK_EVENTS_NEW_JWT_TOKEN=false
+      - CONFIG_SESSION_PHONE_CLIENT=CodeChat_V1
+      - CONFIG_SESSION_PHONE_NAME=Edge
 
-    #   - CONFIG_SESSION_PHONE_CLIENT='CodeChat'
-    #   - CONFIG_SESSION_PHONE_NAME='Chrome'
+      - QRCODE_LIMIT=10
+      - QRCODE_EXPIRATION_TIME=60
 
-    #   - QRCODE_LIMIT=6
+      - CONNECTION_TIMEOUT=300
 
-    #   - AUTHENTICATION_TYPE='jwt'
-    #   - AUTHENTICATION_API_KEY='t8OOEeISKzpmc3jjcMqBWYSaJsafdefer'
-    #   - AUTHENTICATION_JWT_EXPIRIN_IN=0
-    #   - AUTHENTICATION_JWT_SECRET='3RFYiiRmvNiokSBrLZzx'
-    command: ['node', './src/main.js']
+      - AUTHENTICATION_GLOBAL_AUTH_TOKEN=zYzP7ocstxh3SJ23D4FZTCu4ehnM8v4hu
+      - AUTHENTICATION_JWT_EXPIRES_IN=0
+      - AUTHENTICATION_JWT_SECRET=3RFYiiRmvNiokSBrLZzx
+
+      - REDIS_ENABLED=true
+      - REDIS_URI=redis://data.srv.codechat.com.br/5
+      - REDIS_PREFIX=codechat
+
+      - S3_ENABLED=true
+      - S3_ACCESS_KEY=XCXV6CawqzpOTlpGmZC2
+      - S3_SECRET_KEY=CEU2tqUv2VDsy1a3vNiQWfb16kW7UzLZ6Dg3hfSr
+      - S3_BUCKET=codechat-api-v1
+      - S3_PORT=443
+      - S3_ENDPOINT=s3.codechat.com.br
+      - S3_USE_SSL=true
     networks:
       - public-network
+  #   depends_on:
+  #     - postgres_server
 
-  # mongodb:
-  #   container_name: mongodb
-  #   image: mongo:6
-  #   restart: unless-stopped
-  #   volumes:
-  #     - mongo_data:/data/db
+  # postgres_server:
+  #   image: postgres:latest
+  #   container_name: postgres_server
   #   environment:
-  #     MONGO_INITDB_ROOT_USERNAME: root
-  #     MONGO_INITDB_ROOT_PASSWORD: mysupersecretpassword
+  #     POSTGRES_PASSWORD: pass
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
   #   networks:
-  #     - public-network
-
-  # cache:
-  #   image: redis:7
-  #   restart: unless-stopped
-  #   command: redis-server --save 20 1 --loglevel warning 
-  #   volumes: 
+  #     - public_network
+  
+  # redis_cache:
+  #   image: redis:latest
+  #   container_name: redis_cache
+  #   volumes:
   #     - redis_data:/data
+  #   ports:
+  #     - "6379:6379"
   #   networks:
-  #     - public-network
+  #     - public_network
+
+volumes:
+  instances_connecteds:
+    driver: local
+  # postgres_data:
+  #   driver: local
+  # redis_data:
+  #   driver: local
+

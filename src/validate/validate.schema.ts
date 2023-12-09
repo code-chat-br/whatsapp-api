@@ -31,11 +31,11 @@
  * │ @constant whatsappNumberSchema @constant readMessageSchema                   │
  * │ @constant archiveChatSchema @constant deleteMessageSchema                    │
  * │ @constant contactValidateSchema @constant profilePictureSchema               │
- * │ @constant messageValidateSchema @constant messageUpSchema                    │
+ * │ @constant messageValidateSchema @constant mediaUrlSchema                     │
  * │ @constant createGroupSchema @constant groupJidSchema                         │
  * │ @constant updateParticipantsSchema @constant updateGroupPicture              │
  * │ @constant webhookSchema @constant oldTokenSchema                             │
- * │ @constant audioMessageSchema                                                 │
+ * │ @constant audioMessageSchema @constant mediaUrlSchema                        │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -71,7 +71,8 @@ export const instanceNameSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
-    instanceName: { type: 'string' },
+    instanceName: { type: 'string', minLength: 1 },
+    description: { type: 'string', minLength: 1 },
   },
   ...isNotEmpty('instanceName'),
 };
@@ -97,6 +98,7 @@ const optionsSchema: JSONSchema7 = {
       type: 'string',
       enum: ['unavailable', 'available', 'composing', 'recording', 'paused'],
     },
+    quotedMessageId: { type: 'integer', description: 'Enter the message id' },
   },
 };
 
@@ -305,6 +307,19 @@ export const readMessageSchema: JSONSchema7 = {
   required: ['readMessages'],
 };
 
+export const updatePresenceSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    presence: {
+      type: 'string',
+      enum: ['unavailable', 'available', 'composing', 'recording', 'paused'],
+    },
+    number: { ...numberDefinition },
+  },
+  required: ['presence'],
+};
+
 export const archiveChatSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
@@ -336,13 +351,10 @@ export const deleteMessageSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
-    id: { type: 'string' },
-    fromMe: { type: 'boolean', enum: [true, false] },
-    remoteJid: { type: 'string' },
-    participant: { type: 'string' },
+    id: { type: 'string', pattern: '\\d+', minLength: 1 },
   },
-  required: ['id', 'fromMe', 'remoteJid'],
-  ...isNotEmpty('id', 'remoteJid', 'participant'),
+  required: ['id'],
+  ...isNotEmpty('id'),
 };
 
 export const contactValidateSchema: JSONSchema7 = {
@@ -352,11 +364,9 @@ export const contactValidateSchema: JSONSchema7 = {
     where: {
       type: 'object',
       properties: {
-        _id: { type: 'string', minLength: 1 },
-        pushName: { type: 'string', minLength: 1 },
-        id: { type: 'string', minLength: 1 },
+        remoteJid: { type: 'string', minLength: 1 },
       },
-      ...isNotEmpty('_id', 'id', 'pushName'),
+      ...isNotEmpty('remoteJid', 'id', 'pushName'),
     },
   },
 };
@@ -377,59 +387,40 @@ export const messageValidateSchema: JSONSchema7 = {
     where: {
       type: 'object',
       properties: {
-        _id: { type: 'string', minLength: 1 },
-        key: {
-          type: 'object',
-          if: {
-            propertyNames: {
-              enum: ['fromMe', 'remoteJid', 'id'],
-            },
-          },
-          then: {
-            properties: {
-              remoteJid: {
-                type: 'string',
-                minLength: 1,
-                description: 'The property cannot be empty',
-              },
-              id: {
-                type: 'string',
-                minLength: 1,
-                description: 'The property cannot be empty',
-              },
-              fromMe: { type: 'boolean', enum: [true, false] },
-            },
-          },
+        id: { type: 'integer', minLength: 1 },
+        keyId: { type: 'string', minLength: 1 },
+        keyRemoteJid: { type: 'string', minLength: 1 },
+        messageType: { type: 'string', minLength: 1 },
+        device: { type: 'string', minLength: 1 },
+        keyFromMe: { type: 'boolean', enum: [true, false] },
+        messageStatus: {
+          type: 'string',
+          enum: ['PENDING', 'DELIVERY_ACK', 'READ', 'PLAYED'],
         },
-        message: { type: 'object' },
       },
-      ...isNotEmpty('_id'),
+      ...isNotEmpty(
+        'id',
+        'keyId',
+        'keyRemoteJid',
+        'messageType',
+        'messageStatus',
+        'device',
+      ),
     },
-    limit: { type: 'integer' },
+    offset: { type: 'integer' },
+    page: { type: 'integer' },
+    sort: { type: 'string', enum: ['asc', 'desc'] },
   },
 };
 
-export const messageUpSchema: JSONSchema7 = {
+export const mediaUrlSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
   properties: {
-    where: {
-      type: 'object',
-      properties: {
-        _id: { type: 'string' },
-        remoteJid: { type: 'string' },
-        id: { type: 'string' },
-        fromMe: { type: 'boolean', enum: [true, false] },
-        participant: { type: 'string' },
-        status: {
-          type: 'string',
-          enum: ['ERROR', 'PENDING', 'SERVER_ACK', 'DELIVERY_ACK', 'READ', 'PLAYED'],
-        },
-      },
-      ...isNotEmpty('_id', 'remoteJid', 'id', 'status'),
-    },
-    limit: { type: 'integer' },
+    id: { type: 'string', pattern: '\\d+', minLength: 1 },
   },
+  required: ['id'],
+  ...isNotEmpty('id'),
 };
 
 // Group Schema
@@ -509,7 +500,100 @@ export const webhookSchema: JSONSchema7 = {
   properties: {
     url: { type: 'string' },
     enabled: { type: 'boolean', enum: [true, false] },
+    events: {
+      type: 'object',
+      properties: {
+        qrcodeUpdated: { type: 'boolean', enum: [true, false] },
+        messagesSet: { type: 'boolean', enum: [true, false] },
+        messagesUpsert: { type: 'boolean', enum: [true, false] },
+        messagesUpdated: { type: 'boolean', enum: [true, false] },
+        sendMessage: { type: 'boolean', enum: [true, false] },
+        contactsSet: { type: 'boolean', enum: [true, false] },
+        contactsUpsert: { type: 'boolean', enum: [true, false] },
+        contactsUpdated: { type: 'boolean', enum: [true, false] },
+        chatsSet: { type: 'boolean', enum: [true, false] },
+        chatsUpsert: { type: 'boolean', enum: [true, false] },
+        chatsUpdated: { type: 'boolean', enum: [true, false] },
+        chatsDeleted: { type: 'boolean', enum: [true, false] },
+        presenceUpdated: { type: 'boolean', enum: [true, false] },
+        groupsUpsert: { type: 'boolean', enum: [true, false] },
+        groupsUpdated: { type: 'boolean', enum: [true, false] },
+        groupsParticipantsUpdated: { type: 'boolean', enum: [true, false] },
+        connectionUpdated: { type: 'boolean', enum: [true, false] },
+        statusInstance: { type: 'boolean', enum: [true, false] },
+        refreshToken: { type: 'boolean', enum: [true, false] },
+      },
+    },
   },
   required: ['url', 'enabled'],
   ...isNotEmpty('url'),
+};
+
+// MinIO Schema
+export const s3MediaSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    id: { type: 'integer' },
+    type: { type: 'string' },
+    messageId: { type: 'integer' },
+  },
+  ...isNotEmpty('id', 'type', 'messageId'),
+};
+
+export const s3MediaUrlSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    id: { type: 'string', pattern: '\\d+', minLength: 1 },
+    expiry: { type: 'string', pattern: '\\d+', minLength: 1 },
+  },
+  ...isNotEmpty('id'),
+  required: ['id'],
+};
+
+// Typebot Schema
+export const typebotSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    publicId: { type: 'string' },
+    typebotUrl: { type: 'string' },
+    enabled: { type: 'boolean', enum: [true, false] },
+  },
+  required: ['publicId', 'typebotUrl', 'enabled'],
+  ...isNotEmpty('publicId', 'typebotUrl', 'enabled'),
+};
+
+export const typebotUpdateSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    publicId: { type: 'string' },
+    typebotUrl: { type: 'string' },
+    enabled: { type: 'boolean', enum: [true, false] },
+  },
+  ...isNotEmpty('publicId', 'typebotUrl', 'enabled'),
+};
+
+export const typebotUpdateSessionSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    sessionId: { type: 'string' },
+    action: { type: 'string', enum: ['open', 'closed', 'paused'] },
+  },
+  required: ['sessionId', 'action'],
+  ...isNotEmpty('sessionId', 'action'),
+};
+
+export const typebotFindSessionSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    sessionId: { type: 'string' },
+    remoteJid: { type: 'string' },
+    action: { type: 'string', enum: ['open', 'closed', 'paused'] },
+  },
+  ...isNotEmpty('sessionId', 'action', 'remoteJid'),
 };

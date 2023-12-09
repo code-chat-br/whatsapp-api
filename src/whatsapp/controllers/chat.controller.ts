@@ -34,74 +34,62 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { proto } from '@whiskeysockets/baileys';
 import {
   ArchiveChatDto,
   DeleteMessage,
   NumberDto,
   ReadMessageDto,
+  UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
-import { ContactQuery } from '../repository/contact.repository';
-import { MessageQuery } from '../repository/message.repository';
-import { MessageUpQuery } from '../repository/messageUp.repository';
 import { WAMonitoringService } from '../services/monitor.service';
+import { Query } from '../../repository/repository.service';
+import { Contact, Message } from '@prisma/client';
 
 export class ChatController {
   constructor(private readonly waMonitor: WAMonitoringService) {}
 
   public async whatsappNumber({ instanceName }: InstanceDto, data: WhatsAppNumberDto) {
-    return await this.waMonitor.waInstances[instanceName].whatsappNumber(data);
+    return await this.waMonitor.waInstances.get(instanceName).whatsappNumber(data);
   }
 
   public async readMessage({ instanceName }: InstanceDto, data: ReadMessageDto) {
-    return await this.waMonitor.waInstances[instanceName].markMessageAsRead(data);
+    return await this.waMonitor.waInstances.get(instanceName).markMessageAsRead(data);
   }
 
   public async archiveChat({ instanceName }: InstanceDto, data: ArchiveChatDto) {
-    return await this.waMonitor.waInstances[instanceName].archiveChat(data);
+    return await this.waMonitor.waInstances.get(instanceName).archiveChat(data);
   }
 
   public async deleteMessage({ instanceName }: InstanceDto, data: DeleteMessage) {
-    return await this.waMonitor.waInstances[instanceName].deleteMessage(data);
+    return await this.waMonitor.waInstances.get(instanceName).deleteMessage(data);
   }
 
   public async fetchProfilePicture({ instanceName }: InstanceDto, data: NumberDto) {
-    return await this.waMonitor.waInstances[instanceName].profilePicture(data.number);
+    return await this.waMonitor.waInstances.get(instanceName).profilePicture(data.number);
   }
 
-  public async fetchContacts({ instanceName }: InstanceDto, query: ContactQuery) {
-    return await this.waMonitor.waInstances[instanceName].fetchContacts(query);
+  public async fetchContacts({ instanceName }: InstanceDto, query: Query<Contact>) {
+    return await this.waMonitor.waInstances.get(instanceName).fetchContacts(query);
   }
 
-  /**
-   *
-   * @deprecated
-   */
-  public async getBase64FromMediaMessage(
-    { instanceName }: InstanceDto,
-    message: proto.IWebMessageInfo,
-  ) {
-    return await this.waMonitor.waInstances[instanceName].getMediaMessage(message, true);
+  public async updatePresence({ instanceName }: InstanceDto, data: UpdatePresenceDto) {
+    return await this.waMonitor.waInstances.get(instanceName).updatePresence(data);
   }
 
   public async getBinaryMediaFromMessage(
     { instanceName }: InstanceDto,
-    message: proto.IWebMessageInfo,
+    message: Message,
   ) {
-    return await this.waMonitor.waInstances[instanceName].getMediaMessage(message);
+    return await this.waMonitor.waInstances.get(instanceName).getMediaMessage(message);
   }
 
-  public async fetchMessages({ instanceName }: InstanceDto, query: MessageQuery) {
-    return await this.waMonitor.waInstances[instanceName].fetchMessages(query);
-  }
-
-  public async fetchStatusMessage({ instanceName }: InstanceDto, query: MessageUpQuery) {
-    return await this.waMonitor.waInstances[instanceName].fetchStatusMessage(query);
+  public async fetchMessages({ instanceName }: InstanceDto, query: Query<Message>) {
+    return await this.waMonitor.waInstances.get(instanceName).fetchMessages(query);
   }
 
   public async fetchChats({ instanceName }: InstanceDto) {
-    return await this.waMonitor.waInstances[instanceName].fetchChats();
+    return await this.waMonitor.waInstances.get(instanceName).fetchChats();
   }
 }

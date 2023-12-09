@@ -34,4 +34,5 @@
 
 export class InstanceDto {
   instanceName: string;
+  description?: string;
 }

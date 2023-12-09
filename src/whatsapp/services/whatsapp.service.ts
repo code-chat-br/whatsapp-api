@@ -40,7 +40,6 @@
 import makeWASocket, {
   AnyMessageContent,
   BufferedEventData,
-  BufferJSON,
   CacheStore,
   Chat,
   ConnectionState,
@@ -50,6 +49,7 @@ import makeWASocket, {
   downloadMediaMessage,
   fetchLatestBaileysVersion,
   generateWAMessageFromContent,
+  getContentType,
   getDevice,
   GroupMetadata,
   isJidGroup,
@@ -62,38 +62,31 @@ import makeWASocket, {
   useMultiFileAuthState,
   UserFacingSocketConfig,
   WABrowserDescription,
+  WAConnectionState,
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
-} from '@whiskeysockets/baileys';
+} from '@whiskeysockets/baileys/';
 import {
   ConfigService,
   ConfigSessionPhone,
   Database,
+  GlobalWebhook,
   QrCode,
   Redis,
-  StoreConf,
-  Webhook,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
-import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { existsSync, readFileSync } from 'fs';
+import { INSTANCE_DIR } from '../../config/path.config';
+import { link, readFileSync } from 'fs';
 import { join } from 'path';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { v4 } from 'uuid';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
-import { Events, TypeMediaMessage, wa, MessageSubtype } from '../types/wa.types';
 import { Boom } from '@hapi/boom';
 import EventEmitter2 from 'eventemitter2';
 import { release } from 'os';
 import P from 'pino';
-import { execSync } from 'child_process';
-import { RepositoryBroker } from '../repository/repository.manager';
-import { MessageRaw, MessageUpdateRaw } from '../models/message.model';
-import { ContactRaw } from '../models/contact.model';
-import { ChatRaw } from '../models/chat.model';
-import { getMIMEType } from 'node-mime-types';
 import {
   AudioMessageFileDto,
   ContactMessage,
@@ -113,10 +106,9 @@ import {
   DeleteMessage,
   OnWhatsAppDto,
   ReadMessageDto,
+  UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
-import { MessageQuery } from '../repository/message.repository';
-import { ContactQuery } from '../repository/contact.repository';
 import {
   BadRequestException,
   InternalServerErrorException,
@@ -128,167 +120,204 @@ import {
   GroupPictureDto,
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
-import { MessageUpQuery } from '../repository/messageUp.repository';
-import { useMultiFileAuthStateDb } from '../../utils/use-multi-file-auth-state-db';
 import Long from 'long';
-import { WebhookRaw } from '../models/webhook.model';
-import { dbserver } from '../../db/db.connect';
 import NodeCache from 'node-cache';
-import { useMultiFileAuthStateRedisDb } from '../../utils/use-multi-file-auth-state-redis-db';
-import { RedisCache } from '../../db/redis.client';
+import {
+  AuthState,
+  AuthStateRedis,
+} from '../../utils/use-multi-file-auth-state-redis-db';
 import mime from 'mime-types';
+import { Instance, Webhook } from '@prisma/client';
+import { WebhookEvents, WebhookEventsType } from '../dto/webhook.dto';
+import { Query, Repository } from '../../repository/repository.service';
+import PrismType from '@prisma/client';
+import * as s3Service from '../../integrations/minio/minio.utils';
+import { RedisCache } from '../../cache/redis';
+import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
+
+type InstanceQrCode = {
+  count: number;
+  code?: string;
+  base64?: string;
+};
+
+type InstanceStateConnection = {
+  state: 'open' | 'close' | 'refused' | WAConnectionState;
+  statusReason?: number;
+};
 
 export class WAStartupService {
   constructor(
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly repository: RepositoryBroker,
-    private readonly cache: RedisCache,
+    private readonly repository: Repository,
+    private readonly redisCache: RedisCache,
   ) {
-    this.cleanStore();
-    this.instance.qrcode = { count: 0 };
+    this.authStateRedis = new AuthStateRedis(this.configService, this.redisCache);
   }
 
-  private readonly logger = new Logger(WAStartupService.name);
-  private readonly instance: wa.Instance = {};
-  public client: WASocket;
-  private readonly localWebhook: wa.LocalWebHook = {};
-  private stateConnection: wa.StateConnection = { state: 'close' };
-  private readonly storePath = join(ROOT_DIR, 'store');
+  private readonly logger = new Logger(this.configService, WAStartupService.name);
+  private readonly instance: Partial<Instance> = {};
+  private readonly webhook: Partial<Webhook> & { events?: WebhookEvents } = {};
   private readonly msgRetryCounterCache: CacheStore = new NodeCache();
   private readonly userDevicesCache: CacheStore = new NodeCache();
-  private endSession = false;
+  private readonly instanceQr: InstanceQrCode = { count: 0 };
+  private readonly stateConnection: InstanceStateConnection = { state: 'close' };
+  private readonly typebotSession = new TypebotSessionService(this.repository);
+  private readonly databaseOptions: Database =
+    this.configService.get<Database>('DATABASE');
 
-  public set instanceName(name: string) {
-    if (!name) {
-      this.instance.name = v4();
-      return;
-    }
-    this.instance.name = name;
-    this.sendDataWebhook(Events.STATUS_INSTANCE, {
-      instance: this.instance.name,
-      status: 'created',
+  private endSession = false;
+  public client: WASocket;
+  private authState: Partial<AuthState> = {};
+  private authStateRedis: AuthStateRedis;
+
+  public async setInstanceName(name: string) {
+    const i = await this.repository.instance.findUnique({
+      where: { name },
     });
+
+    Object.assign(this.instance, i);
+    this.sendDataWebhook('statusInstance', {
+      instance: this.instance.name,
+      status: 'loaded',
+    });
+
+    this.logger.subContext(`${i.id}:${i.name}`);
   }
 
   public get instanceName() {
     return this.instance.name;
   }
 
-  public get wuid() {
-    return this.instance.wuid;
-  }
-
-  public async getProfileName() {
-    let profileName = this.client.user?.name ?? this.client.user?.verifiedName;
-    if (!profileName) {
-      if (this.configService.get<Database>('DATABASE').ENABLED) {
-        const collection = dbserver
-          .getClient()
-          .db(
-            this.configService.get<Database>('DATABASE').CONNECTION.DB_PREFIX_NAME +
-              '-instances',
-          )
-          .collection(this.instanceName);
-        const data = await collection.findOne({ _id: 'creds' } as any);
-        if (data) {
-          const creds = JSON.parse(JSON.stringify(data), BufferJSON.reviver);
-          profileName = creds.me?.name || creds.me?.verifiedName;
-        }
-      } else if (existsSync(join(INSTANCE_DIR, this.instanceName, 'creds.json'))) {
-        const creds = JSON.parse(
-          readFileSync(join(INSTANCE_DIR, this.instanceName, 'creds.json'), {
-            encoding: 'utf-8',
-          }),
-        );
-        profileName = creds.me?.name || creds.me?.verifiedName;
-      }
-    }
-    return profileName;
+  public get ownerJid() {
+    return this.instance.ownerJid;
   }
 
   public get profilePictureUrl() {
-    return this.instance.profilePictureUrl;
+    return this.instance.profilePicUrl;
   }
 
-  public get qrCode(): wa.QrCode {
-    return {
-      code: this.instance.qrcode?.code,
-      base64: this.instance.qrcode?.base64,
-    };
+  public get qrCode(): Partial<InstanceQrCode> {
+    return this.instanceQr;
   }
 
   private async loadWebhook() {
-    const data = await this.repository.webhook.find(this.instanceName);
-    this.localWebhook.url = data?.url;
-    this.localWebhook.enabled = data?.enabled;
+    const data = await this.repository.webhook.findFirst({
+      where: { instanceId: this.instance.id },
+    });
+    this.webhook.url = data?.url;
+    this.webhook.enabled = data?.enabled;
   }
 
-  public async setWebhook(data: WebhookRaw) {
-    await this.repository.webhook.create(data, this.instanceName);
-    Object.assign(this.localWebhook, data);
+  public async setWebhook(data: typeof this.webhook) {
+    const find = await this.repository.webhook.findUnique({
+      where: { instanceId: this.instance.id },
+    });
+
+    let update: typeof this.webhook;
+
+    if (find) {
+      update = await this.repository.updateWebhook(this.instance.id, data);
+    } else {
+      update = await this.repository.webhook.create({
+        data: {
+          url: data.url,
+          enabled: data.enabled,
+          events: data?.events,
+          instanceId: this.instance.id,
+        },
+        select: {
+          id: true,
+          url: true,
+          enabled: true,
+          events: true,
+          instanceId: true,
+        },
+      });
+    }
+    Object.assign(this.webhook, update);
+
+    return update;
   }
 
   public async findWebhook() {
-    return await this.repository.webhook.find(this.instanceName);
+    return await this.repository.webhook.findUnique({
+      where: { instanceId: this.instance.id },
+    });
   }
 
-  private async sendDataWebhook<T = any>(event: Events, data: T) {
-    const webhook = this.configService.get<Webhook>('WEBHOOK');
-    const we = event.replace(/[\.-]/gm, '_').toUpperCase();
-    if (webhook.EVENTS[we]) {
-      try {
-        if (this.localWebhook.enabled && isURL(this.localWebhook.url)) {
-          const httpService = axios.create({ baseURL: this.localWebhook.url });
-          await httpService.post(
-            '',
-            {
-              event,
-              instance: this.instance.name,
-              data,
-            },
-            { headers: { 'x-owner': this.instance.wuid } },
+  private async sendDataWebhook<T = any>(event: WebhookEventsType, data: T) {
+    try {
+      if (this.webhook?.enabled && isURL(this.webhook?.url)) {
+        if (this.webhook?.events) {
+          const eventDesc = this.webhook.events?.[event];
+          if (eventDesc) {
+            await axios.post(
+              this.webhook.url,
+              { event: eventDesc, data },
+              { headers: { 'Resource-Owner': this.instance.ownerJid } },
+            );
+          }
+        } else {
+          await axios.post(
+            this.webhook.url,
+            { event, data },
+            { headers: { 'Resource-Owner': this.instance.ownerJid } },
           );
         }
-      } catch (error) {
-        this.logger.error({
-          local: WAStartupService.name + '.sendDataWebhook-local',
-          message: error?.message,
-          hostName: error?.hostname,
-          syscall: error?.syscall,
-          code: error?.code,
-          error: error?.errno,
-          stack: error?.stack,
-          name: error?.name,
-        });
       }
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      const records = this.logger.error({
+        local: 'sendDataWebhook-local',
+        message: axiosError?.message,
+        hostName: error?.hostname,
+        code: axiosError?.code,
+        headers: JSON.stringify(axiosError?.request?.headers || {}),
+        data: JSON.stringify(axiosError?.response?.data || {}),
+        stack: error?.stack,
+        name: error?.name,
+      });
+      this.repository.createLogs(this.instance.name, {
+        content: records,
+        type: 'error',
+        context: WAStartupService.name,
+        description: 'Error on send data to webhook',
+      });
+    }
 
-      try {
-        const globalWebhook = this.configService.get<Webhook>('WEBHOOK').GLOBAL;
-        if (globalWebhook && globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
-          const httpService = axios.create({ baseURL: globalWebhook.URL });
-          await httpService.post(
-            '',
-            {
-              event,
-              instance: this.instance.name,
-              data,
-            },
-            { headers: { 'x-owner': this.instance.wuid } },
-          );
-        }
-      } catch (error) {
-        this.logger.error({
-          local: WAStartupService.name + '.sendDataWebhook-global',
-          message: error?.message,
-          hostName: error?.hostname,
-          syscall: error?.syscall,
-          code: error?.code,
-          error: error?.errno,
-          stack: error?.stack,
-          name: error?.name,
-        });
+    try {
+      const globalWebhook = this.configService.get<GlobalWebhook>('GLOBAL_WEBHOOK');
+      if (globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
+        await axios.post(
+          globalWebhook.URL,
+          {
+            event,
+            instance: this.instance.name,
+            data,
+          },
+          { headers: { 'Resource-owner': this.instance.ownerJid } },
+        );
       }
+    } catch (error) {
+      const axiosError = error as AxiosError;
+      const records = this.logger.error({
+        local: 'sendDataWebhook-global',
+        message: axiosError?.message,
+        hostName: error?.hostname,
+        code: axiosError?.code,
+        headers: JSON.stringify(axiosError?.request?.headers || {}),
+        data: JSON.stringify(axiosError?.response?.data || {}),
+        stack: error?.stack,
+        name: error?.name,
+      });
+      this.repository.createLogs(this.instance.name, {
+        content: records,
+        type: 'error',
+        context: WAStartupService.name,
+        description: 'Error on send data to webhook',
+      });
     }
   }
 
@@ -298,29 +327,31 @@ export class WAStartupService {
     lastDisconnect,
   }: Partial<ConnectionState>) {
     if (qr) {
-      if (this.instance.qrcode.count === this.configService.get<QrCode>('QRCODE').LIMIT) {
-        this.sendDataWebhook(Events.QRCODE_UPDATED, {
+      if (this.qrCode === this.configService.get<QrCode>('QRCODE').LIMIT) {
+        this.sendDataWebhook('qrcodeUpdated', {
           message: 'QR code limit reached, please login again',
           statusCode: DisconnectReason.badSession,
         });
 
-        this.sendDataWebhook(Events.CONNECTION_UPDATE, {
+        this.stateConnection.state = 'refused';
+        this.stateConnection.statusReason = DisconnectReason.connectionClosed;
+
+        this.sendDataWebhook('connectionUpdated', {
           instance: this.instance.name,
-          state: 'refused',
-          statusReason: DisconnectReason.connectionClosed,
+          ...this.stateConnection,
         });
 
-        this.sendDataWebhook(Events.STATUS_INSTANCE, {
+        this.sendDataWebhook('statusInstance', {
           instance: this.instance.name,
           status: 'removed',
         });
 
         this.endSession = true;
 
-        return this.eventEmitter.emit('no.connection', this.instance.name);
+        return this.eventEmitter.emit('no.connection', this.instance);
       }
 
-      this.instance.qrcode.count++;
+      this.instanceQr.count++;
 
       const optsQrcode: QRCodeToDataURLOptions = {
         margin: 3,
@@ -335,28 +366,27 @@ export class WAStartupService {
           return;
         }
 
-        this.instance.qrcode.base64 = base64;
-        this.instance.qrcode.code = qr;
+        this.instanceQr.base64 = base64;
+        this.instanceQr.code = qr;
 
-        this.sendDataWebhook(Events.QRCODE_UPDATED, {
+        this.sendDataWebhook('qrcodeUpdated', {
           qrcode: { instance: this.instance.name, code: qr, base64 },
         });
       });
 
       qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
         this.logger.log(
-          `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instance.qrcode.count} }\n` +
+          `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instanceQr.count} }\n` +
             qrcode,
         ),
       );
     }
 
     if (connection) {
-      this.stateConnection = {
-        state: connection,
-        statusReason: (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200,
-      };
-      this.sendDataWebhook(Events.CONNECTION_UPDATE, {
+      this.stateConnection.state = connection;
+      this.stateConnection.statusReason =
+        (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200;
+      this.sendDataWebhook('connectionUpdated', {
         instance: this.instance.name,
         ...this.stateConnection,
       });
@@ -368,21 +398,33 @@ export class WAStartupService {
       if (shouldReconnect) {
         await this.connectToWhatsapp();
       } else {
-        this.sendDataWebhook(Events.STATUS_INSTANCE, {
+        this.sendDataWebhook('statusInstance', {
           instance: this.instance.name,
           status: 'removed',
         });
-        this.eventEmitter.emit('remove.instance', this.instance.name, 'inner');
+        this.eventEmitter.emit('remove.instance', this.instance, 'inner');
         this.client?.ws?.close();
         this.client.end(new Error('Close connection'));
       }
     }
 
     if (connection === 'open') {
-      this.instance.wuid = this.client.user.id.replace(/:\d+/, '');
-      this.instance.profilePictureUrl = (
-        await this.profilePicture(this.instance.wuid)
+      this.instance.ownerJid = this.client.user.id.replace(/:\d+/, '');
+      this.instance.profilePicUrl = (
+        await this.profilePicture(this.instance.ownerJid)
       ).profilePictureUrl;
+
+      this.repository.instance
+        .update({
+          where: { id: this.instance.id },
+          data: {
+            ownerJid: this.instance.ownerJid,
+            profilePicUrl: this.instance.profilePicUrl,
+            connectionStatus: 'ONLINE',
+          },
+        })
+        .catch((err) => this.logger.error(err));
+
       this.logger.info(
         `
         ┌──────────────────────────────┐
@@ -392,53 +434,40 @@ export class WAStartupService {
     }
   }
 
-  private async getMessage(key: proto.IMessageKey, full = false) {
+  private async getMessage(key: PrismType.Message, full = false) {
     try {
-      const webMessageInfo = (await this.repository.message.find({
-        where: { owner: this.instance.wuid, key: { id: key.id } },
-      })) as unknown as proto.IWebMessageInfo[];
+      const message = await this.repository.message.findFirst({
+        where: {
+          instanceId: this.instance.id,
+          keyId: key.keyId,
+        },
+      });
+      const webMessageInfo: Partial<proto.WebMessageInfo> = {
+        key: {
+          id: message.keyId,
+          remoteJid: message.keyRemoteJid,
+          fromMe: message.keyFromMe,
+        },
+        message: {
+          [message.messageType]: message.content,
+        },
+      };
       if (full) {
-        return webMessageInfo[0];
+        return webMessageInfo;
       }
-      return webMessageInfo[0].message;
+      return webMessageInfo.message;
     } catch (error) {
       return { conversation: '' };
     }
   }
 
-  private cleanStore() {
-    const store = this.configService.get<StoreConf>('STORE');
-    const database = this.configService.get<Database>('DATABASE');
-    if (store?.CLEANING_INTERVAL && !database.ENABLED) {
-      setInterval(() => {
-        try {
-          for (const [key, value] of Object.entries(store)) {
-            if (value === true) {
-              execSync(
-                `rm -rf ${join(
-                  this.storePath,
-                  key.toLowerCase(),
-                  this.instance.wuid,
-                )}/*.json`,
-              );
-            }
-          }
-        } catch (error) {}
-      }, (store?.CLEANING_INTERVAL ?? 3600) * 1000);
-    }
-  }
-
   private async defineAuthState() {
-    const db = this.configService.get<Database>('DATABASE');
     const redis = this.configService.get<Redis>('REDIS');
 
     if (redis?.ENABLED) {
-      this.cache.reference = this.instance.name;
-      return await useMultiFileAuthStateRedisDb(this.cache);
-    }
-
-    if (db.SAVE_DATA.INSTANCE && db.ENABLED) {
-      return await useMultiFileAuthStateDb(this.instance.name);
+      return await this.authStateRedis.authStateRedisDb(
+        `${this.instance.id}:${this.instance.name}`,
+      );
     }
 
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
@@ -447,17 +476,20 @@ export class WAStartupService {
   private async setSocket() {
     this.endSession = false;
 
-    this.instance.authState = await this.defineAuthState();
+    this.authState = (await this.defineAuthState()) as AuthState;
 
     const { version } = await fetchLatestBaileysVersion();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
+    const { EXPIRATION_TIME } = this.configService.get<QrCode>('QRCODE');
+    const CONNECTION_TIMEOUT = this.configService.get<number>('CONNECTION_TIMEOUT');
+
     const socketConfig: UserFacingSocketConfig = {
       auth: {
-        creds: this.instance.authState.state.creds,
+        creds: this.authState.state.creds,
         keys: makeCacheableSignalKeyStore(
-          this.instance.authState.state.keys,
+          this.authState.state.keys,
           P({ level: 'silent' }) as any,
         ),
       },
@@ -465,9 +497,9 @@ export class WAStartupService {
       printQRInTerminal: false,
       browser,
       version,
-      connectTimeoutMs: 60_000,
-      qrTimeout: 10_000,
-      emitOwnEvents: false,
+      connectTimeoutMs: CONNECTION_TIMEOUT * 1000,
+      qrTimeout: EXPIRATION_TIME * 1000,
+      emitOwnEvents: true,
       msgRetryCounterCache: this.msgRetryCounterCache,
       getMessage: this.getMessage as any,
       generateHighQualityLinkPreview: true,
@@ -503,22 +535,29 @@ export class WAStartupService {
   }
 
   private readonly chatHandle = {
-    'chats.upsert': async (chats: Chat[], database: Database) => {
-      const chatsRepository = await this.repository.chat.find({
-        where: { owner: this.instance.wuid },
+    'chats.upsert': async (chats: Chat[]) => {
+      const chatsRepository = await this.repository.chat.findMany({
+        where: {
+          instanceId: this.instance.id,
+        },
       });
 
-      const chatsRaw: ChatRaw[] = [];
+      const chatsRaw: PrismType.Chat[] = [];
       for await (const chat of chats) {
-        if (chatsRepository.find((cr) => cr.id === chat.id)) {
+        if (chatsRepository.find((cr) => cr.remoteJid === chat.id)) {
           continue;
         }
 
-        chatsRaw.push({ id: chat.id, owner: this.instance.wuid });
+        chatsRaw.push({
+          remoteJid: chat.id,
+          instanceId: this.instance.id,
+        } as PrismType.Chat);
       }
 
-      await this.sendDataWebhook(Events.CHATS_UPSERT, chatsRaw);
-      await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
+      await this.sendDataWebhook('chatsUpsert', chatsRaw);
+      await this.repository.chat.createMany({
+        data: chatsRaw,
+      });
     },
 
     'chats.update': async (
@@ -530,89 +569,109 @@ export class WAStartupService {
         }
       >[],
     ) => {
-      const chatsRaw: ChatRaw[] = chats.map((chat) => {
-        return { id: chat.id, owner: this.instance.wuid };
+      const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
+        return { remoteJid: chat.id, instanceId: this.instance.id } as PrismType.Chat;
       });
-      await this.sendDataWebhook(Events.CHATS_UPDATE, chatsRaw);
+      await this.sendDataWebhook('chatsUpdated', chatsRaw);
     },
 
     'chats.delete': async (chats: string[]) => {
-      chats.forEach(
-        async (chat) =>
-          await this.repository.chat.delete({
-            where: { owner: this.instance.wuid, id: chat },
-          }),
-      );
-      await this.sendDataWebhook(Events.CHATS_DELETE, [...chats]);
+      await this.sendDataWebhook('chatsDeleted', [...chats]);
+      for await (const chat of chats) {
+        const c = await this.repository.chat.findFirst({
+          where: {
+            remoteJid: chat,
+          },
+        });
+        await this.repository.chat.delete({
+          where: {
+            id: c.id,
+          },
+        });
+      }
     },
   };
 
   private readonly contactHandle = {
-    'contacts.upsert': async (contacts: Contact[], database: Database) => {
-      const contactsRepository = await this.repository.contact.find({
-        where: { owner: this.instance.wuid },
+    'contacts.upsert': async (contacts: Contact[]) => {
+      const contactsRepository = await this.repository.contact.findMany({
+        where: { instanceId: this.instance.id },
       });
 
-      const contactsRaw: ContactRaw[] = [];
+      const contactsRaw: PrismType.Contact[] = [];
       for await (const contact of contacts) {
-        if (contactsRepository.find((cr) => cr.id === contact.id)) {
+        if (contactsRepository.find((cr) => cr.remoteJid === contact.id)) {
           continue;
         }
 
         contactsRaw.push({
-          id: contact.id,
+          remoteJid: contact.id,
           pushName: contact?.name || contact?.verifiedName,
-          profilePictureUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          owner: this.instance.wuid,
-        });
+          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+          instanceId: this.instance.id,
+        } as unknown as PrismType.Contact);
       }
-      await this.sendDataWebhook(Events.CONTACTS_UPSERT, contactsRaw);
-      await this.repository.contact.insert(contactsRaw, database.SAVE_DATA.CONTACTS);
+      await this.sendDataWebhook('contactsUpsert', contactsRaw);
+      await this.repository.contact.createMany({
+        data: contactsRaw,
+      });
     },
 
     'contacts.update': async (contacts: Partial<Contact>[]) => {
-      const contactsRaw: ContactRaw[] = [];
+      const contactsRaw: PrismType.Contact[] = [];
       for await (const contact of contacts) {
         contactsRaw.push({
-          id: contact.id,
+          remoteJid: contact.id,
           pushName: contact?.name ?? contact?.verifiedName,
-          profilePictureUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          owner: this.instance.wuid,
-        });
+          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+          instanceId: this.instance.id,
+        } as unknown as PrismType.Contact);
       }
-      await this.sendDataWebhook(Events.CONTACTS_UPDATE, contactsRaw);
+      await this.repository.contact.createMany({
+        data: contactsRaw,
+      });
     },
   };
 
-  private readonly messageHandle = {
-    'messaging-history.set': async (
-      {
-        messages,
-        chats,
-        isLatest,
-      }: {
-        chats: Chat[];
-        contacts: Contact[];
-        messages: proto.IWebMessageInfo[];
-        isLatest: boolean;
-      },
-      database: Database,
-    ) => {
-      if (isLatest) {
-        const chatsRaw: ChatRaw[] = chats.map((chat) => {
-          return {
-            id: chat.id,
-            owner: this.instance.wuid,
-          };
-        });
-        await this.sendDataWebhook(Events.CHATS_SET, chatsRaw);
-        await this.repository.chat.insert(chatsRaw, database.SAVE_DATA.CHATS);
+  private async syncMessage(messages: PrismType.Message[]) {
+    const messagesRepository = await this.repository.message.findMany({
+      where: { instanceId: this.instance.id },
+    });
+
+    for await (const message of messages) {
+      if (messagesRepository.find((mr) => mr.keyId === message.keyId)) {
+        continue;
       }
 
-      const messagesRaw: MessageRaw[] = [];
-      const messagesRepository = await this.repository.message.find({
-        where: { owner: this.instance.wuid },
+      await this.repository.message.create({
+        data: message,
       });
+    }
+  }
+
+  private readonly messageHandle = {
+    'messaging-history.set': async ({
+      messages,
+      chats,
+      isLatest,
+    }: {
+      chats: Chat[];
+      contacts: Contact[];
+      messages: proto.IWebMessageInfo[];
+      isLatest: boolean;
+    }) => {
+      if (isLatest) {
+        const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
+          return {
+            remoteJid: chat.id,
+            instanceId: this.instance.id,
+          } as PrismType.Chat;
+        });
+        await this.sendDataWebhook('chatsSet', chatsRaw);
+        await this.repository.chat.createMany({ data: chatsRaw });
+      }
+
+      const messagesRaw: PrismType.Message[] = [];
       for await (const [, m] of Object.entries(messages)) {
         if (
           m.message?.protocolMessage ||
@@ -621,46 +680,43 @@ export class WAStartupService {
         ) {
           continue;
         }
-        if (
-          messagesRepository.find(
-            (mr) => mr.owner === this.instance.wuid && mr.key.id === m.key.id,
-          )
-        ) {
-          continue;
-        }
 
         if (Long.isLong(m?.messageTimestamp)) {
           m.messageTimestamp = m.messageTimestamp?.toNumber();
         }
 
+        const messageType = getContentType(m.message);
+
         messagesRaw.push({
-          key: m.key,
-          pushName: m.pushName,
-          participant: m.participant,
-          message: { ...m.message },
+          keyId: m.key.id,
+          keyRemoteJid: m.key.remoteJid,
+          keyFromMe: m.key.fromMe,
+          pushName: m?.pushName,
+          keyParticipant: m.participant,
+          messageType,
+          content: m.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: m.messageTimestamp as number,
-          owner: this.instance.wuid,
-        });
+          instanceId: this.instance.id,
+          device: getDevice(m.key.id),
+        } as PrismType.Message);
       }
 
-      await this.repository.message.insert(
-        [...messagesRaw],
-        database.SAVE_DATA.OLD_MESSAGE,
-      );
-      this.sendDataWebhook(Events.MESSAGES_SET, [...messagesRaw]);
+      this.sendDataWebhook('messagesSet', [...messagesRaw]);
+
+      if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
+        await this.syncMessage(messagesRaw);
+      }
+
       messages = undefined;
     },
 
-    'messages.upsert': async (
-      {
-        messages,
-        type,
-      }: {
-        messages: proto.IWebMessageInfo[];
-        type: MessageUpsertType;
-      },
-      database: Database,
-    ) => {
+    'messages.upsert': async ({
+      messages,
+      type,
+    }: {
+      messages: proto.IWebMessageInfo[];
+      type: MessageUpsertType;
+    }) => {
       for (const received of messages) {
         if (
           type !== 'notify' ||
@@ -677,27 +733,167 @@ export class WAStartupService {
           received.messageTimestamp = received.messageTimestamp?.toNumber();
         }
 
-        const messageRaw = new MessageRaw({
-          key: received.key,
+        const messageType = getContentType(received.message);
+
+        const messageRaw = {
+          keyId: received.key.id,
+          keyRemoteJid: received.key.remoteJid,
+          keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          message: { ...received.message },
+          keyParticipant: received.participant,
+          messageType,
+          content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp as number,
-          owner: this.instance.wuid,
-          source: getDevice(received.key.id),
+          instanceId: this.instance.id,
+          device: getDevice(received.key.id),
+          isGroup: isJidGroup(received.key.remoteJid),
+        } as PrismType.Message;
+
+        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
+          const { id } = await this.repository.message.create({ data: messageRaw });
+          messageRaw.id = id;
+        }
+
+        this.logger.log(messageRaw);
+
+        await this.sendDataWebhook('messagesUpsert', messageRaw);
+
+        if (s3Service.BUCKET?.ENABLE) {
+          try {
+            const media = await this.getMediaMessage(messageRaw, true);
+            if (media) {
+              const { stream, mediaType, fileName } = media;
+              const { id, name } = this.instance;
+              const mimetype = mime.lookup(fileName).toString();
+              const fullName = join(
+                `${id}_${name}`,
+                messageRaw.keyRemoteJid,
+                mediaType,
+                fileName,
+              );
+              await s3Service.uploadFile(fullName, stream, {
+                'Content-Type': mimetype,
+                'custom-header-fromMe': String(!!received.key?.fromMe),
+                'custom-header-keyRemoteJid': received.key.remoteJid,
+                'custom-header-pushName': received?.pushName,
+                'custom-header-mediaType': mediaType,
+                'custom-header-messageId': messageRaw.keyId,
+              });
+
+              await this.repository.media.create({
+                data: {
+                  messageId: messageRaw.id,
+                  type: mediaType,
+                  fileName: fullName,
+                  mimetype,
+                },
+              });
+            }
+          } catch (error) {
+            this.logger.error([
+              'Error on upload file to s3',
+              error?.message,
+              error?.stack,
+            ]);
+            this.repository.createLogs(this.instance.name, {
+              content: [error?.toString(), JSON.stringify(error?.stack)],
+              type: 'error',
+              context: WAStartupService.name,
+              description: 'Error on upload file to s3',
+            });
+          }
+        }
+
+        this.typebotSession.onMessage(messageRaw, async (items) => {
+          for await (const item of items) {
+            if (item?.text) {
+              await this.textMessage({
+                number: messageRaw.keyRemoteJid,
+                textMessage: { text: item.text },
+                options: { delay: 1200, presence: 'composing' },
+              });
+              continue;
+            }
+
+            if (item?.video || item?.embed) {
+              const url = item?.video || item?.embed;
+              const head = await (async () => {
+                try {
+                  return await axios.head(url);
+                } catch (error) {
+                  return {
+                    headers: {
+                      'content-type': 'text/html; charset=utf-8',
+                    },
+                  };
+                }
+              })();
+
+              const ext = mime.extension(head.headers['content-type']);
+              if (ext && ext.includes('html')) {
+                await this.textMessage({
+                  number: messageRaw.keyRemoteJid,
+                  textMessage: { text: url },
+                  options: { delay: 1200, presence: 'composing' },
+                });
+                continue;
+              }
+
+              await this.mediaMessage({
+                number: messageRaw.keyRemoteJid,
+                mediaMessage: {
+                  mediatype: 'document',
+                  media: url,
+                },
+                options: { delay: 1200, presence: 'composing' },
+              });
+              continue;
+            }
+
+            if (item?.image) {
+              await this.mediaMessage({
+                number: messageRaw.keyRemoteJid,
+                mediaMessage: {
+                  mediatype: 'image',
+                  fileName: 'image.jpg',
+                  media: item.image,
+                },
+                options: { delay: 1200, presence: 'composing' },
+              });
+              continue;
+            }
+
+            if (item?.audio) {
+              const head = await axios.head(item.audio);
+
+              if (head.headers['content-type'].includes('audio/ogg')) {
+                await this.audioWhatsapp({
+                  number: messageRaw.keyRemoteJid,
+                  audioMessage: {
+                    audio: item.audio,
+                  },
+                  options: { delay: 1200, presence: 'recording' },
+                });
+                continue;
+              }
+
+              await this.mediaMessage({
+                number: messageRaw.keyRemoteJid,
+                mediaMessage: {
+                  mediatype: 'audio',
+                  media: item.audio,
+                },
+                options: { delay: 1200, presence: 'composing' },
+              });
+              continue;
+            }
+          }
         });
-
-        this.logger.log(received);
-
-        await this.repository.message.insert(
-          [messageRaw],
-          database.SAVE_DATA.NEW_MESSAGE,
-        );
-        await this.sendDataWebhook(Events.MESSAGES_UPSERT, messageRaw);
       }
     },
 
-    'messages.update': async (args: WAMessageUpdate[], database: Database) => {
-      const status: Record<number, wa.StatusMessage> = {
+    'messages.update': async (args: WAMessageUpdate[]) => {
+      const status = {
         0: 'ERROR',
         1: 'PENDING',
         2: 'SERVER_ACK',
@@ -707,17 +903,34 @@ export class WAStartupService {
       };
       for await (const { key, update } of args) {
         if (key.remoteJid !== 'status@broadcast' && !key?.remoteJid?.match(/(:\d+)/)) {
-          const message: MessageUpdateRaw = {
+          const message = {
             ...key,
             status: status[update.status],
-            datetime: Date.now(),
-            owner: this.instance.wuid,
+            dateTime: new Date(),
+            instanceId: this.instance.id,
           };
-          await this.sendDataWebhook(Events.MESSAGES_UPDATE, message);
-          await this.repository.messageUpdate.insert(
-            [message],
-            database.SAVE_DATA.MESSAGE_UPDATE,
-          );
+          await this.sendDataWebhook('messagesUpdated', message);
+          if (this.databaseOptions.DB_OPTIONS.MESSAGE_UPDATE) {
+            this.repository.message
+              .findFirst({
+                where: {
+                  instanceId: this.instance.id,
+                  keyId: key.id,
+                },
+              })
+              .then(async (result) => {
+                if (result) {
+                  await this.repository.messageUpdate.create({
+                    data: {
+                      messageId: result.id,
+                      status: status[update?.status || 3],
+                      dateTime: new Date(),
+                    },
+                  });
+                }
+              })
+              .catch((error) => this.logger.error(error));
+          }
         }
       }
     },
@@ -725,11 +938,11 @@ export class WAStartupService {
 
   private readonly groupHandler = {
     'groups.upsert': (groupMetadata: GroupMetadata[]) => {
-      this.sendDataWebhook(Events.GROUPS_UPSERT, groupMetadata);
+      this.sendDataWebhook('groupsUpsert', groupMetadata);
     },
 
     'groups.update': (groupMetadataUpdate: Partial<GroupMetadata>[]) => {
-      this.sendDataWebhook(Events.GROUPS_UPDATE, groupMetadataUpdate);
+      this.sendDataWebhook('groupsUpdated', groupMetadataUpdate);
     },
 
     'group-participants.update': (participantsUpdate: {
@@ -737,7 +950,7 @@ export class WAStartupService {
       participants: string[];
       action: ParticipantAction;
     }) => {
-      this.sendDataWebhook(Events.GROUP_PARTICIPANTS_UPDATE, participantsUpdate);
+      this.sendDataWebhook('groupsParticipantsUpdated', participantsUpdate);
     },
   };
 
@@ -751,27 +964,27 @@ export class WAStartupService {
         }
 
         if (events['creds.update']) {
-          this.instance.authState.saveCreds();
+          this.authState.saveCreds();
         }
 
         if (events['messaging-history.set']) {
           const payload = events['messaging-history.set'];
-          this.messageHandle['messaging-history.set'](payload, database);
+          this.messageHandle['messaging-history.set'](payload);
         }
 
         if (events['messages.upsert']) {
           const payload = events['messages.upsert'];
-          this.messageHandle['messages.upsert'](payload, database);
+          this.messageHandle['messages.upsert'](payload);
         }
 
         if (events['messages.update']) {
           const payload = events['messages.update'];
-          this.messageHandle['messages.update'](payload, database);
+          this.messageHandle['messages.update'](payload);
         }
 
         if (events['presence.update']) {
           const payload = events['presence.update'];
-          this.sendDataWebhook(Events.PRESENCE_UPDATE, payload);
+          this.sendDataWebhook('presenceUpdated', payload);
         }
 
         if (events['groups.upsert']) {
@@ -791,7 +1004,7 @@ export class WAStartupService {
 
         if (events['chats.upsert']) {
           const payload = events['chats.upsert'];
-          this.chatHandle['chats.upsert'](payload, database);
+          this.chatHandle['chats.upsert'](payload);
         }
 
         if (events['chats.update']) {
@@ -806,7 +1019,7 @@ export class WAStartupService {
 
         if (events['contacts.upsert']) {
           const payload = events['contacts.upsert'];
-          this.contactHandle['contacts.upsert'](payload, database);
+          this.contactHandle['contacts.upsert'](payload);
         }
 
         if (events['contacts.update']) {
@@ -889,22 +1102,65 @@ export class WAStartupService {
     }
   }
 
+  public async updatePresence(data: UpdatePresenceDto) {
+    const jid = this.createJid(data.number);
+    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+    if (!isWA.exists && !isJidGroup(isWA.jid)) {
+      throw new BadRequestException(isWA);
+    }
+
+    const recipient = isJidGroup(jid) ? jid : isWA.jid;
+
+    if (isJidGroup(recipient)) {
+      try {
+        await this.client.groupMetadata(recipient);
+      } catch (error) {
+        throw new NotFoundException('Group not found');
+      }
+    }
+
+    await this.client.presenceSubscribe(recipient);
+    await this.client.sendPresenceUpdate(data.presence, recipient);
+
+    return { message: 'success' };
+  }
+
   private async sendMessageWithTyping<T = proto.IMessage>(
     number: string,
     message: T,
     options?: Options,
   ) {
+    let quoted: PrismType.Message;
+    if (options?.quotedMessageId) {
+      if (!this.databaseOptions?.ENABLED) {
+        throw new BadRequestException('Quoted message is not supported without database');
+      }
+      if (!this.databaseOptions?.DB_OPTIONS?.NEW_MESSAGE) {
+        throw new BadRequestException(
+          'The DATABASE_SAVE_DATA_NEW_MESSAGE environment variable is disabled',
+        );
+      }
+
+      quoted = await this.repository.message.findUnique({
+        where: { id: options.quotedMessageId },
+      });
+
+      if (!quoted) {
+        throw new NotFoundException('Quoted message not found');
+      }
+    }
+
     const jid = this.createJid(number);
     const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
     if (!isWA.exists && !isJidGroup(isWA.jid)) {
       throw new BadRequestException(isWA);
     }
 
-    const sender = isJidGroup(jid) ? jid : isWA.jid;
+    const recipient = isJidGroup(jid) ? jid : isWA.jid;
 
-    if (isJidGroup(sender)) {
+    if (isJidGroup(recipient)) {
       try {
-        await this.client.groupMetadata(sender);
+        await this.client.groupMetadata(recipient);
       } catch (error) {
         throw new NotFoundException('Group not found');
       }
@@ -912,37 +1168,77 @@ export class WAStartupService {
 
     try {
       if (options?.delay) {
-        await this.client.presenceSubscribe(sender);
+        await this.client.presenceSubscribe(recipient);
         await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
         await delay(options.delay);
-        await this.client.sendPresenceUpdate('paused', sender);
+        await this.client.sendPresenceUpdate('paused', recipient);
       }
 
-      const messageSent = await (async () => {
-        if (!message['audio']) {
-          return await this.client.sendMessage(sender, {
-            forward: {
-              key: { remoteJid: this.instance.wuid, fromMe: true },
-              message,
+      const messageSent: PrismType.Message = await (async () => {
+        let m: proto.IWebMessageInfo;
+        let q: proto.IWebMessageInfo;
+        if (quoted) {
+          q = {
+            key: {
+              remoteJid: quoted.keyRemoteJid,
+              fromMe: quoted.keyFromMe,
+              id: quoted.keyId,
             },
-          });
+            message: {
+              [quoted.messageType]: quoted.content,
+            },
+          };
+        }
+        if (!message['audio']) {
+          m = await this.client.sendMessage(
+            recipient,
+            {
+              forward: {
+                key: { remoteJid: this.instance.ownerJid, fromMe: true },
+                message,
+              },
+            },
+            { quoted: q },
+          );
+        } else {
+          m = await this.client.sendMessage(
+            recipient,
+            message as unknown as AnyMessageContent,
+            { quoted: q },
+          );
         }
 
-        return await this.client.sendMessage(
-          sender,
-          message as unknown as AnyMessageContent,
-        );
+        return {
+          id: undefined,
+          keyId: m.key.id,
+          keyFromMe: m.key.fromMe,
+          keyRemoteJid: m.key.remoteJid,
+          keyParticipant: m?.participant,
+          pushName: m?.pushName,
+          messageType: getContentType(m.message),
+          content: m.message[getContentType(m.message)] as PrismType.Prisma.JsonValue,
+          messageTimestamp: (() => {
+            if (Long.isLong(m.messageTimestamp)) {
+              return m.messageTimestamp.toNumber();
+            }
+            return m.messageTimestamp;
+          })(),
+          instanceId: this.instance.id,
+          device: getDevice(m.key.id),
+          isGroup: isJidGroup(m.key.remoteJid),
+          typebotSessionId: undefined,
+        };
       })();
+      if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
+        const { id } = await this.repository.message.create({
+          data: messageSent,
+        });
+        messageSent.id = id;
+      }
 
-      this.sendDataWebhook(Events.SEND_MESSAGE, messageSent).catch((error) =>
+      this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
         this.logger.error(error),
       );
-      this.repository.message
-        .insert(
-          [{ ...messageSent, owner: this.instance.wuid }],
-          this.configService.get<Database>('DATABASE').SAVE_DATA.NEW_MESSAGE,
-        )
-        .catch((error) => this.logger.error(error));
 
       return messageSent;
     } catch (error) {
@@ -988,12 +1284,16 @@ export class WAStartupService {
         mediaMessage.fileName = arrayMatch[1];
       }
 
-      let mimetype: string;
+      let mimetype: string | boolean;
 
       if (typeof mediaMessage.media === 'string' && isURL(mediaMessage.media)) {
-        mimetype = getMIMEType(mediaMessage.media);
+        mimetype = mime.lookup(mediaMessage.media);
+        if (!mimetype) {
+          const head = await axios.head(mediaMessage.media as string);
+          mimetype = head.headers['content-type'];
+        }
       } else {
-        mimetype = getMIMEType(mediaMessage.fileName);
+        mimetype = mime.lookup(mediaMessage.fileName);
       }
 
       prepareMedia[mediaType].caption = mediaMessage?.caption;
@@ -1010,7 +1310,7 @@ export class WAStartupService {
       return generateWAMessageFromContent(
         '',
         { [mediaType]: { ...prepareMedia[mediaType] } },
-        { userJid: this.instance.wuid },
+        { userJid: this.instance.ownerJid },
       );
     } catch (error) {
       this.logger.error(error);
@@ -1020,6 +1320,8 @@ export class WAStartupService {
 
   public async mediaMessage(data: SendMediaDto) {
     const generate = await this.prepareMediaMessage(data.mediaMessage);
+
+    console.log(generate);
 
     return await this.sendMessageWithTyping(
       data.number,
@@ -1144,6 +1446,8 @@ export class WAStartupService {
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
         onWhatsapp.push(new OnWhatsAppDto(group.id, !!group?.id, group?.subject));
+      } else if (jid.includes('@broadcast')) {
+        onWhatsapp.push(new OnWhatsAppDto(jid, true));
       } else {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
@@ -1205,7 +1509,18 @@ export class WAStartupService {
 
   public async deleteMessage(del: DeleteMessage) {
     try {
-      return await this.client.sendMessage(del.remoteJid, { delete: del });
+      const id = Number.parseInt(del.id);
+      const message = await this.repository.message.findUnique({
+        where: { id },
+      });
+      return await this.client.sendMessage(message.keyRemoteJid, {
+        delete: {
+          id: message.keyId,
+          fromMe: message.keyFromMe,
+          participant: message?.keyParticipant,
+          remoteJid: message.keyRemoteJid,
+        },
+      });
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while deleting message for everyone',
@@ -1214,11 +1529,34 @@ export class WAStartupService {
     }
   }
 
-  public async getMediaMessage(m: proto.IWebMessageInfo, base64 = false) {
+  public async getMediaMessage(m: PrismType.Message, inner = false) {
+    const MessageSubtype = [
+      'ephemeralMessage',
+      'documentWithCaptionMessage',
+      'viewOnceMessage',
+      'viewOnceMessageV2',
+    ];
+    const TypeMediaMessage = [
+      'imageMessage',
+      'documentMessage',
+      'audioMessage',
+      'videoMessage',
+      'stickerMessage',
+    ];
+
     try {
-      const msg = m?.message
-        ? m
-        : ((await this.getMessage(m.key, true)) as proto.IWebMessageInfo);
+      const msg: proto.IWebMessageInfo = m?.content
+        ? {
+            key: {
+              id: m.keyId,
+              fromMe: m.keyFromMe,
+              remoteJid: m.keyRemoteJid,
+            },
+            message: {
+              [m.messageType]: m.content,
+            },
+          }
+        : ((await this.getMessage(m, true)) as proto.IWebMessageInfo);
 
       for (const subtype of MessageSubtype) {
         if (msg.message[subtype]) {
@@ -1238,6 +1576,9 @@ export class WAStartupService {
       }
 
       if (!mediaMessage) {
+        if (inner) {
+          return;
+        }
         throw 'The message is not of the media type';
       }
 
@@ -1245,9 +1586,9 @@ export class WAStartupService {
         msg.message = JSON.parse(JSON.stringify(msg.message));
       }
 
-      const buffer = await downloadMediaMessage(
+      const stream = await downloadMediaMessage(
         { key: msg?.key, message: msg?.message },
-        'buffer',
+        'stream',
         {},
         {
           logger: P({ level: 'silent' }) as any,
@@ -1255,9 +1596,10 @@ export class WAStartupService {
         },
       );
 
+      const ext = mime.extension(mediaMessage?.['mimetype']);
+
       const fileName =
-        mediaMessage?.['fileName'] ||
-        `${mediaType}.${mime.extension(mediaMessage?.['mimetype'])}`;
+        mediaMessage?.['fileName'] || `${msg.key.id}.${ext}` || `${v4()}.${ext}`;
 
       return {
         mediaType,
@@ -1269,57 +1611,122 @@ export class WAStartupService {
           width: mediaMessage?.['width'],
         },
         mimetype: mediaMessage?.['mimetype'],
-        media: base64 ? buffer.toString('base64') : buffer,
+        stream,
       };
     } catch (error) {
       this.logger.error(error);
+      this.repository.activityLogs
+        .create({
+          data: {
+            type: 'error',
+            context: WAStartupService.name,
+            description: 'Error on get media message',
+            content: [error?.toString(), JSON.stringify(error?.stack)],
+            instanceId: this.instance.id,
+          },
+        })
+        .catch((error) => this.logger.error(error));
+      if (inner) {
+        return;
+      }
       throw new BadRequestException(error.toString());
     }
   }
 
-  public async fetchContacts(query: ContactQuery) {
-    if (query?.where) {
-      query.where.owner = this.instance.wuid;
-    } else {
-      query = {
-        where: {
-          owner: this.instance.wuid,
-        },
-      };
+  async getMediaUrl(messageId: number, expiry: number) {
+    if (!s3Service.BUCKET?.ENABLE) {
+      throw new BadRequestException('S3 is not enabled');
     }
-    return await this.repository.contact.find(query);
+
+    const media = await this.repository.media.findFirst({
+      where: { messageId },
+    });
+
+    const mediaUrl = await s3Service.getObjectUrl(media.fileName, expiry);
+
+    return { mediaUrl };
   }
 
-  public async fetchMessages(query: MessageQuery) {
-    if (query?.where) {
-      query.where.owner = this.instance.wuid;
-    } else {
-      query = {
-        where: {
-          owner: this.instance.wuid,
-        },
-        limit: query?.limit,
-      };
-    }
-    return await this.repository.message.find(query);
+  public async fetchContacts(query: Query<PrismType.Contact>) {
+    return await this.repository.contact.findMany({
+      where: {
+        instanceId: this.instance.id,
+        remoteJid: query.where?.remoteJid,
+      },
+    });
   }
 
-  public async fetchStatusMessage(query: MessageUpQuery) {
-    if (query?.where) {
-      query.where.owner = this.instance.wuid;
-    } else {
-      query = {
-        where: {
-          owner: this.instance.wuid,
-        },
-        limit: query?.limit,
-      };
+  public async fetchMessages(query: Query<PrismType.Message>) {
+    const count = await this.repository.message.count({
+      where: {
+        instanceId: this.instance.id,
+        id: query?.where?.id,
+        keyId: query?.where?.keyId,
+        keyFromMe: query?.where?.keyFromMe,
+        keyRemoteJid: query.where?.keyRemoteJid,
+        device: query?.where?.device,
+        messageType: query?.where?.messageType,
+      },
+    });
+
+    if (!query?.offset) {
+      query.offset = 50;
     }
-    return await this.repository.messageUpdate.find(query);
+
+    if (!query?.page) {
+      query.page = 1;
+    }
+
+    const messages = await this.repository.message.findMany({
+      where: {
+        instanceId: this.instance.id,
+        id: query?.where?.id,
+        keyId: query?.where?.keyId,
+        keyFromMe: query?.where?.keyFromMe,
+        keyRemoteJid: query.where?.keyRemoteJid,
+        device: query?.where?.device,
+        messageType: query?.where?.messageType,
+      },
+      orderBy: {
+        messageTimestamp: 'desc',
+      },
+      skip: query.offset * (query?.page === 1 ? 0 : (query?.page as number) - 1),
+      take: query.offset,
+      select: {
+        id: true,
+        keyId: true,
+        keyFromMe: true,
+        keyRemoteJid: true,
+        keyParticipant: true,
+        pushName: true,
+        messageType: true,
+        content: true,
+        messageTimestamp: true,
+        instanceId: true,
+        device: true,
+        MessageUpdate: {
+          select: {
+            status: true,
+            dateTime: true,
+          },
+        },
+      },
+    });
+
+    return {
+      messages: {
+        total: count,
+        pages: Math.ceil(count / query.offset),
+        currentPage: query.page,
+        records: messages,
+      },
+    };
   }
 
   public async fetchChats() {
-    return await this.repository.chat.find({ where: { owner: this.instance.wuid } });
+    return await this.repository.chat.findMany({
+      where: { instanceId: this.instance.id },
+    });
   }
 
   // Group
@@ -1369,7 +1776,7 @@ export class WAStartupService {
     }
   }
 
-  public async inviteCode(id: GroupJid) {
+  public async invitationCode(id: GroupJid) {
     try {
       const code = await this.client.groupInviteCode(id.groupJid);
       return { inviteUrl: `https://chat.whatsapp.com/${code}`, inviteCode: code };
@@ -1378,7 +1785,7 @@ export class WAStartupService {
     }
   }
 
-  public async revokeInviteCode(id: GroupJid) {
+  public async revokeInvitationCode(id: GroupJid) {
     try {
       const inviteCode = await this.client.groupRevokeInvite(id.groupJid);
       return { revoked: true, inviteCode };

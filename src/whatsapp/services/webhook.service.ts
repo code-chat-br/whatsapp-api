@@ -41,15 +41,13 @@ import { WAMonitoringService } from './monitor.service';
 export class WebhookService {
   constructor(private readonly waMonitor: WAMonitoringService) {}
 
-  public create(instance: InstanceDto, data: WebhookDto) {
-    this.waMonitor.waInstances[instance.instanceName].setWebhook(data);
-
-    return { webhook: { ...instance, webhook: data } };
+  public async create({ instanceName }: InstanceDto, data: WebhookDto) {
+    return await this.waMonitor.waInstances.get(instanceName).setWebhook(data);
   }
 
-  public async find(instance: InstanceDto): Promise<WebhookDto> {
+  public async find({ instanceName }: InstanceDto): Promise<WebhookDto> {
     try {
-      return await this.waMonitor.waInstances[instance.instanceName].findWebhook();
+      return await this.waMonitor.waInstances.get(instanceName).findWebhook();
     } catch (error) {
       return { enabled: null, url: '' };
     }

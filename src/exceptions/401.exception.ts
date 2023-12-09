@@ -34,7 +34,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { HttpStatus } from '../whatsapp/routers/index.router';
+import { HttpStatus } from '../app.module';
 
 export class UnauthorizedException {
   constructor(...objectError: any[]) {

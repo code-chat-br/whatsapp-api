@@ -40,18 +40,21 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { readFileSync } from 'fs';
-import { load } from 'js-yaml';
 import { isBooleanString } from 'class-validator';
-import { join } from 'path';
+import { config } from 'dotenv';
 
-export type HttpServer = { TYPE: 'http' | 'https'; PORT: number };
+config();
 
-export type HttpMethods = 'POST' | 'GET' | 'PUT' | 'DELETE';
-export type Cors = {
-  ORIGIN: string[];
-  METHODS: HttpMethods[];
-  CREDENTIALS: boolean;
+export type HttpServer = { PORT: number };
+
+export type Bucket = {
+  ACCESS_KEY: string;
+  SECRET_KEY: string;
+  ENDPOINT: string;
+  BUCKET_NAME: string;
+  ENABLE: boolean;
+  PORT?: number;
+  USE_SSL?: boolean;
 };
 
 export type LogLevel = 'ERROR' | 'WARN' | 'DEBUG' | 'INFO' | 'LOG' | 'VERBOSE' | 'DARK';
@@ -60,9 +63,8 @@ export type Log = {
   COLOR: boolean;
 };
 
-export type SaveData = {
-  INSTANCE: boolean;
-  OLD_MESSAGE: boolean;
+export type DBOptions = {
+  SYNC_MESSAGES: boolean;
   NEW_MESSAGE: boolean;
   MESSAGE_UPDATE: boolean;
   CONTACTS: boolean;
@@ -77,13 +79,12 @@ export type StoreConf = {
 };
 
 export type DBConnection = {
-  URI: string;
-  DB_PREFIX_NAME: string;
+  URL: string;
 };
 export type Database = {
   CONNECTION: DBConnection;
   ENABLED: boolean;
-  SAVE_DATA: SaveData;
+  DB_OPTIONS: DBOptions;
 };
 
 export type Redis = {
@@ -92,53 +93,35 @@ export type Redis = {
   PREFIX_KEY: string;
 };
 
-export type EventsWebhook = {
-  QRCODE_UPDATED: boolean;
-  MESSAGES_SET: boolean;
-  MESSAGES_UPSERT: boolean;
-  MESSAGES_UPDATE: boolean;
-  SEND_MESSAGE: boolean;
-  CONTACTS_SET: boolean;
-  CONTACTS_UPDATE: boolean;
-  CONTACTS_UPSERT: boolean;
-  PRESENCE_UPDATE: boolean;
-  CHATS_SET: boolean;
-  CHATS_UPDATE: boolean;
-  CHATS_DELETE: boolean;
-  CHATS_UPSERT: boolean;
-  CONNECTION_UPDATE: boolean;
-  GROUPS_UPSERT: boolean;
-  GROUP_UPDATE: boolean;
-  GROUP_PARTICIPANTS_UPDATE: boolean;
-  NEW_JWT_TOKEN: boolean;
+export type QrCode = {
+  LIMIT: number;
+  EXPIRATION_TIME: number;
 };
 
 export type Jwt = { EXPIRIN_IN: number; SECRET: string };
-export type Auth = { API_KEY: string; JWT: Jwt; TYPE: 'jwt' | 'apikey' };
+export type Auth = { GLOBAL_AUTH_TOKEN: string; JWT: Jwt };
 
-export type DelInstance = number | boolean;
+export type InstanceExpirationTime = number | boolean;
 
 export type GlobalWebhook = { URL: string; ENABLED: boolean };
-export type SslConf = { PRIVKEY: string; FULLCHAIN: string };
-export type Webhook = { GLOBAL?: GlobalWebhook; EVENTS: EventsWebhook };
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
-export type QrCode = { LIMIT: number };
+export type QrCodLimit = number;
 
 export interface Env {
   SERVER: HttpServer;
-  CORS: Cors;
-  SSL_CONF: SslConf;
   STORE: StoreConf;
   DATABASE: Database;
   REDIS: Redis;
   LOG: Log;
-  DEL_INSTANCE: DelInstance;
-  WEBHOOK: Webhook;
+  INSTANCE_EXPIRATION_TIME: InstanceExpirationTime;
+  GLOBAL_WEBHOOK: GlobalWebhook;
   CONFIG_SESSION_PHONE: ConfigSessionPhone;
   QRCODE: QrCode;
+  CONNECTION_TIMEOUT: number;
   AUTHENTICATION: Auth;
   PRODUCTION?: boolean;
   SESSION_SECRET: string;
+  S3?: Bucket;
 }
 
 export type Key = keyof Env;
@@ -155,34 +138,22 @@ export class ConfigService {
   }
 
   private loadEnv() {
-    this.env = !(process.env?.DOCKER_ENV === 'true') ? this.envYaml() : this.envProcess();
+    this.env = this.envProcess();
     this.env.PRODUCTION = process.env?.NODE_ENV === 'PROD';
-    if (process.env?.DOCKER_ENV === 'true') {
-      this.env.SERVER.TYPE = 'http';
-      this.env.SERVER.PORT = 8083;
-    }
-  }
 
-  private envYaml(): Env {
-    return load(
-      readFileSync(join(process.cwd(), 'src', 'env.yml'), { encoding: 'utf-8' }),
-    ) as Env;
+    if (this.env.S3.ENABLE === true) {
+      if (this.env.DATABASE.DB_OPTIONS.NEW_MESSAGE !== true) {
+        throw new Error(
+          'The bucket is disabled or the database is not configured to save new messages',
+        );
+      }
+    }
   }
 
   private envProcess(): Env {
     return {
       SERVER: {
-        TYPE: process.env.SERVER_TYPE as 'http' | 'https',
-        PORT: Number.parseInt(process.env.SERVER_PORT),
-      },
-      CORS: {
-        ORIGIN: process.env.CORS_ORIGIN.split(','),
-        METHODS: process.env.CORS_METHODS.split(',') as HttpMethods[],
-        CREDENTIALS: process.env?.CORS_CREDENTIALS === 'true',
-      },
-      SSL_CONF: {
-        PRIVKEY: process.env?.SSL_CONF_PRIVKEY,
-        FULLCHAIN: process.env?.SSL_CONF_FULLCHAIN,
+        PORT: Number.parseInt(process.env?.SERVER_PORT || '8084'),
       },
       STORE: {
         CLEANING_INTERVAL: Number.isInteger(process.env?.STORE_CLEANING_TERMINAL)
@@ -194,13 +165,11 @@ export class ConfigService {
       },
       DATABASE: {
         CONNECTION: {
-          URI: process.env.DATABASE_CONNECTION_URI,
-          DB_PREFIX_NAME: process.env.DATABASE_CONNECTION_DB_PREFIX_NAME,
+          URL: process.env.DATABASE_URL,
         },
         ENABLED: process.env?.DATABASE_ENABLED === 'true',
-        SAVE_DATA: {
-          INSTANCE: process.env?.DATABASE_SAVE_DATA_INSTANCE === 'true',
-          OLD_MESSAGE: process.env?.DATABASE_SAVE_DATA_OLD_MESSAGE === 'true',
+        DB_OPTIONS: {
+          SYNC_MESSAGES: process.env?.DATABASE_SYNC_MESSAGES === 'true',
           NEW_MESSAGE: process.env?.DATABASE_SAVE_DATA_NEW_MESSAGE === 'true',
           MESSAGE_UPDATE: process.env?.DATABASE_SAVE_MESSAGE_UPDATE === 'true',
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
@@ -210,62 +179,49 @@ export class ConfigService {
       REDIS: {
         ENABLED: process.env?.REDIS_ENABLED === 'true',
         URI: process.env.REDIS_URI,
-        PREFIX_KEY: process.env.REDIS_PREFIX_KEY,
+        PREFIX_KEY: process.env?.REDIS_PREFIX || 'codechat_v1',
       },
       LOG: {
-        LEVEL: process.env?.LOG_LEVEL.split(',') as LogLevel[],
+        LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],
         COLOR: process.env?.LOG_COLOR === 'true',
       },
-      DEL_INSTANCE: isBooleanString(process.env?.DEL_INSTANCE)
+      INSTANCE_EXPIRATION_TIME: isBooleanString(process.env?.DEL_INSTANCE)
         ? process.env.DEL_INSTANCE === 'true'
-        : Number.parseInt(process.env.DEL_INSTANCE),
-      WEBHOOK: {
-        GLOBAL: {
-          URL: process.env?.WEBHOOK_GLOBAL_URL,
-          ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',
-        },
-        EVENTS: {
-          QRCODE_UPDATED: process.env?.WEBHOOK_EVENTS_QRCODE_UPDATED === 'true',
-          MESSAGES_SET: process.env?.WEBHOOK_EVENTS_MESSAGES_SET === 'true',
-          MESSAGES_UPSERT: process.env?.WEBHOOK_EVENTS_MESSAGES_UPSERT === 'true',
-          MESSAGES_UPDATE: process.env?.WEBHOOK_EVENTS_MESSAGES_UPDATE === 'true',
-          SEND_MESSAGE: process.env?.WEBHOOK_EVENTS_SEND_MESSAGE === 'true',
-          CONTACTS_SET: process.env?.WEBHOOK_EVENTS_CONTACTS_SET === 'true',
-          CONTACTS_UPDATE: process.env?.WEBHOOK_EVENTS_CONTACTS_UPDATE === 'true',
-          CONTACTS_UPSERT: process.env?.WEBHOOK_EVENTS_CONTACTS_UPSERT === 'true',
-          PRESENCE_UPDATE: process.env?.WEBHOOK_EVENTS_PRESENCE_UPDATE === 'true',
-          CHATS_SET: process.env?.WEBHOOK_EVENTS_CHATS_SET === 'true',
-          CHATS_UPDATE: process.env?.WEBHOOK_EVENTS_CHATS_UPDATE === 'true',
-          CHATS_UPSERT: process.env?.WEBHOOK_EVENTS_CHATS_UPSERT === 'true',
-          CHATS_DELETE: process.env?.WEBHOOK_EVENTS_CHATS_DELETE === 'true',
-          CONNECTION_UPDATE: process.env?.WEBHOOK_EVENTS_CONNECTION_UPDATE === 'true',
-          GROUPS_UPSERT: process.env?.WEBHOOK_EVENTS_GROUPS_UPSERT === 'true',
-          GROUP_UPDATE: process.env?.WEBHOOK_EVENTS_GROUPS_UPDATE === 'true',
-          GROUP_PARTICIPANTS_UPDATE:
-            process.env?.WEBHOOK_EVENTS_GROUP_PARTICIPANTS_UPDATE === 'true',
-          NEW_JWT_TOKEN: process.env?.WEBHOOK_EVENTS_NEW_JWT_TOKEN === 'true',
-        },
+        : Number.parseInt(process.env?.DEL_INSTANCE || '5'),
+      GLOBAL_WEBHOOK: {
+        URL: process.env?.WEBHOOK_GLOBAL_URL,
+        ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',
       },
       CONFIG_SESSION_PHONE: {
         CLIENT: process.env?.CONFIG_SESSION_PHONE_CLIENT,
         NAME: process.env?.CONFIG_SESSION_PHONE_NAME,
       },
       QRCODE: {
-        LIMIT: Number.parseInt(process.env.QRCODE_LIMIT),
+        LIMIT: Number.parseInt(process.env?.QRCODE_LIMIT || '10'),
+        EXPIRATION_TIME: Number.parseInt(process.env?.QRCODE_EXPIRATION_TIME || '60'),
       },
+      CONNECTION_TIMEOUT: Number.parseInt(process.env?.CONNECTION_TIMEOUT || '300'),
       AUTHENTICATION: {
-        TYPE: process.env.AUTHENTICATION_TYPE as 'jwt',
-        API_KEY: process.env.AUTHENTICATION_API_KEY,
+        GLOBAL_AUTH_TOKEN: process.env.AUTHENTICATION_GLOBAL_AUTH_TOKEN,
         JWT: {
-          EXPIRIN_IN: Number.isInteger(process.env?.AUTHENTICATION_JWT_EXPIRIN_IN)
-            ? Number.parseInt(process.env.AUTHENTICATION_JWT_EXPIRIN_IN)
-            : 3600,
+          EXPIRIN_IN:
+            Number.isInteger(process.env?.AUTHENTICATION_JWT_EXPIRES_IN) ||
+            process.env?.AUTHENTICATION_JWT_EXPIRES_IN === '0'
+              ? Number.parseInt(process.env.AUTHENTICATION_JWT_EXPIRES_IN)
+              : 3600,
           SECRET: process.env.AUTHENTICATION_JWT_SECRET,
         },
       },
       SESSION_SECRET: process.env.SESSION_SECRET,
+      S3: {
+        ACCESS_KEY: process.env?.S3_ACCESS_KEY,
+        SECRET_KEY: process.env?.S3_SECRET_KEY,
+        ENDPOINT: process.env?.S3_ENDPOINT,
+        BUCKET_NAME: process.env?.S3_BUCKET,
+        ENABLE: process.env?.S3_ENABLED === 'true',
+        PORT: Number.parseInt(process.env?.S3_PORT || '9000'),
+        USE_SSL: process.env?.S3_USE_SSL === 'true',
+      },
     };
   }
 }
-
-export const configService = new ConfigService();

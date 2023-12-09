@@ -1,9 +1,9 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename auth.model.ts                                                      │
+ * │ @filename main.ts                                                            │
  * │ Developed by: Cleber Wilson                                                  │
- * │ Creation date: Jan 10, 2023                                                  │
+ * │ Creation date: Aug 13, 2023                                                  │
  * │ Contact: contato@codechat.dev                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
@@ -23,10 +23,6 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @class AuthRaw                                                               │
- * │ @constant authSchema                                                         │
- * │ @constant AuthModel                                                          │
- * │ @type {IAuthModel}                                                           │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -35,20 +31,20 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { Schema } from 'mongoose';
-import { dbserver } from '../../db/db.connect';
+import { Router } from 'express';
+import { join } from 'path';
+import swaggerUi from 'swagger-ui-express';
+import YAML from 'yamljs';
 
-export class AuthRaw {
-  _id?: string;
-  jwt?: string;
-  apikey?: string;
-}
+const document = YAML.load(join(process.cwd(), 'docs', 'swagger.yaml'));
 
-const authSchema = new Schema<AuthRaw>({
-  _id: { type: String, _id: true },
-  jwt: { type: String, minlength: 1 },
-  apikey: { type: String, minlength: 1 },
-});
+const router = Router();
 
-export const AuthModel = dbserver?.model(AuthRaw.name, authSchema, 'authentication');
-export type IAuthModel = typeof AuthModel;
+export const swaggerRouter = router.use('/docs', swaggerUi.serve).get(
+  '/docs',
+  swaggerUi.setup(document, {
+    customCssUrl: '/css/dark-theme-swagger.css',
+    customSiteTitle: 'CodeChat - WhatsApp API',
+    customfavIcon: '/images/logo.svg',
+  }),
+);

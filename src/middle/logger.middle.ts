@@ -1,9 +1,9 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename chat.model.ts                                                      │
+ * │ @filename whatsapp.module.ts                                                 │
  * │ Developed by: Cleber Wilson                                                  │
- * │ Creation date: Nov 27, 2022                                                  │
+ * │ Creation date: Dez 06, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
@@ -23,10 +23,6 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @class ChatRaw                                                               │
- * │ @constant chatSchema                                                         │
- * │ @constant ChatModel                                                          │
- * │ @type {IChatModel}                                                           │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -35,20 +31,50 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { Schema } from 'mongoose';
-import { dbserver } from '../../db/db.connect';
+import { NextFunction, Request, Response } from 'express';
+import { Logger } from '../config/logger.config';
+import { Repository } from '../repository/repository.service';
+import { ConfigService } from '../config/env.config';
 
-export class ChatRaw {
-  _id?: string;
-  id?: string;
-  owner: string;
+export class LoggerMiddleware {
+  constructor(
+    private readonly repository: Repository,
+    private readonly configService: ConfigService,
+  ) {}
+
+  async use(req: Request, res: Response, next: NextFunction) {
+    const logger = new Logger(this.configService, LoggerMiddleware.name);
+
+    if (!this.configService.get<boolean>('PRODUCTION')) {
+      logger.log({
+        originalUrl: req.originalUrl,
+        method: req.method.toUpperCase(),
+        headers: JSON.stringify(req.headers),
+        params: JSON.stringify(req?.params || {}),
+        query: JSON.stringify(req?.query || {}),
+        body: JSON.stringify(req?.body || {}),
+      });
+    }
+
+    this.repository.activityLogs
+      .create({
+        data: {
+          context: 'LoggerMiddleware',
+          type: 'http',
+          content: {
+            originalUrl: req.originalUrl,
+            method: req.method.toUpperCase(),
+            headers: JSON.stringify(req.headers),
+            params: JSON.stringify(req?.params || {}),
+            query: JSON.stringify(req?.query || {}),
+            body: JSON.stringify(req?.body || {}),
+          },
+          description: 'Request received',
+          instanceId: req?.params?.instanceId ? Number(req.params.instanceId) : undefined,
+        },
+      })
+      .catch((error) => logger.error(error));
+
+    next();
+  }
 }
-
-const chatSchema = new Schema<ChatRaw>({
-  _id: { type: String, _id: true },
-  id: { type: String, required: true, minlength: 1 },
-  owner: { type: String, required: true, minlength: 1 },
-});
-
-export const ChatModel = dbserver?.model(ChatRaw.name, chatSchema, 'chats');
-export type IChatModel = typeof ChatModel;

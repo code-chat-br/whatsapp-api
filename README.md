@@ -18,14 +18,6 @@
 This code is an implementation of [Baileys](https://github.com/WhiskeySockets/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
 With this one you can create multiservice chats, service bots or any other system that uses whatsapp. With this code you don't need to know javascript for nodejs , just start the server and make the language requests that you feel most comfortable with.
 
-## [Node n8n](https://github.com/jrCleber/n8n-codechat-wapi)
-
-<div align="center">
-  <a href="https://github.com/jrCleber/n8n-codechat-wapi" target="_blank" rel="noopener noreferrer">
-    <img src="./public/images/n8n-codechat-wapi.png" style="width: 50% !important;">
-  </a>
-</div>
-
 ## Infrastructure
 
 ### Nvm installation
@@ -51,7 +43,7 @@ sudo usermod -aG docker ${USER}
 ### Nodejs installation
 
 ```sh
-nvm install 18.17.0
+nvm install 20
 ```
 
 ### pm2 installation
@@ -59,20 +51,15 @@ nvm install 18.17.0
 npm i -g pm2
 ```
 
-### yarn installation
-```sh
-npm i -g yarn
-```
-
 ```sh
 docker --version
 
 node --version
 ```
-## MongoDb [optional]
+## PostgreSql [required]
 
 After installing docker and docker-compose, up the container.
-  - [compose from mongodb](./mongodb/docker-compose.yaml)
+  - [compose from postgres](./postgres/docker-compose.yaml)
 
 In the same directory where the file is located, run the following command:
 ```sh
@@ -89,6 +76,30 @@ git clone https://github.com/code-chat-br/whatsapp-api.git
 
 Go to the project directory and install all dependencies.
 
+### Database Setup
+
+#### Usando o Prisma ORM
+
+O aplicativo aproveita o Prisma ORM para lidar com operações de banco de dados. O Prisma simplifica o acesso, a migração e o gerenciamento de banco de dados.
+
+Em ambiente de desenvolvimento:
+```sh
+npx prisma migrate dev
+```
+
+Em ambiente de produção:
+
+```sh
+nps prisma migrate deploy
+```
+
+#### Estúdio prisma
+
+Veja os seus dados:
+```sh
+npx prisma studio
+```
+
 >
 > Give preference to **npm** as it has greater compatibility.
 >
@@ -96,23 +107,16 @@ Go to the project directory and install all dependencies.
 ```sh
 cd whatsapp-api-v2
 
-yarn install
-# OR
-npm install
+npm install --force
 ```
 
 Finally, run the command below to start the application:
 ```sh
-# Under development
-yarn start
-npm start
+npm run start:dev
 
-# In production
-yarn start:prod
 npm run start:prod
 
 # pm2
-pm2 start 'yarn start:prod' --name ApiCodechat
 pm2 start 'npm run start:prod' --name ApiCodechat
 ```
 
@@ -126,94 +130,13 @@ pm2 start 'npm run start:prod' --name ApiCodechat
 You can define two authentication **types** for the routes in the **[env file](./dev-env.yml)**.
 Authentications must be inserted in the request header.
 
-1. **apikey**
-
-2. **jwt:** A JWT is a standard for authentication and information exchange defined with a signature.
+1. **jwt:** A JWT is a standard for authentication and information exchange defined with a signature.
 
 > Authentications are generated at instance creation time.
 
 **Note:** There is also the possibility to define a global api key, which can access and control all instances.
 
-### Connection
-
-#### Create an instance
-
-##### HTTP
-
-> *NOTE:* This key must be inserted in the request header to create an instance.
-
-```http
-POST /instance/create HTTP/1.1
-Host: localhost:8080
-Content-Type: application/json
-apikey: t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns
-
-{
-  "instanceName": "codechat"
-}
-```
-##### cURL
-
-```bash
-curl --location --request POST 'http://localhost:8080/instance/create' \
---header 'Content-Type: application/json' \
---header 'apikey: t8OOEeISKzpmc3jjcMqBWYSaJH2PIxns' \
---data-raw '{
-  "instanceName": "codechat"
-}'
-```
-### Response
-
-```ts
-{
-  "instance": {
-    "instanceName": "codechat",
-    "status": "created"
-  },
-  "hash": {
-    "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. [...]"
-
-    // or
-    // "apikey": "88513847-1B0E-4188-8D76-4A2750C9B6C3"
-  }
-}
-```
-#### Connection with qrcode
-
-##### HTTP
-
-```http
-GET /instance/connect/codechat HTTP/1.1
-Host: localhost:8080
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. [...]
-```
-```http
-GET /instance/connect/codechat HTTP/1.1
-Host: localhost:8080
-apikey: 88513847-1B0E-4188-8D76-4A2750C9B6C3
-```
-##### cURL
-
-```bash
-curl --location --request GET 'http://localhost:8080/instance/connect/codechat' \
---header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. [...]'
-```
-```bash
-curl --location --request GET 'http://localhost:8080/instance/connect/codechat' \
---header 'apikey: 88513847-1B0E-4188-8D76-4A2750C9B6C3'
-```
-
-### Response
-
-```ts
-{
-  "code": "2@nXSUgRJSBY6T0XJmiFKZ0 [...] ,XsgJhJHYa+0MPpXANdPHHt6Ke/I7O2QyXT/Lsge0uSg=",
-  "base64": "data:image/png;base64,iVBORw0KGgoAAAANSUhE [...] LkMtqAAAAABJRU5ErkJggg=="
-}
-```
-
 ### App in Docker
-  - [docker run](./docker.sh)
   - [docker-compose](./docker-compose.yml)
   - [env for docker](./Docker/.env)
   - [DockerHub-codechat/api](https://hub.docker.com/r/codechat/api)
@@ -233,14 +156,14 @@ docker-compose up
 | Send Audio type WhatsApp | ✔ |
 | Send Audio type WhatsApp - File | ✔ |
 | Send Location | ✔ |
-| Send List | ✔ |
+| Send List | ❌ |
 | Send Link Preview | ❌ |
 | Send Contact | ✔ |
 | Send Reaction - emoji | ✔ |
 
 ## Postman collections
   - [Postman Json](./postman.json)
-  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/api/fbe06c7b-7647-4c71-81ee-841f5b2e90d8?action=share&creator=14064846)
+  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://elements.getpostman.com/redirect?entityId=14064846-194eec6c-c3d6-48d1-9660-93d8085fd83a&entityType=collection)
 
 ## Webhook Events
 
@@ -266,9 +189,9 @@ docker-compose up
 
 ## Env File
 
-See additional settings that can be applied through the **env** file by clicking **[here](./src/dev-env.yml)**.
+See additional settings that can be applied through the **env** file by clicking **[here](./.env.dev)**.
 
-> **⚠️Attention⚠️:** copy the **dev-env.yml** file to **env.yml**.
+> **⚠️Attention⚠️:** copy the **.env.dev** file to **.env**.
 
 ## SSL
 

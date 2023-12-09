@@ -43,6 +43,7 @@ import { proto, WAPresence } from '@whiskeysockets/baileys';
 export class Options {
   delay?: number;
   presence?: WAPresence;
+  quotedMessageId?: number;
 }
 class OptionsMessage {
   options: Options;
@@ -89,11 +90,6 @@ export class SendAudioDto extends Metadata {
 export class AudioMessageFileDto extends Metadata {
   delay: number;
   audio: Buffer;
-}
-
-class Button {
-  buttonText: string;
-  buttonId: string;
 }
 
 class LocationMessage {

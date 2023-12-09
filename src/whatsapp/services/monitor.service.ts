@@ -43,158 +43,98 @@ import { INSTANCE_DIR } from '../../config/path.config';
 import EventEmitter2 from 'eventemitter2';
 import { join } from 'path';
 import { Logger } from '../../config/logger.config';
-import { ConfigService, Database, DelInstance, Redis } from '../../config/env.config';
-import { RepositoryBroker } from '../repository/repository.manager';
-import { NotFoundException } from '../../exceptions';
-import { Db } from 'mongodb';
-import { RedisCache } from '../../db/redis.client';
+import {
+  ConfigService,
+  Database,
+  InstanceExpirationTime,
+  Redis,
+} from '../../config/env.config';
+import { Repository } from '../../repository/repository.service';
+import { RedisCache } from '../../cache/redis';
+import { Instance } from '@prisma/client';
 
 export class WAMonitoringService {
   constructor(
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
-    private readonly repository: RepositoryBroker,
-    private readonly cache: RedisCache,
+    private readonly repository: Repository,
+    private readonly redisCache: RedisCache,
   ) {
     this.removeInstance();
     this.noConnection();
-    this.delInstanceFiles();
 
     Object.assign(this.db, configService.get<Database>('DATABASE'));
     Object.assign(this.redis, configService.get<Redis>('REDIS'));
-
-    this.dbInstance = this.db.ENABLED
-      ? this.repository.dbServer?.db(this.db.CONNECTION.DB_PREFIX_NAME + '-instances')
-      : undefined;
   }
 
   private readonly db: Partial<Database> = {};
   private readonly redis: Partial<Redis> = {};
 
-  private dbInstance: Db;
-
-  private readonly logger = new Logger(WAMonitoringService.name);
-  public readonly waInstances: Record<string, WAStartupService> = {};
+  private readonly logger = new Logger(this.configService, WAMonitoringService.name);
+  public readonly waInstances = new Map<string, WAStartupService>();
 
   public delInstanceTime(instance: string) {
-    const time = this.configService.get<DelInstance>('DEL_INSTANCE');
+    const time = this.configService.get<InstanceExpirationTime>(
+      'INSTANCE_EXPIRATION_TIME',
+    );
     if (typeof time === 'number' && time > 0) {
-      setTimeout(() => {
-        if (this.waInstances[instance]?.connectionStatus?.state !== 'open') {
-          delete this.waInstances[instance];
-        }
-      }, 1000 * 60 * time);
-    }
-  }
-
-  public async instanceInfo(instanceName?: string) {
-    if (instanceName && !this.waInstances[instanceName]) {
-      throw new NotFoundException(`Instance "${instanceName}" not found`);
-    }
-
-    const instances: any[] = [];
-
-    for await (const [key, value] of Object.entries(this.waInstances)) {
-      if (value && value.connectionStatus.state === 'open') {
-        const auth = await this.repository.auth.find(key);
-        instances.push({
-          instance: {
-            instanceName: key,
-            owner: value.wuid,
-            profileName: (await value.getProfileName()) || 'not loaded',
-            profilePictureUrl: value.profilePictureUrl,
-          },
-          auth,
-        });
-      }
-    }
-
-    return instances;
-  }
-
-  private delInstanceFiles() {
-    setInterval(async () => {
-      if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-        const collections = await this.dbInstance.collections();
-        collections.forEach(async (collection) => {
-          const name = collection.namespace.replace(/^[\w-]+./, '');
-          await this.dbInstance.collection(name).deleteMany({
-            $or: [
-              { _id: { $regex: /^app.state.*/ } },
-              { _id: { $regex: /^session-.*/ } },
-            ] as any[],
-          });
-        });
-      } else if (this.redis.ENABLED) {
-      } else {
-        const dir = opendirSync(INSTANCE_DIR, { encoding: 'utf-8' });
-        for await (const dirent of dir) {
-          if (dirent.isDirectory()) {
-            const files = readdirSync(join(INSTANCE_DIR, dirent.name), {
-              encoding: 'utf-8',
-            });
-            files.forEach(async (file) => {
-              if (file.match(/^app.state.*/) || file.match(/^session-.*/)) {
-                rmSync(join(INSTANCE_DIR, dirent.name, file), {
-                  recursive: true,
-                  force: true,
-                });
-              }
-            });
+      setTimeout(
+        () => {
+          const ref = this.waInstances.get(instance);
+          if (ref?.connectionStatus?.state !== 'open') {
+            this.waInstances.delete(instance);
           }
-        }
-      }
-    }, 3600 * 1000 * 2);
+        },
+        1000 * 60 * time,
+      );
+    }
   }
 
-  private async cleaningUp(instanceName: string) {
-    if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-      await this.repository.dbServer.connect();
-      const collections: any[] = await this.dbInstance.collections();
-      if (collections.length > 0) {
-        await this.dbInstance.dropCollection(instanceName);
-      }
-      return;
+  private async cleaningUp({ name, id }: Instance) {
+    this.waInstances.get(name)?.client?.ev.removeAllListeners('connection.update');
+    this.waInstances.get(name)?.client?.ev.flush();
+    this.waInstances.delete(name);
+    if (this.redis?.ENABLED) {
+      await this.redisCache.del(`${id}:${name}`);
+    } else {
+      rmSync(join(INSTANCE_DIR, name), { recursive: true, force: true });
     }
 
-    if (this.redis.ENABLED) {
-      this.cache.reference = instanceName;
-      await this.cache.delAll();
-      return;
-    }
-    rmSync(join(INSTANCE_DIR, instanceName), { recursive: true, force: true });
+    await this.repository.instance.update({
+      where: { name },
+      data: {
+        connectionStatus: 'OFFLINE',
+      },
+    });
   }
 
   public async loadInstance() {
     const set = async (name: string) => {
-      const instance = new WAStartupService(
+      const instance = await this.repository.instance.findUnique({
+        where: { name },
+      });
+      if (!instance) {
+        return this.eventEmitter.emit('remove.instance', instance);
+      }
+      const init = new WAStartupService(
         this.configService,
         this.eventEmitter,
         this.repository,
-        this.cache,
+        this.redisCache,
       );
-      instance.instanceName = name;
-      await instance.connectToWhatsapp();
-      this.waInstances[name] = instance;
+      await init.setInstanceName(name);
+      await init.connectToWhatsapp();
+      this.waInstances.set(name, init);
     };
 
     try {
       if (this.redis.ENABLED) {
-        await this.cache.connect(this.redis as Redis);
-        const keys = await this.cache.instanceKeys();
+        const keys = await this.redisCache.keys('*');
         if (keys?.length > 0) {
-          keys.forEach(async (k) => await set(k.split(':')[1]));
-        }
-        return;
-      }
-
-      if (this.db.ENABLED && this.db.SAVE_DATA.INSTANCE) {
-        await this.repository.dbServer.connect();
-        const collections: any[] = await this.dbInstance.collections();
-        if (collections.length > 0) {
-          collections.forEach(
-            async (coll) => await set(coll.namespace.replace(/^[\w-]+\./, '')),
-          );
+          keys.forEach(async (key) => {
+            const [prefix, id, name] = key.split(':');
+            await set(name);
+          });
         }
         return;
       }
@@ -219,26 +159,32 @@ export class WAMonitoringService {
   }
 
   private removeInstance() {
-    this.eventEmitter.on('remove.instance', async (instanceName: string) => {
+    this.eventEmitter.on('remove.instance', async (instance: Instance) => {
       try {
-        this.waInstances[instanceName] = undefined;
+        await this.waInstances.get(instance.name)?.client?.logout();
+        this.waInstances
+          .get(instance.name)
+          ?.client?.ev.removeAllListeners('connection.update');
+        this.waInstances.get(instance.name)?.client?.ev.flush();
+        this.waInstances.delete(instance.name);
       } catch {}
 
       try {
-        this.cleaningUp(instanceName);
+        await this.cleaningUp(instance);
       } finally {
-        this.logger.warn(`Instance "${instanceName}" - REMOVED`);
+        this.logger.warn(`Instance "${instance.name}" - REMOVED`);
       }
     });
   }
 
   private noConnection() {
-    this.eventEmitter.on('no.connection', async (instanceName) => {
-      const del = this.configService.get<DelInstance>('DEL_INSTANCE');
+    this.eventEmitter.on('no.connection', async (instance: Instance) => {
+      const del = this.configService.get<InstanceExpirationTime>(
+        'INSTANCE_EXPIRATION_TIME',
+      );
       if (del) {
         try {
-          this.waInstances[instanceName] = undefined;
-          this.cleaningUp(instanceName);
+          this.cleaningUp(instance);
         } catch (error) {
           this.logger.error({
             localError: 'noConnection',
@@ -246,7 +192,7 @@ export class WAMonitoringService {
             error,
           });
         } finally {
-          this.logger.warn(`Instance "${instanceName}" - NOT CONNECTION`);
+          this.logger.warn(`Instance "${instance.name}" - NOT CONNECTION`);
         }
       }
     });

@@ -1,7 +1,7 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename abstract.repository.ts                                             │
+ * │ @filename abstract.router.ts                                                 │
  * │ Developed by: Cleber Wilson                                                  │
  * │ Creation date: Jul 17, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │
@@ -23,12 +23,10 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @interface IRepository                                                       │
- * │ @type {WriteStore} @type {IInsert}                                           │
+ * │ @type {DataValidate}                                                         │
+ * │ @constant logger                                                             │
  * │                                                                              │
- * │ @abstract @class                                                             │
- * │ @constructs Repository                                                       │
- * │ @param {ConfigService} configService                                         │
+ * │ @abstract @class RouterBroker                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -37,61 +35,106 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { ConfigService, Database } from '../../config/env.config';
-import { ROOT_DIR } from '../../config/path.config';
+import { InstanceDto } from '../whatsapp/dto/instance.dto';
+import { JSONSchema7 } from 'json-schema';
+import { Request } from 'express';
+import { validate } from 'jsonschema';
+import { BadRequestException } from '../exceptions';
+import 'express-async-errors';
+import { Logger } from '../config/logger.config';
+import { GroupJid } from '../whatsapp/dto/group.dto';
+import { ConfigService } from '../config/env.config';
 
-export type IInsert = { insertCount: number };
-
-export interface IRepository {
-  insert(data: any, saveDb?: boolean): Promise<IInsert>;
-  find(query: any): Promise<any>;
-  delete(query: any, force?: boolean): Promise<any>;
-
-  dbSettings: Database;
-  readonly storePath: string;
+class DataValidate<T> {
+  request: Request;
+  schema: JSONSchema7;
+  execute: (instance: InstanceDto, data: T, file?: Express.Multer.File) => Promise<any>;
 }
 
-type WriteStore<U> = {
-  path: string;
-  fileName: string;
-  data: U;
-};
+const logger = new Logger(new ConfigService(), 'Validate');
 
-export abstract class Repository implements IRepository {
-  constructor(configService: ConfigService) {
-    this.dbSettings = configService.get<Database>('DATABASE');
+export function routerPath(path: string, param = true) {
+  let route = '/' + path;
+  param ? (route += '/:instanceName') : null;
+
+  return route;
+}
+
+export async function dataValidate<T>(args: DataValidate<T>) {
+  const { request, schema, execute } = args;
+
+  const body = request.body;
+  const instance = request.params as unknown as InstanceDto;
+
+  if (request?.query && Object.keys(request.query).length > 0) {
+    Object.assign(instance, request.query);
   }
 
-  dbSettings: Database;
-  readonly storePath = join(ROOT_DIR, 'store');
-
-  public writeStore = <T = any>(create: WriteStore<T>) => {
-    if (!existsSync(create.path)) {
-      mkdirSync(create.path, { recursive: true });
-    }
-    try {
-      writeFileSync(
-        join(create.path, create.fileName + '.json'),
-        JSON.stringify({ ...create.data }),
-        { encoding: 'utf-8' },
-      );
-
-      return { message: 'create - success' };
-    } finally {
-      create.data = undefined;
-    }
-  };
-
-  public insert(data: any, saveDb = false): Promise<IInsert> {
-    throw new Error('Method not implemented.');
-  }
-  public find(query: any): Promise<any> {
-    throw new Error('Method not implemented.');
+  if (request.originalUrl.includes('/instance/create')) {
+    Object.assign(instance, body);
   }
 
-  delete(query: any, force?: boolean): Promise<any> {
-    throw new Error('Method not implemented.');
+  if (request?.query && ['get', 'delete'].includes(request.method.toLowerCase())) {
+    Object.assign(body, request.query);
   }
+
+  const v = schema ? validate(body, schema) : { valid: true, errors: [] };
+
+  if (!v.valid) {
+    const message: any[] = v.errors.map(({ property, stack, schema }) => {
+      let message: string;
+      if (schema['description']) {
+        message = schema['description'];
+      } else {
+        message = stack.replace('instance.', '');
+      }
+      return {
+        property: property.replace('instance.', ''),
+        message,
+      };
+    });
+    logger.error([...message]);
+    throw new BadRequestException(...message);
+  }
+
+  return await execute(instance, body, request?.file);
+}
+
+export async function groupValidate<T>(args: DataValidate<T>) {
+  const { request, schema, execute } = args;
+
+  const groupJid = request.query as unknown as GroupJid;
+
+  if (!groupJid?.groupJid) {
+    throw new BadRequestException(
+      'The group id needs to be informed in the query',
+      'ex: "groupJid=120362@g.us"',
+    );
+  }
+
+  const instance = request.params as unknown as InstanceDto;
+  const body = request.body;
+
+  Object.assign(body, groupJid);
+
+  const v = validate(body, schema);
+
+  if (!v.valid) {
+    const message: any[] = v.errors.map(({ property, stack, schema }) => {
+      let message: string;
+      if (schema['description']) {
+        message = schema['description'];
+      } else {
+        message = stack.replace('instance.', '');
+      }
+      return {
+        property: property.replace('instance.', ''),
+        message,
+      };
+    });
+    logger.error([...message]);
+    throw new BadRequestException(...message);
+  }
+
+  return await execute(instance, body);
 }

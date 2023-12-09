@@ -35,17 +35,16 @@
  */
 
 import { RequestHandler, Router } from 'express';
-import { RouterBroker } from '../abstract/abstract.router';
-import { viewsController } from '../whatsapp.module';
+import { ViewsController } from '../controllers/views.controller';
+import { routerPath } from '../../validate/router.validate';
 
-export class ViewsRouter extends RouterBroker {
-  constructor(...guards: RequestHandler[]) {
-    super();
+export function ViewsRouter(
+  viewsController: ViewsController,
+  ...guards: RequestHandler[]
+) {
+  const router = Router().get(routerPath('qrcode'), ...guards, (req, res) => {
+    return viewsController.qrcode(req, res);
+  });
 
-    this.router.get(this.routerPath('qrcode'), ...guards, (req, res) => {
-      return viewsController.qrcode(req, res);
-    });
-  }
-
-  public readonly router = Router();
+  return router;
 }

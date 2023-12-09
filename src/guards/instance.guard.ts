@@ -44,72 +44,83 @@
 import { NextFunction, Request, Response } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
-import { INSTANCE_DIR } from '../../config/path.config';
-import { dbserver } from '../../db/db.connect';
+import { INSTANCE_DIR } from '../config/path.config';
 import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
-} from '../../exceptions';
-import { InstanceDto } from '../dto/instance.dto';
-import { cache, waMonitor } from '../whatsapp.module';
-import { Database, Redis, configService } from '../../config/env.config';
+} from '../exceptions';
+import { InstanceDto } from '../whatsapp/dto/instance.dto';
+import { Redis } from '../config/env.config';
+import { WAMonitoringService } from '../whatsapp/services/monitor.service';
+import { RedisCache } from '../cache/redis';
+import 'express-async-errors';
 
-async function getInstance(instanceName: string) {
-  const db = configService.get<Database>('DATABASE');
-  const redisConf = configService.get<Redis>('REDIS');
+async function fetchInstanceFromCache(
+  instanceName: string,
+  waMonitor: WAMonitoringService,
+  redisCache: RedisCache,
+) {
+  try {
+    const exists = !!waMonitor.waInstances[instanceName];
+    if (redisCache.isConnected) {
+      const keyExists = await redisCache.keys('*');
+      return exists || keyExists[0];
+    }
 
-  const exists = !!waMonitor.waInstances[instanceName];
-
-  if (redisConf.ENABLED) {
-    const keyExists = await cache.keyExists();
-    return exists || keyExists;
+    return exists || existsSync(join(INSTANCE_DIR, instanceName));
+  } catch (error) {
+    console.log('Error fetching instance from cache', error);
+    return false;
   }
-
-  if (db.ENABLED) {
-    const collection = dbserver
-      .getClient()
-      .db(db.CONNECTION.DB_PREFIX_NAME + '-instances')
-      .collection(instanceName);
-    return exists || (await collection.find({}).toArray()).length > 0;
-  }
-
-  return exists || existsSync(join(INSTANCE_DIR, instanceName));
 }
 
-export async function instanceExistsGuard(req: Request, _: Response, next: NextFunction) {
-  if (
-    req.originalUrl.includes('/instance/create') ||
-    req.originalUrl.includes('/instance/fetchInstances')
-  ) {
+export class InstanceGuard {
+  constructor(
+    private readonly waMonitor: WAMonitoringService,
+    private readonly redisCache: RedisCache,
+  ) {}
+  async canActivate(req: Request, _: Response, next: NextFunction) {
+    if (req.originalUrl.includes('/instance/create')) {
+      const instance = req?.body as InstanceDto;
+      if (
+        await fetchInstanceFromCache(
+          instance.instanceName,
+          this.waMonitor,
+          this.redisCache,
+        )
+      ) {
+        throw new ForbiddenException(
+          `This name "${instance.instanceName}" is already in use.`,
+        );
+      }
+
+      if (this.waMonitor.waInstances[instance.instanceName]) {
+        delete this.waMonitor.waInstances[instance.instanceName];
+      }
+    }
+
+    if (
+      req.originalUrl.includes('/instance/create') ||
+      req.originalUrl.includes('/instance/fetchInstances')
+    ) {
+      return next();
+    }
+
+    const param = req.params as unknown as InstanceDto;
+    if (!param?.instanceName) {
+      throw new BadRequestException('"instanceName" not provided.');
+    }
+    const fetch = await fetchInstanceFromCache(
+      param.instanceName,
+      this.waMonitor,
+      this.redisCache,
+    );
+
+    if (!fetch) {
+      throw new NotFoundException(`The "${param.instanceName}" instance does not exist`);
+    }
+
     return next();
   }
-
-  const param = req.params as unknown as InstanceDto;
-  if (!param?.instanceName) {
-    throw new BadRequestException('"instanceName" not provided.');
-  }
-
-  if (!(await getInstance(param.instanceName))) {
-    throw new NotFoundException(`The "${param.instanceName}" instance does not exist`);
-  }
-
-  next();
-}
-
-export async function instanceLoggedGuard(req: Request, _: Response, next: NextFunction) {
-  if (req.originalUrl.includes('/instance/create')) {
-    const instance = req.body as InstanceDto;
-    if (await getInstance(instance.instanceName)) {
-      throw new ForbiddenException(
-        `This name "${instance.instanceName}" is already in use.`,
-      );
-    }
-
-    if (waMonitor.waInstances[instance.instanceName]) {
-      delete waMonitor.waInstances[instance.instanceName];
-    }
-  }
-
-  next();
 }

@@ -32,11 +32,13 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
+import { ConfigService } from './env.config';
 import { Logger } from './logger.config';
 
-export function onUnexpectedError() {
+export function onUnexpectedError(configService: ConfigService) {
+  const logger = new Logger(configService);
   process.on('uncaughtException', (error, origin) => {
-    const logger = new Logger('uncaughtException');
+    logger.setContext('uncaughtException');
     logger.error({
       origin,
       stderr: process.stderr.fd,
@@ -45,7 +47,7 @@ export function onUnexpectedError() {
   });
 
   process.on('unhandledRejection', (error, origin) => {
-    const logger = new Logger('unhandledRejection');
+    logger.setContext('unhandledRejection');
     logger.error({
       origin,
       stderr: process.stderr.fd,

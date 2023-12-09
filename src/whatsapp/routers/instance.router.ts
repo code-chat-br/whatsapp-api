@@ -37,102 +37,97 @@
 import { RequestHandler, Router } from 'express';
 import { instanceNameSchema, oldTokenSchema } from '../../validate/validate.schema';
 import { InstanceDto } from '../dto/instance.dto';
-import { instanceController } from '../whatsapp.module';
-import { RouterBroker } from '../abstract/abstract.router';
-import { HttpStatus } from './index.router';
-import { OldToken } from '../services/auth.service';
-import { Auth, ConfigService } from '../../config/env.config';
+import { OldToken } from '../services/instance.service';
+import { HttpStatus } from '../../app.module';
+import { InstanceController } from '../controllers/instance.controller';
+import { dataValidate, routerPath } from '../../validate/router.validate';
 
-export class InstanceRouter extends RouterBroker {
-  constructor(readonly configService: ConfigService, ...guards: RequestHandler[]) {
-    super();
-    const auth = configService.get<Auth>('AUTHENTICATION');
-    this.router
-      .post('/create', ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: instanceNameSchema,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.createInstance(instance, req),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .get(this.routerPath('connect'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: instanceNameSchema,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.connectToWhatsapp(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .get(this.routerPath('connectionState'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: instanceNameSchema,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.connectionState(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .get(this.routerPath('fetchInstances', false), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: null,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.fetchInstances(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .get(this.routerPath('reload'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: instanceNameSchema,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.reloadConnection(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .delete(this.routerPath('logout'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: instanceNameSchema,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.logout(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .delete(this.routerPath('delete'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: instanceNameSchema,
-          ClassRef: InstanceDto,
-          execute: (instance) => instanceController.deleteInstance(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
+export function InstanceRouter(
+  instanceController: InstanceController,
+  ...guards: RequestHandler[]
+) {
+  const router = Router()
+    .post('/create', ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.createInstance(instance, req),
       });
 
-    if (auth.TYPE === 'jwt') {
-      this.router.put('/refreshToken', async (req, res) => {
-        const response = await this.dataValidate<OldToken>({
-          request: req,
-          schema: oldTokenSchema,
-          ClassRef: OldToken,
-          execute: (instance, data) =>
-            instanceController.refreshToken(instance, data, req),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .get(routerPath('connect'), async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.connectToWhatsapp(instance),
       });
-    }
-  }
 
-  public readonly router = Router();
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .get(routerPath('connectionState'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.connectionState(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .get(routerPath('fetchInstances', false), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: null,
+        execute: (instance) => instanceController.fetchInstances(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .patch(routerPath('reload'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.reloadConnection(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .patch(routerPath('update'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.updateInstance(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .delete(routerPath('logout'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.logout(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .delete(routerPath('delete'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.deleteInstance(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .put('/refreshToken', async (req, res) => {
+      const response = await dataValidate<OldToken>({
+        request: req,
+        schema: oldTokenSchema,
+        execute: (instance, data) => instanceController.refreshToken(instance, data, req),
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    });
+
+  return router;
 }

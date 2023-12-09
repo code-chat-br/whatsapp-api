@@ -1,0 +1,3011 @@
+# ┌──────────────────────────────────────────────────────────────────────────────┐
+# │ @author jrCleber                                                             │
+# │ @filename main.ts                                                            │
+# │ Developed by: Cleber Wilson                                                  │
+# │ Creation date: Aug 13, 2023                                                  │
+# │ Contact: contato@codechat.dev                                                │
+# ├──────────────────────────────────────────────────────────────────────────────┤
+# │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
+# │ Licensed under the Apache License, Version 2.0                               │
+# │                                                                              │
+# │  @license "https://github.com/code-chat-br/whatsapp-api/blob/main/LICENSE"   │
+# │                                                                              │
+# │ You may not use this file except in compliance with the License.             │
+# │ You may obtain a copy of the License at                                      │
+# │                                                                              │
+# │    http://www.apache.org/licenses/LICENSE-2.0                                │
+# │                                                                              │
+# │ Unless required by applicable law or agreed to in writing, software          │
+# │ distributed under the License is distributed on an "AS IS" BASIS,            │
+# │ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.     │
+# │                                                                              │
+# │ See the License for the specific language governing permissions and          │
+# │ limitations under the License.                                               │
+# │                                                                              │
+# ├──────────────────────────────────────────────────────────────────────────────┤
+# │ @important                                                                   │
+# │ For any future changes to the code in this file, it is recommended to        │
+# │ contain, together with the modification, the information of the developer    │
+# │ who changed it and the date of modification.                                 │
+# └──────────────────────────────────────────────────────────────────────────────┘
+
+openapi: 3.0.0
+info:
+  title: CodeChat - WhatsApp API
+  description: |
+    <hr style="height: 5px;background: #007500;margin: 20px 0;box-shadow: 0px 3px 5px 0px rgb(204 204 204);"/>
+
+    <div align="center">
+
+    [![Telegram Group](https://img.shields.io/badge/Group-Telegram-%2333C1FF)](https://t.me/codechatBR)
+    [![Whatsapp Group](https://img.shields.io/badge/Group-WhatsApp-%2322BC18)](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5)
+    [![License](https://img.shields.io/badge/license-GPL--3.0-orange)](https://github.com/code-chat-br/whatsapp-api/blob/main/LICENSE)
+    [![Support](https://img.shields.io/badge/Buy%20me-coffe-orange)](https://app.picpay.com/user/cleber.wilson.oliveira)
+
+    </div>
+      
+    <div align="center"><img src="https://raw.githubusercontent.com/code-chat-br/whatsapp-api/main/public/images/cover.png"/></div>
+
+    CodeChat is an advanced WhatsApp integration API that seamlessly merges the popularity of WhatsApp with modern business applications. 
+    With comprehensive features, the CodeChat API empowers businesses to expand their digital presence, reach customers more directly, and 
+    provide personalized and efficient support, all through the world's most widely used messaging platform.
+
+    The CodeChat API opens doors to more effective and engaging business communication, offering a modern approach to customer support, 
+    direct marketing, and real-time interactions. By combining WhatsApp's popularity with the functionality of the CodeChat API, businesses 
+    can build stronger and more authentic relationships with their customers, generating lasting satisfaction and loyalty.
+
+    [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/api/fbe06c7b-7647-4c71-81ee-841f5b2e90d8?action=share&creator=14064846)
+  version: 1.2.8
+  contact:
+    name: jrCleber
+    email: cleber@codechat.dev
+    url: https://www.apache.org/licenses/LICENSE-2.0
+  license:
+    name: Apache License - Version 2.0, January 2004
+    url: https://www.exemplo.com/licenca
+components:
+  securitySchemes:
+    apikeyAuth:
+      type: apiKey
+      in: header
+      name: apikey
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+security:
+  - bearerAuth: []
+tags:
+  - name: Instance Controller
+    description: Controller responsible for managing the application instances.
+  - name: Instance Controller > Views
+    description: Controller responsible for displaying views related to the application instances.
+  - name: Send Message Controller
+    description: Controller responsible for sending messages through the application.
+  - name: Chat Controller
+    description: Controller responsible for managing the application chats.
+  - name: Group Controller
+    description: Controller responsible for managing the application groups.
+  - name: JWT
+    description: Library for JSON Web Token-based authentication.
+  - name: Webhook
+    description: Mechanism for receiving asynchronous event notifications.
+  - name: S3 Bucket
+    description: Object storage in the cloud offered by Amazon S3 or MinIO service.
+  - name: Typebot
+    description: Chatbot platform for creating virtual assistants.
+  - name: Typebot > Sessions
+    description: Management of chatbot sessions on the Typebot platform.
+paths:
+  /instance/qrcode/{instanceName}:
+    get:
+      tags:
+        - Instance Controller > Views
+      summary: QrCode
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+      description: |
+        This endpoint returns the QR code for the specified instance.
+  
+  /instance/create:
+    post:
+      tags:
+        - Instance Controller
+      summary: Create Instance
+      description: |
+        This endpoint is used to create a new instance.
+        It receives a JSON object in the request body with the following fields:
+        - instanceName: the name of the instance
+        - description: an optional description of the instance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                instanceName: codechat-bot
+                description: 'Instance: Test V1'
+      security:
+        - apikeyAuth: []
+      responses:
+        '201':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '442'
+            ETag:
+              schema:
+                type: string
+                example: W/"1ba-TGxN/leIZn7YtssW90IY6RKaHvM"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Mon, 04 Dec 2023 23:34:23 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 1
+                name: codechat
+                description: 'Instance: Test V1'
+                createdAt: '2023-12-04T00:00:00.000Z'
+                updatedAt: '2023-12-04T00:00:00.000Z'
+                Auth:
+                  id: 1
+                  token: >-
+                    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiYjEwZDYzZWYtZGQ4Ni00NzFmLTljZmMtOGYxMTAxYTJjNGI3IiwiaWF0IjoxNzAxNzMyODYyLCJleHAiOjE3MDE3MzY0NjIsInN1YiI6ImctdCJ9.ICtbfIIUm7tE52GlxhBTEHiYwWSNAeWTg3er6v1I9Qw
+  
+  /instance/fetchInstances:
+    get:
+      tags:
+        - Instance Controller
+      summary: Fetch Instances
+      description: |
+        This endpoint is used to fetch one or all instances. It accepts an optional query parameter `instanceName` to filter the results.
+      security:
+        - apikeyAuth: []
+      parameters:
+        - name: instanceName
+          in: query
+          schema:
+            type: string
+          description: Retrieve one or all instances - optional
+          example: codechat-bot
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '631'
+            ETag:
+              schema:
+                type: string
+                example: W/"277-xtshIWa2qiaPH/lRSdSpOLf18eQ"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 00:42:54 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              examples:
+                example-0:
+                  summary: 200 - Fetch Single
+                  value:
+                    id: 1
+                    name: codechat
+                    description: 'Instance: Test V1'
+                    connectionStatus: ONLINE
+                    ownerJid: null
+                    profilePicUrl: null
+                    createdAt: '2023-12-04T00:00:00.000Z'
+                    updatedAt: '2023-12-04T00:00:00.000Z'
+                    Auth:
+                      id: 1
+                      token: >-
+                        eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiYjEwZDYzZWYtZGQ4Ni00NzFmLTljZmMtOGYxMTAxYTJjNGI3IiwiaWF0IjoxNzAxNzMyODYyLCJleHAiOjE3MDE3MzY0NjIsInN1YiI6ImctdCJ9.ICtbfIIUm7tE52GlxhBTEHiYwWSNAeWTg3er6v1I9Qw
+                      createdAt: '2023-12-04T00:00:00.000Z'
+                      updatedAt: '2023-12-04T00:00:00.000Z'
+                    Webhook: null
+                    Chatwoot: null
+                    Typebot: null
+                example-1:
+                  summary: 200 - Fetch All
+                  value:
+                    - id: 1
+                      name: codechat
+                      description: 'Instance: Test V1'
+                      connectionStatus: ONLINE
+                      ownerJid: null
+                      profilePicUrl: null
+                      createdAt: '2023-12-04T00:00:00.000Z'
+                      updatedAt: '2023-12-04T00:00:00.000Z'
+                      Auth:
+                        id: 1
+                        token: >-
+                          eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpbnN0YW5jZU5hbWUiOiJjb2RlY2hhdCIsImFwaU5hbWUiOiJ3aGF0c2FwcC1hcGkiLCJ0b2tlbklkIjoiYjEwZDYzZWYtZGQ4Ni00NzFmLTljZmMtOGYxMTAxYTJjNGI3IiwiaWF0IjoxNzAxNzMyODYyLCJleHAiOjE3MDE3MzY0NjIsInN1YiI6ImctdCJ9.ICtbfIIUm7tE52GlxhBTEHiYwWSNAeWTg3er6v1I9Qw
+                        createdAt: '2023-12-04T00:00:00.000Z'
+                        updatedAt: '2023-12-04T00:00:00.000Z'
+                      Webhook: null
+                      Chatwoot: null
+                      Typebot: null
+  
+  /instance/connect/{instanceName}:
+    get:
+      tags:
+        - Instance Controller
+      summary: Instance Connect
+      description: |
+        This endpoint allows you to connect to a specific instance.
+        You need to provide the instance name as a path parameter.
+        After successful connection, you will receive a response with information about the connected instance.
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Connect to your instance - required
+          example: codechat-bot
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            ETag:
+              schema:
+                type: string
+                example: W/"3080-Jq6QcOPmu0LaxEpgAfV8ikVLhos"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Date:
+              schema:
+                type: string
+                example: Mon, 04 Dec 2023 23:52:10 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                count: 1
+                base64: >-
+                  data:image/png;base64,iVBORw0KGgo...
+                code: >-
+                  2@WWDFM7QHaSH7i0BQQv12dUluv7PFYo ...
+    '404':
+      description: Not Found
+      headers:
+        X-Powered-By:
+          schema:
+            type: string
+            example: Express
+        Content-Type:
+          schema:
+            type: string
+            example: application/json; charset=utf-8
+        Content-Length:
+          schema:
+            type: integer
+            example: '89'
+        ETag:
+          schema:
+            type: string
+            example: W/"59-k4cfwuHqwL6LhzKnVo3RcMhJc+U"
+        Vary:
+          schema:
+            type: string
+            example: Accept-Encoding
+        Date:
+          schema:
+            type: string
+            example: Mon, 04 Dec 2023 23:37:29 GMT
+        Connection:
+          schema:
+            type: string
+            example: keep-alive
+        Keep-Alive:
+          schema:
+            type: string
+            example: timeout=5
+      content:
+        application/json:
+          schema:
+            type: object
+          example:
+            status: 404
+            error: Not Found
+            message:
+              - The "codechat" instance does not exist
+  
+  /instance/connectionState/{instanceName}:
+    get:
+      tags:
+        - Instance Controller
+      summary: Connection Status
+      description: |
+        This endpoint returns the connection status of a specific instance.
+        The `instanceName` parameter should be provided in the URL to identify the desired instance.
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '35'
+            ETag:
+              schema:
+                type: string
+                example: W/"23-nac7WzMd0OLjn7OhjfARLJe158A"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 00:48:48 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                state: open
+                statusReason: 200
+        '401':
+          description: Unauthorized
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '37'
+            ETag:
+              schema:
+                type: string
+                example: W/"25-NTjTJxyvyEF9LbjkF6bG86WDTJg"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 00:44:35 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 401
+                error: Unauthorized
+  
+  /instance/logout/{instanceName}:
+    delete:
+      tags:
+        - Instance Controller
+      summary: Logout Instance
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /instance/delete/{instanceName}:
+    delete:
+      tags:
+        - Instance Controller
+      summary: Delete Instance
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /message/sendText/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send Text
+      description: |
+        This endpoint allows sending a text message through the WhatsApp API.
+        It requires the instance name as a path parameter and a JSON request body containing the phone number, sending options, and message text.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                number: 123@broadcast
+                options:
+                  delay: 1200
+                  presence: composing
+                textMessage:
+                  text: text
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: '{{instance}}'
+      responses:
+        '201':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '280'
+            ETag:
+              schema:
+                type: string
+                example: W/"118-0QNcm2pEx0oVk/6YPgCKDQyvVFw"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 09:07:45 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              examples:
+                example-0:
+                  summary: '201'
+                  value:
+                    id: 1882
+                    keyId: BAE535C930C07790
+                    keyFromMe: true
+                    keyRemoteJid: 123@s.whatsapp.net
+                    keyParticipant: ''
+                    pushName: ''
+                    messageType: extendedTextMessage
+                    content:
+                      text: Test v1.3.0
+                      contextInfo: {}
+                    messageTimestamp: 1701767264
+                    instanceId: 1
+                    device: web
+                example-1:
+                  summary: 201 - Quoted - Text
+                  value:
+                    id: 1884
+                    keyId: BAE562775DFC18E6
+                    keyFromMe: true
+                    keyRemoteJid: 553197853327@s.whatsapp.net
+                    keyParticipant: ''
+                    pushName: ''
+                    messageType: extendedTextMessage
+                    content:
+                      text: Quoted
+                      contextInfo:
+                        stanzaId: BAE535C930C07790
+                        participant: 553171714339@s.whatsapp.net
+                        quotedMessage:
+                          extendedTextMessage:
+                            text: Test v1.3.0
+                    messageTimestamp: 1701768867
+                    instanceId: 1
+                    device: web
+                example-2:
+                  summary: 201 - Quoted Media
+                  value:
+                    id: 1886
+                    keyId: BAE525B9649EE922
+                    keyFromMe: true
+                    keyRemoteJid: 123@s.whatsapp.net
+                    keyParticipant: ''
+                    pushName: ''
+                    messageType: extendedTextMessage
+                    content:
+                      text: Quoted - Media
+                      contextInfo:
+                        stanzaId: BAE5A9A507D527DB
+                        participant: 321@s.whatsapp.net
+                        quotedMessage:
+                          documentMessage:
+                            url: >-
+                              https://mmg.whatsapp.net/v/t62.7119-24/35317474_103457e7fwq590867_8056035352822051236_n.enc?ccb=11-4&oh=01_AdRrA4FZOSCrLN4HoajKc7atxmm59srL24OtpgKXpCT3fg&oe=659654545&_nc_sid=5e03e0&mms3=true
+                            mimetype: application/pdf
+                            fileSha256: HM8OAjW5ZyHhlVGOgxU77+cWgEesRssIGr5YXB4ORNQ=
+                            fileLength: '92941'
+                            mediaKey: 2B78QLsqdSI9bq4aEf0cV9Z+0F8Ljz7OF8gfQPQEsHA=
+                            fileName: microsofit.pdf
+                            fileEncSha256: ZC5SLffH4gGJSmneU9uds3hDL1HUiAuTCLiSGJANczI=
+                            directPath: >-
+                              /v/t62.7119-24/35317474_1039171127290867_8056035352822051236_n.enc?ccb=11-4&oh=01_AdRrA4FZOSCrLN4HoajKc7atxmm59srL24OtpgKXpCT3fg&oe=65967159&_nc_sid=5e03e0
+                            mediaKeyTimestamp: '1701768972'
+                            caption: Media
+                    messageTimestamp: 1701769053
+                    instanceId: 1
+                    device: web
+  
+  /message/sendMedia/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send Media
+      description: |
+        This endpoint allows sending media messages via WhatsApp. It requires the following parameters in the request body:
+        
+        - `number` (required): The phone number of the recipient.
+        - `options` (optional): Additional options for the message.
+          - `delay` (optional): The delay in milliseconds before sending the message.
+          - `presence` (optional): The presence status to set while sending the message. Can be one of 'composing', 'recording', or 'paused'.
+          - `quotedMessageId` (optional): The ID of the message to quote.
+        - `mediaMessage` (required): The media message details.
+          - `mediatype` (required): The type of media to send. Can be one of 'image', 'document', 'video', or 'audio'.
+          - `fileName` (optional): The name of the file.
+          - `caption` (optional): The caption for the media.
+          - `media` (required): The URL of the media file.
+        
+        The `instanceName` parameter in the path specifies the instance name for sending the media message.
+        
+        A successful response will have a status code of 200 and an empty JSON body.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                number: <string> - required
+                options:
+                  delay: <integer> - optional
+                  presence: <'composing' | 'recording' | 'paused'> - optional
+                  quotedMessageId: 1
+                mediaMessage:
+                  mediatype: <'image' | 'document' | 'video' | 'audio'> - required
+                  fileName: <string> - optional
+                  caption: <string> - optional
+                  media: <string> - URL - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /message/sendMediaFile/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send Media File
+      description: |
+        This endpoint allows sending a media file (image, document, video, or audio) via WhatsApp. The media file can be sent to a specific phone number, with an optional caption and presence status. The endpoint requires the instance name as a path parameter.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                number:
+                  type: integer
+                  description: '- required'
+                  example: '5531997853327'
+                caption:
+                  type: string
+                  description: '- optional'
+                  example: Media
+                attachment:
+                  type: string
+                  description: '- required - file'
+                  format: binary
+                mediatype:
+                  type: string
+                  description: '-required - image | document | video | audio'
+                  example: document
+                presence:
+                  type: string
+                  description: '- optional - composing | recording'
+                  example: composing
+                delay:
+                  type: integer
+                  description: '- optional'
+                  example: '1200'
+                quotedMessageId:
+                  type: integer
+                  description: '- optional'
+                  example: '1883'
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: Required. The name of the instance.
+          example: '{{instance}}'
+      responses:
+        '201':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '932'
+            ETag:
+              schema:
+                type: string
+                example: W/"3a4-B4T6qfkbaGZZAwZru/T1JbHB9xg"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 09:10:29 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 1883
+                keyId: BAE57934C99793B0
+                keyFromMe: true
+                keyRemoteJid: 123@s.whatsapp.net
+                keyParticipant: ''
+                pushName: ''
+                messageType: documentMessage
+                content:
+                  url: >-
+                    https://mmg.whatsapp.net/v/t62.7119-24/34666153_729845632173676_3343657073423871265_n.enc?ccb=11-4&oh=01_AdQFTYFkVXDFQHKtbynp7KFQikpM0ZD1ckpp--gyoU0Ugw&oe=659666542&_nc_sid=5e03e0&mms3=true
+                  mimetype: application/pdf
+                  fileSha256: HM8OAjW5ZyHhlVGOgx456596-gEesRssIGr5YXB4ORNQ=
+                  fileLength: '92941'
+                  mediaKey: WyPZ4dJdffdfewoX8NAG966mogAh0loGHGhjNoeT0dkQ=
+                  fileName: microsofit.pdf
+                  fileEncSha256: eSTo3k0lTaT+jMfIsG86nQfpOMStApr9lWFWsXsFQzg=
+                  directPath: >-
+                    /v/t62.7119-24/34666153_729836271923676_3343657073423871265_n.enc?ccb=11-4&oh=01_AdQFTYFkVXDFQHKtbynp7KFQikpM0ZD1ckpp--gyoU0Ugw&oe=659659B6&_nc_sid=5e03e0
+                  mediaKeyTimestamp: '1701767428'
+                  contextInfo: {}
+                  caption: Media
+                messageTimestamp: 1701767429
+                instanceId: 1
+                device: web
+  
+  /message/sendLocation/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send Location
+      description: |
+        This endpoint allows sending a location message via WhatsApp. The request body should contain the following parameters:
+        
+        - `number` (string, required): The phone number to send the message to.
+        - `options` (object, optional): Additional options for the message.
+          - `delay` (integer, optional): The delay in milliseconds before sending the message.
+          - `presence` (string, optional): The presence status to set for the message sender. Possible values are 'composing', 'recording', or 'paused'.
+          - `quotedMessageId` (integer): The ID of the message to quote.
+        - `locationMessage` (object):
+          - `name` (string, optional): The name of the location.
+          - `address` (string, optional): The address of the location.
+          - `latitude` (integer, required): The latitude of the location.
+          - `longitude` (integer, required): The longitude of the location.
+        
+        The `instanceName` path parameter should be replaced with the actual instance name.
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                number: <string> - required
+                options:
+                  delay: <integer> - optional
+                  presence: <'composing' | 'recording' | 'paused'> - optional
+                  quotedMessageId: 1
+                locationMessage:
+                  name: <string> - optional
+                  address: <string> - optional
+                  latitude: <integer> - required
+                  longitude: <integer> - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /message/sendContact/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send Contact
+      description: |
+        This endpoint allows you to send a contact message in WhatsApp. It requires the instance name as a path parameter and the contact details as the request body. The contact details should include the full name, WhatsApp unique ID (wuid), and phone number of the contact. Additional options such as delay, presence, and quoted message ID can also be provided.
+
+        The response will be a successful status code (200) with an empty JSON body.
+
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                number: <string> - required
+                options:
+                  delay: <integer> - optional
+                  presence: <'composing' | 'recording' | 'paused'> - optional
+                  quotedMessageId: 1
+                contactMessage:
+                  - fullName: <string> - required
+                    wuid: <string> - required
+                    phoneNumber: <string> - required
+                  - fullName: Contact Name
+                    wuid: '5531988882222'
+                    phoneNumber: +55 31 9 8888-2222
+                  - fullName: Contact Name
+                    wuid: '5531922228888'
+                    phoneNumber: +55 31 9 2222-8888
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /message/sendReaction/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send Reaction
+      description: |
+        This endpoint is used to send a reaction message in response to a received message in WhatsApp. The reaction message includes the key of the original message and the reaction itself.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                reactionMessage:
+                  key:
+                    remoteJid: <string> - required
+                    fromMe: <boolean> - required
+                    id: <string> - required
+                  reaction: <string> - required - max 1
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /message/sendWhatsAppAudio/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send WhatsApp Audio
+      description: |
+        This endpoint allows you to send a WhatsApp audio message. 
+        It requires the instance name and the audio URL as parameters. 
+        You can also provide additional options such as delay and quoted message ID.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                number: <string> - required
+                options:
+                  delay: <integer> - optional
+                  quotedMessageId: 1
+                audioMessage:
+                  audio: <string> - URL - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /message/sendWhatsAppAudioFile/{instanceName}:
+    post:
+      tags:
+        - Send Message Controller
+      summary: Send WhatsApp Audio File
+      description: |
+        Send an audio file as a WhatsApp message to a specified number from a given instance.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the WhatsApp instance used to send the audio message.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                number:
+                  type: string
+                  description: WhatsApp number of the recipient, including country code.
+                  example: "+1234567890"
+                attachment:
+                  type: string
+                  description: Audio file to be sent. The file should be provided in binary format.
+                  format: binary
+                delay:
+                  type: string
+                  description: Optional delay (in seconds) before sending the message.
+                  example: "5"
+                quotedMessageId:
+                  type: string
+                  description: Optional ID of the message to be quoted in the conversation.
+                  example: "12345"
+      responses:
+        '200':
+          description: Audio file sent successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Status of the message send operation.
+                  messageId:
+                    type: string
+                    description: Unique identifier of the sent message.
+                example:
+                  status: "Success"
+                  messageId: "abcd1234efgh5678"
+        '400':
+          description: Bad Request - Incorrect parameters or missing audio file.
+        '500':
+          description: Internal Server Error - Error in processing the request.
+  
+  /chat/whatsappNumbers/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: WhatsApp Number
+      description: |
+        This endpoint is used to add WhatsApp numbers to a specific instance. It expects a JSON object in the request body with an array of numbers. The numbers must be provided as strings. The instance name is passed as a path parameter.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                numbers:
+                  - <string> - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '89'
+            ETag:
+              schema:
+                type: string
+                example: W/"59-URVyjOOmCv5REmYHceVfaEO5zy8"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 09:40:00 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - jid: 123@s.whatsapp.net
+                  exists: true
+                - jid: '5531988888'
+                  exists: false
+        '400':
+          description: Bad Request
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '134'
+            ETag:
+              schema:
+                type: string
+                example: W/"86-boH/kjKBqKGrErvvnEE3ns9kl5c"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 09:39:13 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 400
+                error: Bad Request
+                message:
+                  - property: numbers[0]
+                    message: '"numbers" must be an array of numeric strings'
+  
+  /chat/markMessageAsRead/{instanceName}:
+    put:
+      tags:
+        - Chat Controller
+      summary: Read Messages
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                readMessages:
+                  - remoteJid: <string> - required
+                    fromMe: <boolean> - required
+                    id: <string> - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '44'
+            ETag:
+              schema:
+                type: string
+                example: W/"2c-tW10vEx5idqx9Xi/GkjeHN7xexQ"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 09:49:41 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                message: Read messages
+                read: success
+        '400':
+          description: Bad Request
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '260'
+            ETag:
+              schema:
+                type: string
+                example: W/"104-TcFMmI8BdcX4HGvv2iRKVzw5igE"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 09:49:07 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 400
+                error: Bad Request
+                message:
+                  - property: readMessages[0].fromMe
+                    message: readMessages[0].fromMe is not of a type(s) boolean
+                  - property: readMessages[0].fromMe
+                    message: >-
+                      readMessages[0].fromMe is not one of enum values:
+                      true,false
+  
+  /chat/archiveChat/{instanceName}:
+    put:
+      tags:
+        - Chat Controller
+      summary: Archive Chat
+      description: This endpoint is used to archive a chat in the WhatsApp API. Archiving a chat removes it from the main chat list and moves it to the archived chats section.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                lastMessage:
+                  key:
+                    remoteJid: <string> - required
+                    fromMe: <boolean> - required
+                    id: <string> - required
+                archive: <boolean> - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+
+  /chat/deleteMessageForEveryone/{instanceName}:
+      delete:
+        tags:
+          - Chat Controller
+        summary: Delete Message
+        description: |
+            This endpoint is used to delete a message for everyone in a chat instance.
+            It requires the `instanceName` parameter in the path and the `messageId` parameter in the query.
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: '{{instance}}'
+          - name: messageId
+            in: query
+            schema:
+              type: string
+            required: true
+            description: 'ID of the message to be deleted'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  
+  /chat/fetchProfilePictureUrl/{instanceNamce}:
+      post:
+        tags:
+          - Chat Controller
+        summary: Fetch Profile Picture
+        description: |
+          This endpoint is used to fetch the profile picture URL of a contact in a chat instance.
+          It requires the `instanceNamce` parameter in the path and the `number` parameter in the request body.
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  number: <string> - required
+        parameters:
+          - name: instanceNamce
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: '{{instance}}'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  
+  indContacts/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: Find Contacts
+      description: |
+        This endpoint allows for searching contacts within a specific chat instance based on provided query criteria.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the chat instance in which to search for contacts.
+      requestBody:
+        description: Request payload containing the search criteria.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                where:
+                  type: object
+                  properties:
+                    remoteJid:
+                      type: string
+                      description: The unique identifier of the contact to be searched. This is a required field.
+                  required:
+                    - remoteJid
+              example:
+                where:
+                  remoteJid: "123@s.whatsapp.net"
+      responses:
+        '200':
+          description: A list of contacts that match the search criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                      description: Unique identifier of the contact.
+                    remoteJid:
+                      type: string
+                      description: The unique identifier of the contact.
+                    pushName:
+                      type: string
+                      description: The push name of the contact, if available.
+                    profilePicUrl:
+                      type: string
+                      description: URL of the contact's profile picture, if available.
+                    createdAt:
+                      type: string
+                      format: date-time
+                      description: Timestamp of when the contact was created.
+                    updatedAt:
+                      type: string
+                      format: date-time
+                      description: Timestamp of the last update to the contact's information.
+                    instanceId:
+                      type: integer
+                      description: Identifier of the instance to which the contact belongs.
+              example:
+                - id: 1
+                  remoteJid: "123@s.whatsapp.net"
+                  pushName: null
+                  profilePicUrl: "https://pps.whatsapp.net/example.jpg"
+                  createdAt: "2023-12-05T00:00:00.000Z"
+                  updatedAt: "2023-12-05T00:00:00.000Z"
+                  instanceId: 1
+  
+  /chat/retrieverMediaMessage/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: Retrieve Media Message
+      description: |
+        Retrieve a specific media message from a given chat instance. This endpoint requires the `instanceName` as a path parameter and `keyId` of the media message in the request body.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the chat instance from which the media message will be retrieved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyId:
+                  type: string
+                  description: The unique identifier of the media message to be retrieved.
+              required:
+                - keyId
+              example:
+                keyId: "3A778B978B5D9995F574"
+      responses:
+        '200':
+          description: Media message retrieved successfully. The response is a binary file of the media.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Media message not found or instance not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message detailing why the media message or instance was not found.
+                example:
+                  error: "Media message or instance not found"
+    
+  /chat/findMessages/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: Find Messages
+      description: |
+        Search for messages within a specific chat instance based on various criteria.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the chat instance in which to search for messages.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                where:
+                  type: object
+                  description: Criteria for filtering messages.
+                  properties:
+                    id:
+                      type: integer
+                      description: Message ID.
+                    keyid:
+                      type: string
+                      description: Key identifier of the message.
+                    keyRemoteJid:
+                      type: string
+                      description: Remote JID associated with the message.
+                    keyFromMe:
+                      type: boolean
+                      description: Indicates if the message was sent by the instance itself.
+                    messageType:
+                      type: string
+                      description: Type of the message (e.g., text, image, video).
+                    device:
+                      type: string
+                      description: Device from which the message was sent.
+                    messageStatus:
+                      type: string
+                      description: Status of the message (e.g., SENT, DELIVERED, READ).
+                offset:
+                  type: integer
+                  description: Offset for pagination.
+                page:
+                  type: integer
+                  description: Page number for pagination.
+              example:
+                where:
+                  id: 2
+                  keyid: "3A4592EBC0C67D447FB2"
+                  keyRemoteJid: "123@s.whatsapp.net"
+                  keyFromMe: true
+                  messageType: "imageMessage"
+                  device: "web"
+                  messageStatus: "DELIVERY_ACK"
+                offset: 20
+                page: 1
+      responses:
+        '200':
+          description: List of messages matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: Total number of messages found.
+                  pages:
+                    type: integer
+                    description: Total number of pages available.
+                  currentPage:
+                    type: integer
+                    description: Current page number.
+                  records:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        keyId:
+                          type: string
+                        keyFromMe:
+                          type: boolean
+                        keyRemoteJid:
+                          type: string
+                        keyParticipant:
+                          type: string
+                        pushName:
+                          type: string
+                        messageType:
+                          type: string
+                        content:
+                          type: string
+                        messageTimestamp:
+                          type: integer
+                        instanceId:
+                          type: integer
+                        device:
+                          type: string
+                        MessageUpdate:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            status:
+                              type: string
+                            dateTime:
+                              type: string
+                              format: date-time
+              example:
+                messages:
+                  total: 254587
+                  pages: 12730
+                  currentPage: 1
+                  records:
+                    - id: 2
+                      keyId: "3A4592EBC0C67D447FB2"
+                      keyFromMe: true
+                      keyRemoteJid: "123@s.whatsapp.net"
+                      keyParticipant: ''
+                      pushName: ''
+                      messageType: "conversation"
+                      content: "text"
+                      messageTimestamp: 1699957890
+                      instanceId: 1
+                      device: "ios"
+                      MessageUpdate:
+                        id: 5
+                        status: "DELIVERY_ACK"
+                        dateTime: "2023-12-05T00:00:00.000Z"
+  
+  /chat/findStatusMessage/{instanceName}:
+      post:
+        tags:
+          - Chat Controller
+        summary: Find Status Message
+        description: |
+          This endpoint is used to find the status message of a chat instance.
+          It requires the instance name as a path parameter and the ID of the status message as a request body parameter.
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  where:
+                    id: <string> - required
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: '{{instance}}'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  /chat/findChats/{inatnceName}:
+    get:
+      tags:
+        - Chat Controller
+      summary: Find Chats
+      parameters:
+        - name: inatnceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            ETag:
+              schema:
+                type: string
+                example: W/"10e1-fHtzEfDU1mbrWbONYhOxLSlARCw"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Date:
+              schema:
+                type: string
+                example: Tue, 05 Dec 2023 14:38:56 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                - id: 1
+                  remoteJid: 123@s.whatsapp.net
+                  createdAt: '2023-12-05T00:00:00.000Z'
+                  updatedAt: '2023-12-05T00:00:00.000Z'
+                  instanceId: 1
+                - id: 2
+                  remoteJid: 456@s.whatsapp.net
+                  createdAt: '2023-12-05T00:00:00.000Z'
+                  updatedAt: '2023-12-05T00:00:00.000Z'
+                  instanceId: 1
+  
+  /chat/updatePresence/{instanceName}:
+      patch:
+        tags:
+          - Chat Controller
+        summary: Update Presence
+        description: |
+          This endpoint is used to update the presence status of a user in a chat instance.
+          The presence status can be set to one of the following values: 'unavailable', 'available', 'composing', 'recording', 'paused'.
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  number: <string>
+                  presence: >-
+                    'unavailable' | 'available' | 'composing' | 'recording' |
+                    'paused'
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            example: '{{instance}}'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  
+  /group/create/{instanceName}:
+      post:
+        tags:
+          - Group Controller
+        summary: Create Group
+        description: This endpoint is used to create a new group in the WhatsApp API.
+        requestBody:
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  subject: <string> - required
+                  description: <string> - optional
+                  participants:
+                    - <string> - required
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: '{{instance}}'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  
+  /group/updateGroupPicture/{instanceName}:
+    put:
+      tags:
+        - Group Controller
+      summary: Update Group Picture
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                image: <string> - URL - required
+      parameters:
+        - name: groupJid
+          in: query
+          schema:
+            type: string
+          description: '- required'
+          example: '{{groupJid}}'
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /group/findGroupInfos/{instanceName}:
+      get:
+        tags:
+          - Group Controller
+        summary: Find Group
+        description: |
+          This endpoint is used to retrieve information about a specific group in the WhatsApp API.
+          It requires the `groupJid` parameter as a query parameter and the `instanceName` parameter as a path parameter.
+          The `groupJid` parameter represents the unique identifier of the group, while the `instanceName` parameter represents the name of the instance.
+        parameters:
+          - name: groupJid
+            in: query
+            schema:
+              type: string
+            description: '- required'
+            example: '{{groupJid}}'
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: '{{instance}}'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  
+  /group/participants/{instanceName}:
+    get:
+      tags:
+        - Group Controller
+      summary: Find Participants
+      parameters:
+        - name: groupJid
+          in: query
+          schema:
+            type: string
+          description: '- required'
+          example: '{{groupJid}}'
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /group/inviteCode/{instanceName}:
+      get:
+        tags:
+          - Group Controller
+        summary: Invite Code
+        description: |
+          This endpoint retrieves the invite code for a specific group instance.
+          The invite code is used to join the group.
+        parameters:
+          - name: groupJid
+            in: query
+            schema:
+              type: string
+            description: '- required'
+            example: '{{groupJid}}'
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: '{{instance}}'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+  
+  /group/revokeInviteCode/{instanceName}:
+    put:
+      tags:
+        - Group Controller
+      summary: Revoke Invite Code
+      requestBody:
+        content: {}
+      parameters:
+        - name: groupJid
+          in: query
+          schema:
+            type: string
+          description: '- required'
+          example: '{{groupJid}}'
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /group/updateParticipant/{instanceName}:
+    put:
+      tags:
+        - Group Controller
+      summary: Update Participant
+      description: |
+        This endpoint is used to update the participants of a group in the WhatsApp API. The available actions are 'add', 'remove', 'promote', and 'demote'. The request body should contain the action and the list of participants to be updated.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                action: <'add' | 'remove' | 'promote' | 'demote'> - required
+                participants:
+                  - <string> - required
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /group/leaveGroup/{instanceName}:
+    delete:
+      tags:
+        - Group Controller
+      summary: Leave Group
+      parameters:
+        - name: groupJid
+          in: query
+          schema:
+            type: string
+          description: '- required'
+          example: '{{groupJid}}'
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: '{{instance}}'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /instance/refreshToken/:
+    put:
+      tags:
+        - JWT
+      summary: Refresh Token
+      description: Endpoint to update the authentication token.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                oldToken: <string> - required
+      security:
+        - noauthAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /webhook/set/{instanceName}:
+    put:
+      tags:
+        - Webhook
+      summary: Set or Update Webhook
+      description: |
+        Create or update a webhook configuration for a specific instance. This endpoint allows enabling or disabling the webhook and setting the events to be monitored.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the instance for which the webhook is being set or updated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                  description: Whether the webhook is enabled.
+                url:
+                  type: string
+                  format: uri
+                  description: The URL to which webhook events will be sent.
+                events:
+                  type: object
+                  description: A map of event names to boolean values indicating whether each event is enabled.
+                  additionalProperties:
+                    type: boolean
+              example:
+                enabled: false
+                url: "https://webhook.site/ddc933af-3e2b-4499-9c5e-5b296c40bc3e"
+                events:
+                  qrcodeUpdated: true
+                  messagesSet: false
+                  messagesUpsert: true
+                  messagesUpdated: true
+                  sendMessage: true
+                  contactsSet: true
+                  contactsUpsert: true
+                  contactsUpdated: true
+                  chatsSet: false
+                  chatsUpsert: true
+                  chatsUpdated: true
+                  chatsDeleted: true
+                  presenceUpdated: true
+                  groupsUpsert: true
+                  groupsUpdated: true
+                  groupsParticipantsUpdated: true
+                  connectionUpdated: true
+                  statusInstance: true
+                  refreshToken: true
+      responses:
+        '201':
+          description: Webhook configuration created or updated successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Identifier of the webhook configuration.
+                  url:
+                    type: string
+                    format: uri
+                  enabled:
+                    type: boolean
+                  events:
+                    type: object
+                    additionalProperties:
+                      type: boolean
+                example:
+                  id: 1
+                  url: "https://webhook.site/ddc933af-3e2b-4499-9c5e-5b296c40bc3e"
+                  enabled: false
+                  events:
+                    chatsSet: false
+                    chatsUpsert: true
+                    contactsSet: true
+                    messagesSet: false
+                    sendMessage: true
+                    chatsDeleted: true
+                    chatsUpdated: true
+                    groupsUpsert: true
+                    refreshToken: true
+                    groupsUpdated: true
+                    qrcodeUpdated: true
+                    contactsUpsert: true
+                    messagesUpsert: true
+                    statusInstance: true
+                    contactsUpdated: true
+                    messagesUpdated: true
+                    presenceUpdated: true
+                    connectionUpdated: true
+                    groupsParticipantsUpdated: true
+                instanceId: 1
+  
+  /webhook/find/{instanceName}:
+    get:
+      tags:
+        - Webhook
+      summary: Find Webhook Configuration
+      description: |
+        Retrieve the current webhook configuration for a specific instance.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the instance for which to retrieve the webhook configuration.
+      responses:
+        '200':
+          description: Webhook configuration retrieved successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    description: Identifier of the webhook configuration.
+                  url:
+                    type: string
+                    format: uri
+                    description: The URL to which webhook events are sent.
+                  enabled:
+                    type: boolean
+                    description: Indicates whether the webhook is enabled.
+                  events:
+                    type: object
+                    additionalProperties:
+                      type: boolean
+                    description: A map of event names to boolean values indicating whether each event is enabled.
+                  createdAt:
+                    type: string
+                    format: date-time
+                    description: Timestamp of when the webhook configuration was created.
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    description: Timestamp of the last update to the webhook configuration.
+                  instanceId:
+                    type: integer
+                    description: Identifier of the instance to which the webhook configuration belongs.
+              example:
+                id: 1
+                url: "https://webhook.site/ddc933af-3e2b-4499-9c5e-5b296c40bc3e"
+                enabled: true
+                events: {}
+                createdAt: "2023-12-05T00:00:00.000Z"
+                updatedAt: "2023-12-05T00:00:00.000Z"
+                instanceId: 1
+  
+  /s3/findMedia/{instance}:
+    post:
+      tags:
+        - S3 Bucket
+      summary: Find Media Messages
+      description: |
+        Search for media messages within a specific instance, stored in an S3 bucket.
+      parameters:
+        - name: instance
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the instance for which to search for media messages.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id:
+                  type: integer
+                  description: Unique identifier of the media message.
+                type:
+                  type: string
+                  description: Type of the media message (e.g., documentMessage, videoMessage, imageMessage, stickerMessage).
+                messageId:
+                  type: integer
+                  description: ID of the message associated with the media.
+              example:
+                id: 1
+                type: "imageMessage"
+                messageId: 1912
+      responses:
+        '200':
+          description: List of media messages matching the search criteria.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: integer
+                    fileName:
+                      type: string
+                      description: Path of the file in the S3 bucket.
+                    type:
+                      type: string
+                    mimetype:
+                      type: string
+                    createdAt:
+                      type: string
+                      format: date-time
+                    Message:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        keyId:
+                          type: string
+                        keyRemoteJid:
+                          type: string
+                        keyFromMe:
+                          type: boolean
+                        keyParticipant:
+                          type: string
+                        pushName:
+                          type: string
+                        messageType:
+                          type: string
+                        content:
+                          type: object
+                          properties:
+                            url:
+                              type: string
+                            width:
+                              type: integer
+                            height:
+                              type: integer
+                        messageTimestamp:
+                          type: integer
+                        device:
+                          type: string
+                        instanceId:
+                          type: integer
+              example:
+                - id: 20
+                  fileName: >-
+                    1_codechat/status@broadcast/imageMessage/7CACD9691C7216F5B6957C1D0C520921.jpeg
+                  type: imageMessage
+                  mimetype: image/jpeg
+                  createdAt: '2023-12-05T00:00:00.000Z'
+                  Message:
+                    id: 1912
+                    keyId: 7CACD9691C7216F5B6957C1D0C520921
+                    keyRemoteJid: status@broadcast
+                    keyFromMe: false
+                    keyParticipant: null
+                    pushName: Name
+                    messageType: imageMessage
+                    content:
+                      url: >-
+                        https://mmg.whatsapp.net/o1/v/t62.7118-24/f1/m269/up-oil-ima*************-49d0-a9a2-f300b914709f?ccb=9-4&oh=01_AdQs2ZomIbflQQ3eXufObXXJWzId5xQlLdwmiLNc1p8zUQ&oe=65968006&_nc_sid=000000&mms3=true
+                      width: 1080
+                      height: 1121
+                      mediaKey: P2ERCqdo1I************8yq+1RyVQH0K1V70=
+                      mimetype: image/jpeg
+                      directPath: >-
+                        /o1/v/t62.7118-24/f1/m269/up-oil-image-9b46bcff-6fae-49d0-a9a2-f300***********?ccb=9-4&oh=01_AdQs2ZomIbflQQ3eXufObXXJWzId5xQlLdwmiLNc1p8zUQ&oe=65968006&_nc_sid=000000&_nc_hot=1701782457
+                      fileLength: '74532'
+                      fileSha256: 12dEIch3xb0+**************brM0n6PXzuWGrx8T6E=
+                      contextInfo:
+                        isForwarded: true
+                        forwardingScore: 2
+                      fileEncSha256: YJCcvYTGyG7Y*****************r+GRhjmUqMHras6SUY=
+                      jpegThumbnail: >-
+                        /9j/4AAQSkZJRgABAQAAAQABAAD/2w******************HQl2NWGdYWGdYjX2Xe3N7l33gsJycsOD/2c7Z//////////////8BGxsbGxwbHiEhHiotKC0qPTgzMzg9XUJHQkdCXY1YZ1hYZ1iNfZd7c3uXfeCwnJyw4P/Zztn////////////////CABEIAEYAQwMBIgACEQEDEQH/xAAtAAEAAwEBAQAAAAAAAAAAAAAABAUGAQIDAQEBAAAAAAAAAAAAAAAAAAAAAf/aAAwDAQACEAMQAAAA0wHO5U0n1x1jGhc7QHIvxypqaKDNIXmTDNPd4nbAFZmbanXjv1TR5jzPIV1Qepd6+aygq9sMfG3NMUfmf0rLOfcB0AAAAAf/xAAjEAACAgICAwADAQEAAAAAAAABAgADBBEFMRASITBBUUNS/9oACAEBAAE/APN2RVQNuwEp5DGs+BvwZzWW5RVjoCOVr6eYXJNSdOdrFYOoYHYPlmCKWJ0BH5bFXoxubo/4MyL68i0ugIjk7+z21OFyySamPnmDYlI0fnjqcfUt9rof2syaLKmIcamiJhWmjJR4rB1DA/D45q0Klaxm9v0BCCepTbZjWrYsS7F5KgqQA8uospuNbRiAdt3OJ5HTil/HMXF7/XwDqAI/cUPU/sjES/LTIqAsTVg6aFWYw1PWQ4I+TDsY4tZfvU5HFsS4nRYGGtg2jWdyzCvrX2KECDaz3BABEJT+Qt/JicZbkadviyusVoqDoDwaqydlRuOi2IUbozJ4c/4w8Zkiz1CxOKyC+iNCUcMF+3GABQAB8H4//8QAFxEBAQEBAAAAAAAAAAAAAAAAAREQMP/aAAgBAgEBPwDBpThDaEOn/8QAFhEBAQEAAAAAAAAAAAAAAAAAMAEh/9oACAEDAQE/AF2p/9k=
+                      mediaKeyTimestamp: '1701782456'
+                    messageTimestamp: 1701782468
+                    device: android
+                    instanceId: 1
+  
+  /s3/media/url/{id}/{instance}/:
+    get:
+      tags:
+        - S3 Bucket
+      summary: Retrieve Media URL
+      description: |
+        Fetch the URL of a specific media file stored in an S3 bucket for a given instance.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Unique identifier of the media file.
+        - name: instance
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Name of the instance associated with the media file.
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            ETag:
+              schema:
+                type: string
+                example: W/"a74-EmgOdbjXGywbzN6BwiB3M8XMP3g"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Content-Encoding:
+              schema:
+                type: string
+                example: gzip
+            Date:
+              schema:
+                type: string
+                example: Wed, 06 Dec 2023 10:38:01 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+            Transfer-Encoding:
+              schema:
+                type: string
+                example: chunked
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                mediaUrl: >-
+                  https://s3.codechat.com.br/codechat-api-v1/codechat_v1/1_codechat/*********27%40s.whatsapp.net/imageMessage/3AD262ADEF289A7F47C0.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=XCXV6CawqzpOTlpGmZC2%2F20231206%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20231206T103801Z&X-Amz-Expires=604800&X-Amz-SignedHeaders=host&X-Amz-Signature=2f8a8b9fbcdb91251345a1ed8e7afe332983a89821b3893669e187a4ed7c140c
+                id: 10
+                fileName: >-
+                  1_codechat/553197853327@s.whatsapp.net/imageMessage/3AD262ADEF289A7F47C0.jpeg
+                type: imageMessage
+                mimetype: image/jpeg
+                createdAt: '2023-12-05T00:00:00.000Z'
+                Message:
+                  id: 1901
+                  keyId: 3AD262ADEF289A7F47C0
+                  keyRemoteJid: 123@s.whatsapp.net
+                  keyFromMe: true
+                  keyParticipant: null
+                  pushName: Name
+                  messageType: imageMessage
+                  content:
+                    url: >-
+                      https://mmg.whatsapp.net/o1/v/t62.7118-24/f1/m238/up-oil-image-*********e-bf2d-ccf75e1bc6cc?ccb=9-4&oh=01_AdSGTZ-kCWrGaSJQqjJN5R9e1ah6U5OGEmWlcZibxSqfqA&oe=65966F26&_nc_sid=000000&mms3=true
+                    width: 1006
+                    height: 571
+                    mediaKey: TzTlnZ*********8eAxR4CdSo9gwiVec8Qf/XEU=
+                    mimetype: image/jpeg
+                    directPath: >-
+                      /o1/v/t62.7118-24/f1/m238/up-oil-image-48d0f641-******cf75e1bc6cc?ccb=9-4&oh=01_AdSGTZ-kCWrGaSJQqjJN5R9e1ah6U5OGEmWlcZibxSqfqA&oe=65966F26&_nc_sid=000000
+                    fileLength: '63572'
+                    fileSha256: Y+gXVHnf/1DOt***4PlZgkv/CGU8x0Hd+Cqw=
+                    scanLengths:
+                      - 6013
+                      - 23583
+                      - 12019
+                      - 21955
+                    scansSidecar: q7Mp3KP+9d+7HT0/hzZJ7bGQ5GLlIowHHS90SG+7j3BH/34pExOeRA==
+                    fileEncSha256: dyz0KlETA11o+awWQsw0MrhD1lI6uGa7OxE/VuwIawo=
+                    jpegThumbnail: >-
+                      /9j/4AAQSkZJRgABAQAAAQAB**********hceHBsgKEIrKCUlKFE6PTBCYFVlZF9VXVtqeJmBanGQc1tdhbWGkJ6jq62rZ4C8ybqmx5moq6T/2wBDARweHigjKE4rK06kbl1upKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKSkpKT/wgARCAApAEgDASIAAhEBAxEB/8QAGgAAAgMBAQAAAAAAAAAAAAAAAAMBAgQFBv/EABcBAQEBAQAAAAAAAAAAAAAAAAEAAgP/2gAMAwEAAhADEAAAAPOa1sTdiURRbA0mdgmYaUmo4la29jHXmzfCIiV75gDm78ktqpnkW0oxKREVJUr/xAAaEQACAwEBAAAAAAAAAAAAAAABEQACECAx/9oACAECAQE/AFq02RULt5AFj5//xAAaEQACAwEBAAAAAAAAAAAAAAAAEQECEDEg/9oACAEDAQE/AHiHiIo4ZCr0tZ8GIc+P/8QAJRAAAgIBBAICAgMAAAAAAAAAAQIAAxEEEiExMkETYRAUImKh/9oACAEBAAE/AFlNbOuMcGLp6tOuS+7jqXVqr/InKH/I75MLTkwITPjxK61UEueYt2wdy29m9yi3+WxvFpbQwcjEXTse4mmCjJELKvCqDLWUrkcfUNhM3EwKzTSaU2OAATNZdTp3FRQs48o99KoDTWSSOz6lttjk5IH1MYH2Y7Z49RULGfFt4PZmm024g2cCae/S6RMgAmarVUNYzrUu49mPcz/1EZhzzkwsTwIcAStlVhmMVcZDDcJ+xYBgnENp9tDaoGByfuEs3fAhIzMjMJh9Qdw9x/UHmJd2I3n+Pc///gADAP/Z
+                    firstScanLength: 6013
+                    firstScanSidecar: q7Mp3KP+9d+7HQ==
+                    mediaKeyTimestamp: '1701775671'
+                    midQualityFileSha256: al//sI4SlW+unkKAyrXR2xVvj4KDvfMVrhIYuvn10Ig=
+                  messageTimestamp: 1701777703
+                  device: ios
+                  instanceId: 1
+        '400':
+          description: Bad Request
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '66'
+            ETag:
+              schema:
+                type: string
+                example: W/"42-nvmo3BA5bJlGEaZ3/Z0oSTkuOws"
+            Vary:
+              schema:
+                type: string
+                example: Accept-Encoding
+            Date:
+              schema:
+                type: string
+                example: Wed, 06 Dec 2023 10:39:15 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 400
+                error: Bad Request
+                message:
+                  - Media not found
+  
+  /typebot/sessions/find/{instanceName}:
+    get:
+      tags:
+        - Typebot > Sessions
+      summary: Sessions Find
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: codechat-bot
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '201'
+            ETag:
+              schema:
+                type: string
+                example: W/"c9-fPIaSDw6c/efSDhq7oZK6CIHGjk"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:44:19 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 2
+                publicId: exibition-zwy88ap
+                typebotUrl: https://typebot.io
+                enabled: true
+                enableGroup: false
+                createdAt: '2023-12-08T00:00:00.000Z'
+                updatedAt: '2023-12-08T00:00:00.000Z'
+                instanceId: 1
+        '404':
+          description: Not Found
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '93'
+            ETag:
+              schema:
+                type: string
+                example: W/"5d-S7z8AssUlis6meu28yjO8nOM3AI"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:28:42 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 404
+                error: Not Found
+                message:
+                  - The "codechat-bot" instance does not exist
+  
+  /typebot/sessions/update/{instanceName}:
+    patch:
+      tags:
+        - Typebot > Sessions
+      summary: Update Session
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example: ''
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: codechat-bot
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '201'
+            ETag:
+              schema:
+                type: string
+                example: W/"c9-fPIaSDw6c/efSDhq7oZK6CIHGjk"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:44:19 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 2
+                publicId: exibition-zwy88ap
+                typebotUrl: https://typebot.io
+                enabled: true
+                enableGroup: false
+                createdAt: '2023-12-08T00:00:00.000Z'
+                updatedAt: '2023-12-08T00:00:00.000Z'
+                instanceId: 1
+        '404':
+          description: Not Found
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '93'
+            ETag:
+              schema:
+                type: string
+                example: W/"5d-S7z8AssUlis6meu28yjO8nOM3AI"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:28:42 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 404
+                error: Not Found
+                message:
+                  - The "codechat-bot" instance does not exist
+  
+  /typebot/create/{instanceName}:
+    post:
+      tags:
+        - Typebot
+      summary: Create Integration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                publicId: exibition-zwy88ap
+                enabled: true
+                typebotUrl: https://typebot.io
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: codechat-bot
+      responses:
+        '201':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '600'
+            ETag:
+              schema:
+                type: string
+                example: W/"258-qYeHwNdxnPVcTWLQ4i2pYTAEp4U"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:21:41 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 2
+                enabled: true
+                publicId: exibition-zwy88ap
+                typebotUrl: https://typebot.io
+                createdAt: '2023-12-08T00:00:00.000Z'
+                updatedAt: '2023-12-08T00:00:00.000Z'
+                Instance:
+                  id: 1
+                  name: codechat-bot
+                  description: 'Instance: Test V1'
+                  connectionStatus: ONLINE
+                  ownerJid: 553171351854@s.whatsapp.net
+                  profilePicUrl: >-
+                    https://pps.whatsapp.net/v/t61.24694-24/390195212_720036100150140_9119125126675536152_n.jpg?ccb=11-4&oh=01_AdRlcxzfhf1s1eNXzOmP68CIQzVLkcsbk_-oH1qRpzUoyQ&oe=6580931F&_nc_sid=e6ed6c&_nc_cat=100
+                  createdAt: '2023-12-08T00:00:00.000Z'
+                  updatedAt: '2023-12-08T00:00:00.000Z'
+        '404':
+          description: Not Found
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '71'
+            ETag:
+              schema:
+                type: string
+                example: W/"47-mml2tCmcQu/SJ/m5UIPCVGgBDdI"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 15:21:47 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 404
+                error: Not Found
+                message:
+                  - Bot instance not found
+  
+  /typebot/update/{instanceName}:
+    put:
+      tags:
+        - Typebot
+      summary: Update
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                publicId: exibition-zwy88ap
+                enabled: true
+                typebotUrl: https://typebot.io
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: codechat-bot
+      responses:
+        '201':
+          description: Created
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '600'
+            ETag:
+              schema:
+                type: string
+                example: W/"258-qYeHwNdxnPVcTWLQ4i2pYTAEp4U"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:21:41 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 2
+                enabled: true
+                publicId: exibition-zwy88ap
+                typebotUrl: https://typebot.io
+                createdAt: '2023-12-08T00:00:00.000Z'
+                updatedAt: '2023-12-08T00:00:00.000Z'
+                Instance:
+                  id: 1
+                  name: codechat-bot
+                  description: 'Instance: Test V1'
+                  connectionStatus: ONLINE
+                  ownerJid: 553171351854@s.whatsapp.net
+                  profilePicUrl: >-
+                    https://pps.whatsapp.net/v/t61.24694-24/390195212_720036100150140_9119125126675536152_n.jpg?ccb=11-4&oh=01_AdRlcxzfhf1s1eNXzOmP68CIQzVLkcsbk_-oH1qRpzUoyQ&oe=6580931F&_nc_sid=e6ed6c&_nc_cat=100
+                  createdAt: '2023-12-08T00:00:00.000Z'
+                  updatedAt: '2023-12-08T00:00:00.000Z'
+        '404':
+          description: Not Found
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '71'
+            ETag:
+              schema:
+                type: string
+                example: W/"47-mml2tCmcQu/SJ/m5UIPCVGgBDdI"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 15:21:47 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 404
+                error: Not Found
+                message:
+                  - Bot instance not found
+  
+  /typebot/find/{instanceName}:
+    get:
+      tags:
+        - Typebot
+      summary: Find Integration
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: codechat-bot
+      responses:
+        '200':
+          description: OK
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '201'
+            ETag:
+              schema:
+                type: string
+                example: W/"c9-fPIaSDw6c/efSDhq7oZK6CIHGjk"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:44:19 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                id: 2
+                publicId: exibition-zwy88ap
+                typebotUrl: https://typebot.io
+                enabled: true
+                enableGroup: false
+                createdAt: '2023-12-08T00:00:00.000Z'
+                updatedAt: '2023-12-08T00:00:00.000Z'
+                instanceId: 1
+        '404':
+          description: Not Found
+          headers:
+            X-Powered-By:
+              schema:
+                type: string
+                example: Express
+            Content-Type:
+              schema:
+                type: string
+                example: application/json; charset=utf-8
+            Content-Length:
+              schema:
+                type: integer
+                example: '93'
+            ETag:
+              schema:
+                type: string
+                example: W/"5d-S7z8AssUlis6meu28yjO8nOM3AI"
+            Date:
+              schema:
+                type: string
+                example: Fri, 08 Dec 2023 20:28:42 GMT
+            Connection:
+              schema:
+                type: string
+                example: keep-alive
+            Keep-Alive:
+              schema:
+                type: string
+                example: timeout=5
+          content:
+            application/json:
+              schema:
+                type: object
+              example:
+                status: 404
+                error: Not Found
+                message:
+                  - The "codechat-bot" instance does not exist
+  
+  /typebot/delete/{instanceName}:
+    delete:
+      tags:
+        - Typebot
+      summary: Delete Integration
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: codechat-bot
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}

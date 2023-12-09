@@ -36,3 +36,73 @@ export class WebhookDto {
   enabled?: boolean;
   url?: string;
 }
+
+export class WebhookEvents {
+  qrcodeUpdated?: boolean;
+  messagesSet?: boolean;
+  messagesUpsert?: boolean;
+  messagesUpdated?: boolean;
+  sendMessage?: boolean;
+  contactsSet?: boolean;
+  contactsUpsert?: boolean;
+  contactsUpdated?: boolean;
+  chatsSet?: boolean;
+  chatsUpsert?: boolean;
+  chatsUpdated?: boolean;
+  chatsDeleted?: boolean;
+  presenceUpdated?: boolean;
+  groupsUpsert?: boolean;
+  groupsUpdated?: boolean;
+  groupsParticipantsUpdated?: boolean;
+  connectionUpdated?: boolean;
+  statusInstance?: boolean;
+  refreshToken?: boolean;
+}
+
+export type EventsType =
+  | 'qrcode.updated'
+  | 'connection.update'
+  | 'status.instance'
+  | 'messages.set'
+  | 'messages.upsert'
+  | 'messages.update'
+  | 'send.message'
+  | 'contacts.set'
+  | 'contacts.upsert'
+  | 'contacts.update'
+  | 'presence.update'
+  | 'chats.set'
+  | 'chats.update'
+  | 'chats.upsert'
+  | 'chats.delete'
+  | 'groups.upsert'
+  | 'groups.update'
+  | 'group-participants.update'
+  | 'status.instance'
+  | 'refresh.token';
+
+export type WebhookEventsType = keyof WebhookEvents;
+
+export const WebhookEventsEnum: Record<WebhookEventsType, EventsType> = {
+  qrcodeUpdated: 'qrcode.updated',
+  messagesSet: 'messages.set',
+  messagesUpsert: 'messages.upsert',
+  messagesUpdated: 'messages.update',
+  sendMessage: 'send.message',
+  contactsSet: 'contacts.set',
+  contactsUpsert: 'contacts.upsert',
+  contactsUpdated: 'contacts.update',
+  chatsSet: 'chats.set',
+  chatsUpsert: 'chats.upsert',
+  chatsUpdated: 'chats.update',
+  chatsDeleted: 'chats.delete',
+  presenceUpdated: 'presence.update',
+  groupsUpsert: 'groups.upsert',
+  groupsUpdated: 'groups.update',
+  groupsParticipantsUpdated: 'group-participants.update',
+  connectionUpdated: 'connection.update',
+  statusInstance: 'status.instance',
+  refreshToken: 'refresh.token',
+};
+
+export type WebhookEventsMap = typeof WebhookEventsEnum;

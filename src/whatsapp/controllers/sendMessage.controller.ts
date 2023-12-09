@@ -53,7 +53,7 @@ export class SendMessageController {
   constructor(private readonly waMonitor: WAMonitoringService) {}
 
   public async sendText({ instanceName }: InstanceDto, data: SendTextDto) {
-    return await this.waMonitor.waInstances[instanceName].textMessage(data);
+    return await this.waMonitor.waInstances.get(instanceName).textMessage(data);
   }
 
   public async sendMedia({ instanceName }: InstanceDto, data: SendMediaDto) {
@@ -64,7 +64,7 @@ export class SendMessageController {
       throw new BadRequestException('Enter the file name for the "document" type.');
     }
     if (isURL(data?.mediaMessage?.media as string)) {
-      return await this.waMonitor.waInstances[instanceName].mediaMessage(data);
+      return await this.waMonitor.waInstances.get(instanceName).mediaMessage(data);
     }
   }
 
@@ -78,7 +78,9 @@ export class SendMessageController {
     } else {
       data.delay = Number.parseInt(data?.delay as never);
     }
-    return await this.waMonitor.waInstances[instanceName].mediaFileMessage(data, file);
+    return await this.waMonitor.waInstances
+      .get(instanceName)
+      .mediaFileMessage(data, file);
   }
 
   public async sendWhatsAppAudio({ instanceName }: InstanceDto, data: SendAudioDto) {
@@ -86,7 +88,7 @@ export class SendMessageController {
       throw new BadRequestException('Owned media must be a url');
     }
     if (isURL(data.audioMessage.audio) || isBase64(data.audioMessage.audio)) {
-      return await this.waMonitor.waInstances[instanceName].audioWhatsapp(data);
+      return await this.waMonitor.waInstances.get(instanceName).audioWhatsapp(data);
     }
   }
 
@@ -100,21 +102,23 @@ export class SendMessageController {
     } else {
       data.delay = Number.parseInt(data?.delay as never);
     }
-    return await this.waMonitor.waInstances[instanceName].audioWhatsAppFile(data, file);
+    return await this.waMonitor.waInstances
+      .get(instanceName)
+      .audioWhatsAppFile(data, file);
   }
 
   public async sendLocation({ instanceName }: InstanceDto, data: SendLocationDto) {
-    return await this.waMonitor.waInstances[instanceName].locationMessage(data);
+    return await this.waMonitor.waInstances.get(instanceName).locationMessage(data);
   }
 
   public async sendContact({ instanceName }: InstanceDto, data: SendContactDto) {
-    return await this.waMonitor.waInstances[instanceName].contactMessage(data);
+    return await this.waMonitor.waInstances.get(instanceName).contactMessage(data);
   }
 
   public async sendReaction({ instanceName }: InstanceDto, data: SendReactionDto) {
     if (!data.reactionMessage.reaction.match(/[^\(\)\w\sà-ú"-\+]+/)) {
       throw new BadRequestException('"reaction" must be an emoji');
     }
-    return await this.waMonitor.waInstances[instanceName].reactionMessage(data);
+    return await this.waMonitor.waInstances.get(instanceName).reactionMessage(data);
   }
 }

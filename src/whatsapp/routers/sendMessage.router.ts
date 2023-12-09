@@ -55,126 +55,117 @@ import {
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import { sendMessageController } from '../whatsapp.module';
-import { RouterBroker } from '../abstract/abstract.router';
-import { HttpStatus } from './index.router';
 import multer from 'multer';
 import { BadRequestException } from '../../exceptions';
 import { isEmpty } from 'class-validator';
+import { HttpStatus } from '../../app.module';
+import { SendMessageController } from '../controllers/sendMessage.controller';
+import { routerPath, dataValidate } from '../../validate/router.validate';
 
-export class MessageRouter extends RouterBroker {
-  constructor(...guards: RequestHandler[]) {
-    super();
+function validateMedia(req: Request, _: Response, next: NextFunction) {
+  if (!req?.file || req.file.fieldname !== 'attachment') {
+    throw new BadRequestException('Invalid File');
+  }
 
-    const uploadFile = multer({ preservePath: true });
+  if (isEmpty(req.body?.presence)) {
+    req.body.presence = undefined;
+  }
 
-    this.router
-      .post(this.routerPath('sendText'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<SendTextDto>({
-          request: req,
-          schema: textMessageSchema,
-          ClassRef: SendTextDto,
-          execute: (instance, data) => sendMessageController.sendText(instance, data),
-        });
+  next();
+}
 
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .post(this.routerPath('sendMedia'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<SendMediaDto>({
-          request: req,
-          schema: mediaMessageSchema,
-          ClassRef: SendMediaDto,
-          execute: (instance, data) => sendMessageController.sendMedia(instance, data),
-        });
+export function MessageRouter(
+  sendMessageController: SendMessageController,
+  ...guards: RequestHandler[]
+) {
+  const uploadFile = multer({ preservePath: true });
 
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .post(
-        this.routerPath('sendMediaFile'),
-        ...guards,
-        uploadFile.single('attachment'),
-        this.validateMedia,
-        async (req, res) => {
-          const response = await this.dataValidate<MediaFileDto>({
-            request: req,
-            schema: mediaFileMessageSchema,
-            ClassRef: MediaFileDto,
-            execute: (instance, data, file) =>
-              sendMessageController.sendMediaFile(instance, data, file),
-          });
-          return res.status(HttpStatus.CREATED).json(response);
-        },
-      )
-      .post(this.routerPath('sendWhatsAppAudio'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<SendAudioDto>({
-          request: req,
-          schema: audioMessageSchema,
-          ClassRef: SendMediaDto,
-          execute: (instance, data) =>
-            sendMessageController.sendWhatsAppAudio(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .post(
-        this.routerPath('sendWhatsAppAudioFile'),
-        ...guards,
-        uploadFile.single('attachment'),
-        this.validateMedia,
-        async (req, res) => {
-          const response = await this.dataValidate<AudioMessageFileDto>({
-            request: req,
-            schema: audioFileMessageSchema,
-            ClassRef: AudioMessageFileDto,
-            execute: (instance, data, file) =>
-              sendMessageController.sendWhatsAppAudioFile(instance, data, file),
-          });
-          return res.status(HttpStatus.CREATED).json(response);
-        },
-      )
-      .post(this.routerPath('sendLocation'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<SendLocationDto>({
-          request: req,
-          schema: locationMessageSchema,
-          ClassRef: SendLocationDto,
-          execute: (instance, data) => sendMessageController.sendLocation(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .post(this.routerPath('sendContact'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<SendContactDto>({
-          request: req,
-          schema: contactMessageSchema,
-          ClassRef: SendContactDto,
-          execute: (instance, data) => sendMessageController.sendContact(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .post(this.routerPath('sendReaction'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<SendReactionDto>({
-          request: req,
-          schema: reactionMessageSchema,
-          ClassRef: SendReactionDto,
-          execute: (instance, data) => sendMessageController.sendReaction(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
+  const router = Router()
+    .post(routerPath('sendText'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendTextDto>({
+        request: req,
+        schema: textMessageSchema,
+        execute: (instance, data) => sendMessageController.sendText(instance, data),
       });
-  }
 
-  public readonly router = Router();
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendMedia'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendMediaDto>({
+        request: req,
+        schema: mediaMessageSchema,
+        execute: (instance, data) => sendMessageController.sendMedia(instance, data),
+      });
 
-  private validateMedia(req: Request, _: Response, next: NextFunction) {
-    if (!req?.file || req.file.fieldname !== 'attachment') {
-      throw new BadRequestException('Invalid File');
-    }
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(
+      routerPath('sendMediaFile'),
+      ...guards,
+      uploadFile.single('attachment'),
+      validateMedia,
+      async (req, res) => {
+        const response = await dataValidate<MediaFileDto>({
+          request: req,
+          schema: mediaFileMessageSchema,
+          execute: (instance, data, file) =>
+            sendMessageController.sendMediaFile(instance, data, file),
+        });
+        return res.status(HttpStatus.CREATED).json(response);
+      },
+    )
+    .post(routerPath('sendWhatsAppAudio'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendAudioDto>({
+        request: req,
+        schema: audioMessageSchema,
+        execute: (instance, data) =>
+          sendMessageController.sendWhatsAppAudio(instance, data),
+      });
 
-    if (isEmpty(req.body?.presence)) {
-      req.body.presence = undefined;
-    }
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(
+      routerPath('sendWhatsAppAudioFile'),
+      ...guards,
+      uploadFile.single('attachment'),
+      validateMedia,
+      async (req, res) => {
+        const response = await dataValidate<AudioMessageFileDto>({
+          request: req,
+          schema: audioFileMessageSchema,
+          execute: (instance, data, file) =>
+            sendMessageController.sendWhatsAppAudioFile(instance, data, file),
+        });
+        return res.status(HttpStatus.CREATED).json(response);
+      },
+    )
+    .post(routerPath('sendLocation'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendLocationDto>({
+        request: req,
+        schema: locationMessageSchema,
+        execute: (instance, data) => sendMessageController.sendLocation(instance, data),
+      });
 
-    next();
-  }
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendContact'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendContactDto>({
+        request: req,
+        schema: contactMessageSchema,
+        execute: (instance, data) => sendMessageController.sendContact(instance, data),
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendReaction'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendReactionDto>({
+        request: req,
+        schema: reactionMessageSchema,
+        execute: (instance, data) => sendMessageController.sendReaction(instance, data),
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    });
+
+  return router;
 }

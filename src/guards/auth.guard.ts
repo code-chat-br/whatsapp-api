@@ -1,7 +1,7 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename webhook.repository.ts                                              │
+ * │ @filename auth.guard.ts                                                      │
  * │ Developed by: Cleber Wilson                                                  │
  * │ Creation date: Nov 27, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │
@@ -23,10 +23,15 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @class                                                                       │
- * │ @constructs WebhookRepository @extends Repository                            │
- * │ @param {IWebhookModel} webhookModel                                          │
- * │ @param {ConfigService} configService                                         │
+ * │ @function jwtGuard                                                           │
+ * │ @property {Request} req @property {Response} _ @property {NextFunction} next │
+ * │ @returns {Promise<void>}                                                     │
+ * │                                                                              │
+ * │ @function apikey                                                             │
+ * │ @property {Request} req @property {Response} _ @property {NextFunction} next │
+ * │ @returns {Promise<void>}                                                     │
+ * │                                                                              │
+ * │ @constant authGuard                                                          │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -35,56 +40,64 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { IInsert, Repository } from '../abstract/abstract.repository';
-import { ConfigService } from '../../config/env.config';
-import { join } from 'path';
-import { readFileSync } from 'fs';
-import { IWebhookModel, WebhookRaw } from '../models';
+import { isJWT } from 'class-validator';
+import { NextFunction, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
+import { Auth, ConfigService } from '../config/env.config';
+import { Logger } from '../config/logger.config';
+import { name } from '../../package.json';
+import { InstanceDto } from '../whatsapp/dto/instance.dto';
+import { JwtPayload } from '../whatsapp/services/instance.service';
+import { ForbiddenException, UnauthorizedException } from '../exceptions';
 
-export class WebhookRepository extends Repository {
-  constructor(
-    private readonly webhookModel: IWebhookModel,
-    private readonly configService: ConfigService,
-  ) {
-    super(configService);
-  }
+export class JwtGuard {
+  constructor(private readonly configService: ConfigService) {}
 
-  public async create(data: WebhookRaw, instance: string): Promise<IInsert> {
-    try {
-      if (this.dbSettings.ENABLED) {
-        const insert = await this.webhookModel.replaceOne(
-          { _id: instance },
-          { ...data },
-          { upsert: true },
-        );
-        return { insertCount: insert.modifiedCount };
-      }
+  private readonly logger = new Logger(this.configService, JwtGuard.name);
 
-      this.writeStore<WebhookRaw>({
-        path: join(this.storePath, 'webhook'),
-        fileName: instance,
-        data,
-      });
+  async canActivate(req: Request, _: Response, next: NextFunction) {
+    const key = req.get('apikey');
 
-      return { insertCount: 1 };
-    } catch (error) {
-      return error;
+    if (this.configService.get<Auth>('AUTHENTICATION').GLOBAL_AUTH_TOKEN === key) {
+      return next();
     }
-  }
 
-  public async find(instance: string): Promise<WebhookRaw> {
+    if (
+      (req.originalUrl.includes('/instance/create') ||
+        req.originalUrl.includes('/instance/fetchInstances')) &&
+      !key
+    ) {
+      throw new ForbiddenException(
+        'Missing global api key',
+        'The global api key must be set',
+      );
+    }
+
+    const jwtOpts = this.configService.get<Auth>('AUTHENTICATION').JWT;
     try {
-      if (this.dbSettings.ENABLED) {
-        return await this.webhookModel.findOne({ _id: instance });
+      const [bearer, token] = req.get('authorization').split(' ');
+
+      if (bearer.toLowerCase() !== 'bearer') {
+        throw new UnauthorizedException();
       }
 
-      return JSON.parse(
-        readFileSync(join(this.storePath, 'webhook', instance + '.json'), {
-          encoding: 'utf-8',
-        }),
-      ) as WebhookRaw;
+      if (!isJWT(token)) {
+        throw new UnauthorizedException();
+      }
+
+      const param = req.params as unknown as InstanceDto;
+      const decode = jwt.verify(token, jwtOpts.SECRET, {
+        ignoreExpiration: jwtOpts.EXPIRIN_IN === 0,
+      }) as JwtPayload;
+
+      if (param.instanceName !== decode.instanceName || name !== decode.apiName) {
+        throw new UnauthorizedException();
+      }
+
+      return next();
     } catch (error) {
-      return {};
+      this.logger.error(error);
+      throw new UnauthorizedException();
     }
   }
 }

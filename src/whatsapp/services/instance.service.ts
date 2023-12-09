@@ -38,17 +38,18 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { Auth, ConfigService, Webhook } from '../../config/env.config';
+import { Auth, ConfigService } from '../../config/env.config';
 import { InstanceDto } from '../dto/instance.dto';
 import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
 import { Logger } from '../../config/logger.config';
 import { v4 } from 'uuid';
 import { isJWT } from 'class-validator';
-import { BadRequestException } from '../../exceptions';
+import { BadRequestException, NotFoundException } from '../../exceptions';
 import axios from 'axios';
+import { Repository } from '../../repository/repository.service';
+import { WebhookEvents } from '../dto/webhook.dto';
 import { WAMonitoringService } from './monitor.service';
-import { RepositoryBroker } from '../repository/repository.manager';
 
 export type JwtPayload = {
   instanceName: string;
@@ -62,20 +63,20 @@ export class OldToken {
   oldToken: string;
 }
 
-export class AuthService {
+export class InstanceService {
   constructor(
     private readonly configService: ConfigService,
     private readonly waMonitor: WAMonitoringService,
-    private readonly repository: RepositoryBroker,
+    private readonly repository: Repository,
   ) {}
 
-  private readonly logger = new Logger(AuthService.name);
+  private readonly logger = new Logger(this.configService, InstanceService.name);
 
-  private async jwt(instance: InstanceDto) {
+  private async generateToken(instanceName: string) {
     const jwtOpts = this.configService.get<Auth>('AUTHENTICATION').JWT;
     const token = sign(
       {
-        instanceName: instance.instanceName,
+        instanceName,
         apiName,
         tokenId: v4(),
       },
@@ -83,38 +84,153 @@ export class AuthService {
       { expiresIn: jwtOpts.EXPIRIN_IN, encoding: 'utf8', subject: 'g-t' },
     );
 
-    const auth = await this.repository.auth.create({ jwt: token }, instance.instanceName);
-
-    if (auth['error']) {
-      this.logger.error({
-        localError: AuthService.name + '.jwt',
-        error: auth['error'],
-      });
-      throw new BadRequestException('Authentication error', auth['error']?.toString());
-    }
-
-    return { jwt: token };
+    return token;
   }
 
-  private async apikey(instance: InstanceDto) {
-    const apikey = v4().toUpperCase();
-
-    const auth = await this.repository.auth.create({ apikey }, instance.instanceName);
-
-    if (auth['error']) {
-      this.logger.error({
-        localError: AuthService.name + '.jwt',
-        error: auth['error'],
-      });
-      throw new BadRequestException('Authentication error', auth['error']?.toString());
+  public async createInstance(instance: InstanceDto) {
+    const find = (await this.fetchInstance(instance.instanceName))[0];
+    if (find) {
+      throw new BadRequestException('Instance already exists');
     }
 
-    return { apikey };
+    try {
+      const instanceName = instance?.instanceName || v4();
+
+      const create = this.repository.instance.create({
+        data: {
+          name: instanceName,
+          description: instance.description,
+          Auth: {
+            create: {
+              token: await this.generateToken(instanceName),
+            },
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          Auth: {
+            select: {
+              id: true,
+              token: true,
+            },
+          },
+        },
+      });
+
+      return create;
+    } catch (error) {}
   }
 
-  public async generateHash(instance: InstanceDto) {
-    const options = this.configService.get<Auth>('AUTHENTICATION');
-    return (await this[options.TYPE](instance)) as { jwt: string } | { apikey: string };
+  public async updateInstance(instance: InstanceDto) {
+    try {
+      const find = (await this.fetchInstance(instance.instanceName))[0];
+      if (!find) {
+        throw new NotFoundException('Instance not found');
+      }
+
+      const updated = await this.repository.instance.update({
+        where: { name: instance.instanceName },
+        data: {
+          description: instance?.description,
+          name: instance?.instanceName,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          createdAt: true,
+          updatedAt: true,
+          Auth: {
+            select: {
+              id: true,
+              token: true,
+            },
+          },
+        },
+      });
+
+      if (instance?.instanceName) {
+        const i = this.waMonitor.waInstances[instance.instanceName];
+        delete this.waMonitor.waInstances[instance.instanceName];
+        this.waMonitor.waInstances[updated.name] = i;
+      }
+
+      return updated;
+    } catch (error) {}
+  }
+
+  public async fetchInstance(instanceName?: string) {
+    const instances = await this.repository.instance.findMany({
+      where: { name: instanceName },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        connectionStatus: true,
+        ownerJid: true,
+        profilePicUrl: true,
+        createdAt: true,
+        updatedAt: true,
+        Auth: {
+          select: { id: true, token: true, createdAt: true, updatedAt: true },
+        },
+        Webhook: {
+          select: { id: true, url: true, createdAt: true, updatedAt: true },
+        },
+        Typebot: {
+          select: {
+            id: true,
+            publicId: true,
+            typebotUrl: true,
+            enabled: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+      },
+    });
+
+    return instances;
+  }
+
+  public async deleteInstance(instance: InstanceDto, force = false) {
+    try {
+      const c1 = await this.repository.auth.count({
+        where: { Instance: { name: instance.instanceName } },
+      });
+      const c2 = await this.repository.webhook.count({
+        where: { Instance: { name: instance.instanceName } },
+      });
+      const c3 = await this.repository.message.count({
+        where: { Instance: { name: instance.instanceName } },
+      });
+      const c4 = await this.repository.chat.count({
+        where: { Instance: { name: instance.instanceName } },
+      });
+      const c5 = await this.repository.contact.count({
+        where: { Instance: { name: instance.instanceName } },
+      });
+      const c6 = await this.repository.activityLogs.count({
+        where: { Instance: { name: instance.instanceName } },
+      });
+
+      if (!force && (c1 || c2 || c3 || c4 || c5 || c6)) {
+        throw new BadRequestException(
+          'This instance has dependencies and cannot be deleted',
+          '"force" parameter to delete all dependencies',
+        );
+      }
+
+      delete this.waMonitor.waInstances[instance.instanceName];
+
+      return await this.repository.instance.delete({
+        where: { name: instance.instanceName },
+      });
+    } catch (error) {}
   }
 
   public async refreshToken({ oldToken }: OldToken) {
@@ -128,9 +244,17 @@ export class AuthService {
         ignoreExpiration: true,
       }) as Pick<JwtPayload, 'apiName' | 'instanceName' | 'tokenId'>;
 
-      const tokenStore = await this.repository.auth.find(decode.instanceName);
+      const instance = await this.repository.instance.findUnique({
+        where: { name: decode.instanceName },
+        select: {
+          id: true,
+          ownerJid: true,
+          Auth: { select: { token: true, id: true } },
+          Webhook: { select: { enabled: true, url: true, events: true } },
+        },
+      });
 
-      const decodeTokenStore = verify(tokenStore.jwt, jwtOpts.SECRET, {
+      const decodeTokenStore = verify(instance.Auth.token, jwtOpts.SECRET, {
         ignoreExpiration: true,
       }) as Pick<JwtPayload, 'apiName' | 'instanceName' | 'tokenId'>;
 
@@ -138,36 +262,33 @@ export class AuthService {
         throw new BadRequestException('Invalid "oldToken"');
       }
 
-      const token = {
-        jwt: (await this.jwt({ instanceName: decode.instanceName })).jwt,
-        instanceName: decode.instanceName,
-      };
+      const auth = await this.generateToken(decode.instanceName);
 
       try {
-        const webhook = await this.repository.webhook.find(decode.instanceName);
-        if (
-          webhook?.enabled &&
-          this.configService.get<Webhook>('WEBHOOK').EVENTS.NEW_JWT_TOKEN
-        ) {
-          const httpService = axios.create({ baseURL: webhook.url });
-          await httpService.post(
-            '',
+        const events = instance.Webhook.events as WebhookEvents;
+        if (instance.Webhook?.enabled && events?.refreshToken) {
+          await axios.post(
+            instance.Webhook.url,
             {
               event: 'new.jwt',
-              instance: decode.instanceName,
-              data: token,
+              auth,
             },
-            { params: { owner: this.waMonitor.waInstances[decode.instanceName].wuid } },
+            { headers: { 'Resource-owner': instance.ownerJid } },
           );
         }
       } catch (error) {
         this.logger.error(error);
       }
 
-      return token;
+      const newAuth = this.repository.auth.update({
+        where: { id: instance.Auth.id },
+        data: { token: auth, updatedAt: new Date() },
+      });
+
+      return newAuth;
     } catch (error) {
       this.logger.error({
-        localError: AuthService.name + '.refreshToken',
+        localError: InstanceService.name + '.refreshToken',
         error,
       });
       throw new BadRequestException('Invalid "oldToken"');

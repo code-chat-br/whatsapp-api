@@ -33,92 +33,29 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import compression from 'compression';
-import { configService, Cors, HttpServer } from './config/env.config';
-import cors from 'cors';
-import express, { json, NextFunction, Request, Response, urlencoded } from 'express';
-import { join } from 'path';
+import { ConfigService, HttpServer } from './config/env.config';
 import { onUnexpectedError } from './config/error.config';
 import { Logger } from './config/logger.config';
-import { ROOT_DIR } from './config/path.config';
-import { waMonitor } from './whatsapp/whatsapp.module';
-import { HttpStatus, router } from './whatsapp/routers/index.router';
+import { AppModule } from './app.module';
 import 'express-async-errors';
-import { ServerUP } from './utils/server-up';
-import { swaggerRouter } from './docs/swagger.conf';
-import session from 'express-session';
 
-function initWA() {
-  waMonitor.loadInstance();
-}
+const context = new Map<string, any>();
 
-function bootstrap() {
-  const logger = new Logger('SERVER');
-  const app = express();
+async function bootstrap() {
+  await AppModule(context);
 
-  app.use(
-    cors({
-      origin(requestOrigin, callback) {
-        const { ORIGIN } = configService.get<Cors>('CORS');
-        if (ORIGIN.includes('*')) {
-          return callback(null, true);
-        }
-        if (ORIGIN.indexOf(requestOrigin) !== -1) {
-          return callback(null, true);
-        }
-        return callback(new Error('Not allowed by CORS'));
-      },
-      methods: [...configService.get<Cors>('CORS').METHODS],
-      credentials: configService.get<Cors>('CORS').CREDENTIALS,
-    }),
-    urlencoded({ extended: true, limit: '50mb' }),
-    json({ limit: '50mb' }),
-    compression(),
-  );
+  const configService = context.get('module:config') as ConfigService;
 
-  app.use(
-    session({
-      secret: configService.get<string>('SESSION_SECRET'),
-      resave: false,
-      saveUninitialized: false,
-      name: 'codechat.api.sid',
-    }),
-  );
+  const logger = new Logger(configService, 'SERVER');
 
-  app.set('view engine', 'hbs');
-  app.set('views', join(ROOT_DIR, 'views'));
-  app.use(express.static(join(ROOT_DIR, 'public')));
-
-  app.use('/', router);
-  app.use(swaggerRouter);
-
-  app.use(
-    (err: Error, req: Request, res: Response, next: NextFunction) => {
-      if (err) {
-        return res.status(err['status'] || 500).json(err);
-      }
-    },
-    (req: Request, res: Response, next: NextFunction) => {
-      const { method, url } = req;
-
-      res.status(HttpStatus.NOT_FOUND).json({
-        status: HttpStatus.NOT_FOUND,
-        message: `Cannot ${method.toUpperCase()} ${url}`,
-        error: 'Not Found',
-      });
-
-      next();
-    },
-  );
+  context.get('module:logger').info('INITIALIZER');
+  context.set('server:logger', logger);
 
   const httpServer = configService.get<HttpServer>('SERVER');
 
-  ServerUP.app = app;
-  const server = ServerUP[httpServer.TYPE];
-
-  server.listen(httpServer.PORT, () => {
-    logger.log(httpServer.TYPE.toUpperCase() + ' - ON: ' + httpServer.PORT + '\n\n');
-    new Logger('Swagger Docs').warn(
+  context.get('app').listen(httpServer.PORT, () => {
+    logger.log('HTTP' + ' - ON: ' + httpServer.PORT);
+    new Logger(configService, 'Swagger Docs').warn(
       `
       ┌──────────────────────────────┐
       │         Swagger Docs         │
@@ -127,9 +64,15 @@ function bootstrap() {
     );
   });
 
-  initWA();
-
-  onUnexpectedError();
+  onUnexpectedError(configService);
 }
 
 bootstrap();
+
+process.on('SIGINT', async () => {
+  await context.get('module:repository').onModuleDestroy();
+  await context.get('module:redisCache').onModuleDestroy();
+  context.get('module:logger').warn('APP MODULE - OFF');
+  context.get('server:logger').warn('HTTP - OFF');
+  process.exit(0);
+});

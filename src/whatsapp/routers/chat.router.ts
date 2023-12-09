@@ -39,10 +39,10 @@ import {
   archiveChatSchema,
   contactValidateSchema,
   deleteMessageSchema,
-  messageUpSchema,
   messageValidateSchema,
   profilePictureSchema,
   readMessageSchema,
+  updatePresenceSchema,
   whatsappNumberSchema,
 } from '../../validate/validate.schema';
 import {
@@ -50,150 +50,120 @@ import {
   DeleteMessage,
   NumberDto,
   ReadMessageDto,
+  UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
-import { ContactQuery } from '../repository/contact.repository';
-import { MessageQuery } from '../repository/message.repository';
-import { chatController } from '../whatsapp.module';
-import { RouterBroker } from '../abstract/abstract.router';
-import { HttpStatus } from './index.router';
-import { MessageUpQuery } from '../repository/messageUp.repository';
-import { proto } from '@whiskeysockets/baileys';
 import { InstanceDto } from '../dto/instance.dto';
-import { Readable } from 'stream';
+import { Transform } from 'stream';
+import { Query } from '../../repository/repository.service';
+import { Contact, Message } from '@prisma/client';
+import { HttpStatus } from '../../app.module';
+import { ChatController } from '../controllers/chat.controller';
+import { routerPath, dataValidate } from '../../validate/router.validate';
 
-export class ChatRouter extends RouterBroker {
-  constructor(...guards: RequestHandler[]) {
-    super();
-    this.router
-      .post(this.routerPath('whatsappNumbers'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<WhatsAppNumberDto>({
-          request: req,
-          schema: whatsappNumberSchema,
-          ClassRef: WhatsAppNumberDto,
-          execute: (instance, data) => chatController.whatsappNumber(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .put(this.routerPath('markMessageAsRead'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<ReadMessageDto>({
-          request: req,
-          schema: readMessageSchema,
-          ClassRef: ReadMessageDto,
-          execute: (instance, data) => chatController.readMessage(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .put(this.routerPath('archiveChat'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<ArchiveChatDto>({
-          request: req,
-          schema: archiveChatSchema,
-          ClassRef: ArchiveChatDto,
-          execute: (instance, data) => chatController.archiveChat(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .delete(
-        this.routerPath('deleteMessageForEveryone'),
-        ...guards,
-        async (req, res) => {
-          const response = await this.dataValidate<DeleteMessage>({
-            request: req,
-            schema: deleteMessageSchema,
-            ClassRef: DeleteMessage,
-            execute: (instance, data) => chatController.deleteMessage(instance, data),
-          });
-
-          return res.status(HttpStatus.CREATED).json(response);
-        },
-      )
-      .post(this.routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<NumberDto>({
-          request: req,
-          schema: profilePictureSchema,
-          ClassRef: NumberDto,
-          execute: (instance, data) => chatController.fetchProfilePicture(instance, data),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .post(this.routerPath('findContacts'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<ContactQuery>({
-          request: req,
-          schema: contactValidateSchema,
-          ClassRef: ContactQuery,
-          execute: (instance, data) => chatController.fetchContacts(instance, data),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .post(this.routerPath('getBase64FromMediaMessage'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<proto.IWebMessageInfo>({
-          request: req,
-          schema: null,
-          ClassRef: Object,
-          execute: (instance, data) =>
-            chatController.getBase64FromMediaMessage(instance, data),
-        });
-
-        return res.status(HttpStatus.CREATED).json(response);
-      })
-      .post(this.routerPath('retrieverMediaMessage'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<proto.IWebMessageInfo>({
-          request: req,
-          schema: null,
-          ClassRef: Object,
-          execute: (instance, data) =>
-            chatController.getBinaryMediaFromMessage(instance, data),
-        });
-
-        res
-          .setHeader('Content-type', response.mimetype)
-          .setHeader(
-            'Content-Disposition',
-            'inline; filename="' + response.fileName + '"',
-          );
-
-        const readableStream = new Readable();
-        readableStream.push(response.media);
-        readableStream.push(null);
-
-        return readableStream.pipe(res);
-      })
-      .post(this.routerPath('findMessages'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<MessageQuery>({
-          request: req,
-          schema: messageValidateSchema,
-          ClassRef: MessageQuery,
-          execute: (instance, data) => chatController.fetchMessages(instance, data),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .post(this.routerPath('findStatusMessage'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<MessageUpQuery>({
-          request: req,
-          schema: messageUpSchema,
-          ClassRef: MessageUpQuery,
-          execute: (instance, data) => chatController.fetchStatusMessage(instance, data),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
-      })
-      .get(this.routerPath('findChats'), ...guards, async (req, res) => {
-        const response = await this.dataValidate<InstanceDto>({
-          request: req,
-          schema: null,
-          ClassRef: InstanceDto,
-          execute: (instance) => chatController.fetchChats(instance),
-        });
-
-        return res.status(HttpStatus.OK).json(response);
+export function ChatRouter(chatController: ChatController, ...guards: RequestHandler[]) {
+  const router = Router()
+    .post(routerPath('whatsappNumbers'), ...guards, async (req, res) => {
+      const response = await dataValidate<WhatsAppNumberDto>({
+        request: req,
+        schema: whatsappNumberSchema,
+        execute: (instance, data) => chatController.whatsappNumber(instance, data),
       });
-  }
 
-  public readonly router = Router();
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .put(routerPath('markMessageAsRead'), ...guards, async (req, res) => {
+      const response = await dataValidate<ReadMessageDto>({
+        request: req,
+        schema: readMessageSchema,
+        execute: (instance, data) => chatController.readMessage(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .patch(routerPath('updatePresence'), ...guards, async (req, res) => {
+      const response = await dataValidate<UpdatePresenceDto>({
+        request: req,
+        schema: updatePresenceSchema,
+        execute: (instance, data) => chatController.updatePresence(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .put(routerPath('archiveChat'), ...guards, async (req, res) => {
+      const response = await dataValidate<ArchiveChatDto>({
+        request: req,
+        schema: archiveChatSchema,
+        execute: (instance, data) => chatController.archiveChat(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .delete(routerPath('deleteMessageForEveryone'), ...guards, async (req, res) => {
+      const response = await dataValidate<DeleteMessage>({
+        request: req,
+        schema: deleteMessageSchema,
+        execute: (instance, data) => chatController.deleteMessage(instance, data),
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
+      const response = await dataValidate<NumberDto>({
+        request: req,
+        schema: profilePictureSchema,
+        execute: (instance, data) => chatController.fetchProfilePicture(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .post(routerPath('findContacts'), ...guards, async (req, res) => {
+      const response = await dataValidate<Query<Contact>>({
+        request: req,
+        schema: contactValidateSchema,
+        execute: (instance, data) => chatController.fetchContacts(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .post(routerPath('retrieverMediaMessage'), ...guards, async (req, res) => {
+      const response = await dataValidate<Message>({
+        request: req,
+        schema: null,
+        execute: (instance, data) =>
+          chatController.getBinaryMediaFromMessage(instance, data),
+      });
+
+      res
+        .setHeader('Content-type', response.mimetype)
+        .setHeader('Content-Disposition', 'inline; filename="' + response.fileName + '"');
+
+      const transform: Transform = response.stream;
+
+      transform.pipe(res);
+      transform.on('error', (err) => {
+        console.error(err);
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
+      });
+    })
+    .post(routerPath('findMessages'), ...guards, async (req, res) => {
+      const response = await dataValidate<Query<Message>>({
+        request: req,
+        schema: messageValidateSchema,
+        execute: (instance, data) => chatController.fetchMessages(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .get(routerPath('findChats'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: null,
+        execute: (instance) => chatController.fetchChats(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    });
+
+  return router;
 }

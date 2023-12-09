@@ -84,7 +84,7 @@ body {
   border-color: #464c56;
 }
 
-.swagger-ui .opblock-section-header>label,
+.swagger-ui .opblock-section-header > label,
 .swagger-ui .parameters .parameter__name,
 .swagger-ui .property-row .property-row_title {
   color: #e5e5e5;
@@ -154,8 +154,12 @@ body {
 .swagger-ui .response-col_description .renderedMarkdown p,
 .swagger-ui .opblock .tab-header .tab-item.active h4 span,
 .swagger-ui .opblock .opblock-section-header h4,
-.swagger-ui .responses-inner h4, .swagger-ui .responses-inner h5,
-.swagger-ui .responses-inner .response-container .body h4 {
+.swagger-ui .responses-inner h4,
+.swagger-ui .responses-inner h5,
+.swagger-ui .responses-inner .response-container .body h4 .swagger-ui .markdown p,
+.swagger-ui .markdown pre,
+.swagger-ui .renderedMarkdown p,
+.swagger-ui .renderedMarkdown pre {
   color: #bbbbbb !important;
 }
 
@@ -164,4 +168,8 @@ body {
 .swagger-ui .info p,
 .swagger-ui .info table {
   color: white;
+}
+
+.swagger-ui table.headers td {
+  color: #b5b9c3;
 }

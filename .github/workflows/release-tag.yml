@@ -1,0 +1,31 @@
+name: Generate Tags
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get version from package.json
+        id: version
+        run: echo "::set-output name=version::$(node -p -e "require('./package.json').version")"
+
+      - name: Generate tag
+        id: tag
+        run: echo "::set-output name=tag::v${{ steps.version.outputs.version }}.${{ github.run_number }}"
+
+      - name: Create tag
+        run: git tag ${{ steps.tag.outputs.tag }}
+
+      - name: Push tag to remote repository
+        run: git push origin ${{ steps.tag.outputs.tag }}
