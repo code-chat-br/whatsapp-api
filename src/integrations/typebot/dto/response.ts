@@ -34,7 +34,11 @@
 export type RichText = {
   type: string;
   text: string;
+  bold: boolean;
+  italic: boolean;
   children: {
+    bold: boolean;
+    italic: boolean;
     text: string;
     type: string;
     children: RichText[];

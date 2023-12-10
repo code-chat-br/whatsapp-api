@@ -32,14 +32,35 @@
  */
 
 import { Message, Typebot, TypebotSession } from '@prisma/client';
-import { BadRequestException, NotFoundException } from '../../exceptions';
+import { BadRequestException } from '../../exceptions';
 import { Repository } from '../../repository/repository.service';
-import { Response, ResponseMessage } from './dto/response';
+import { Response, ResponseMessage, RichText } from './dto/response';
 import { TypebotDto, TypebotUpdateSessionDto } from './dto/typebot.dto';
 import { getContentType } from '@whiskeysockets/baileys';
 import axios, { AxiosResponse } from 'axios';
 import { ConfigService } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
+import { isArray } from 'class-validator';
+
+function formatterTextToWa(child: RichText) {
+  const formatter = (text: string, f: '' | '*' | '_' = '') => {
+    if (text?.endsWith(' ')) {
+      text = text.slice(0, -1);
+      text = `${f}${text}${f} `;
+      return text;
+    }
+
+    return `${f}${text}${f}`;
+  };
+
+  if (child?.bold) {
+    return formatter(child.text, '*');
+  }
+  if (child?.italic) {
+    return formatter(child.text, '_');
+  }
+  return formatter(child.text);
+}
 
 function formatter(data: ResponseMessage[]) {
   let text = '';
@@ -51,20 +72,26 @@ function formatter(data: ResponseMessage[]) {
       for (const richText of item.content.richText) {
         if (['p', 'variable'].includes(richText.type)) {
           for (const child of richText.children) {
-            if (Array.isArray(child?.children)) {
+            const index = richText.children.indexOf(child);
+
+            if (isArray(child?.children)) {
               const children = child.children;
               for (const child of children) {
                 if (child.type === 'p') {
                   for (const c of child.children) {
-                    text = text.concat(c.text);
+                    text = text.concat(formatterTextToWa(c));
                   }
                 } else {
-                  text = text.concat(child.text);
+                  console.log(child);
+                  text = text.concat(formatterTextToWa(child));
                 }
               }
             }
+            if (index !== richText.children.length - 1) {
+              text = text.concat('\n');
+            }
 
-            text = text.concat(child.text);
+            text = text.concat(formatterTextToWa(child));
           }
 
           text = text.concat('\n');
@@ -129,7 +156,7 @@ export class TypebotService {
         },
       });
     } catch (error) {
-      throw new NotFoundException('Bot instance not found');
+      throw new BadRequestException('Bot instance not found');
     }
   }
 
@@ -150,7 +177,8 @@ export class TypebotService {
         select: this.select,
       });
 
-      typebotCache.set(create.id, {
+      typebotCache.set(find.id, {
+        id: create.id,
         enabled: create.enabled,
         publicId: create.publicId,
         typebotUrl: create.typebotUrl,
@@ -166,7 +194,7 @@ export class TypebotService {
   public async updateBotInstance(instanceName: string, data: TypebotDto) {
     const find = await this.getBotInstance(instanceName);
     if (!find?.Typebot) {
-      throw new NotFoundException('Bot instance not found');
+      throw new BadRequestException('Bot instance not found');
     }
 
     const update = await this.repository.typebot.update({
@@ -179,7 +207,8 @@ export class TypebotService {
       select: this.select,
     });
 
-    typebotCache.set(update.id, {
+    typebotCache.set(find.id, {
+      id: update.id,
       enabled: update.enabled,
       publicId: update.publicId,
       typebotUrl: update.typebotUrl,
@@ -191,7 +220,7 @@ export class TypebotService {
   public async deleteBotInstance(instanceName: string) {
     const find = await this.getBotInstance(instanceName);
     if (!find?.Typebot) {
-      throw new NotFoundException('Bot instance not found');
+      throw new BadRequestException('Bot instance not found');
     }
 
     typebotCache.delete(find.id);
@@ -234,7 +263,7 @@ export class TypebotService {
     });
 
     if (!sessions) {
-      throw new NotFoundException('Sessions not found');
+      throw new BadRequestException('Sessions not found');
     }
 
     return sessions;
@@ -252,7 +281,7 @@ export class TypebotService {
     });
 
     if (!session) {
-      throw new NotFoundException('Session not found');
+      throw new BadRequestException('Session not found');
     }
 
     const update = await this.repository.typebotSession.update({
@@ -270,7 +299,7 @@ export class TypebotService {
     });
 
     if (!update) {
-      throw new NotFoundException('Sessions not found');
+      throw new BadRequestException('Sessions not found');
     }
 
     if (data.action === 'closed') {
@@ -327,7 +356,12 @@ export class TypebotService {
 }
 
 export class TypebotSessionService {
-  constructor(private readonly repository: Repository) {}
+  constructor(
+    private readonly repository: Repository,
+    private readonly configService: ConfigService,
+  ) {}
+
+  private readonly logger = new Logger(this.configService, TypebotSessionService.name);
 
   public async onMessage(
     newMessage: Message,
@@ -378,37 +412,50 @@ export class TypebotSessionService {
         },
       );
     } catch (error) {
-      if (error?.response?.data?.message === 'Session not found.') {
-        const { id, keyRemoteJid, keyFromMe, keyId, messageType, pushName, instanceId } =
-          newMessage;
+      const sessionNotFound =
+        error?.response?.data?.message === 'Session not found.' &&
+        error?.response?.data?.code === 'NOT_FOUND';
+      if (sessionNotFound) {
+        const { id, keyRemoteJid, keyId, messageType, pushName, instanceId } = newMessage;
 
-        response = await axios.post<Response>(
-          `${typebot.typebotUrl}/api/v1/typebots/${typebot.publicId}/startChat`,
-          {
-            isStreamEnabled: true,
-            isOnlyRegistering: false,
-            prefilledVariables: {
-              messageId: id,
-              keyRemoteJid,
-              keyId,
-              messageType,
-              pushName,
-              instanceId,
+        try {
+          response = await axios.post<Response>(
+            `${typebot.typebotUrl}/api/v1/typebots/${typebot.publicId}/startChat`,
+            {
+              isStreamEnabled: true,
+              isOnlyRegistering: false,
+              prefilledVariables: {
+                messageId: id,
+                keyRemoteJid,
+                keyId,
+                messageType,
+                pushName,
+                instanceId,
+              },
             },
-          },
-          {
-            headers: {
-              'Content-Type': 'application/json',
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
             },
-          },
-        );
+          );
+
+          sessionCache.set(`${newMessage.instanceId}:${newMessage.keyRemoteJid}`, {
+            sessionId: response.data.sessionId,
+            remoteJid: newMessage.keyRemoteJid,
+            status: 'open',
+          });
+        } catch (error) {
+          this.logger.error(error?.response?.data || error);
+          return;
+        }
       }
 
-      sessionCache.set(`${newMessage.instanceId}:${newMessage.keyRemoteJid}`, {
-        sessionId: response.data.sessionId,
-        remoteJid: newMessage.keyRemoteJid,
-        status: 'open',
-      });
+      const badRequest = error?.response?.data?.code === 'BAD_REQUEST';
+      if (badRequest) {
+        this.logger.error(error?.response?.data || error);
+        return;
+      }
     }
 
     const data = formatter(response.data.messages);
@@ -421,7 +468,7 @@ export class TypebotSessionService {
 
     this.repository.typebotSession
       .upsert({
-        where: { sessionId },
+        where: { remoteJid: newMessage.keyRemoteJid },
         create: {
           sessionId,
           remoteJid: newMessage.keyRemoteJid,
