@@ -177,8 +177,8 @@ enum TypebotSessionStatus {
 
 model TypebotSession {
   id        Int                  @id @default(autoincrement())
-  sessionId String               @unique @db.VarChar(200)
-  remoteJid String               @db.VarChar(100)
+  sessionId String               @db.VarChar(200)
+  remoteJid String               @db.VarChar(100) @unique
   status    TypebotSessionStatus @default(open)
   Typebot   Typebot              @relation(fields: [typebotId], references: [id], onDelete: Cascade)
   typebotId Int
