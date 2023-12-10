@@ -45,13 +45,8 @@ import { NextFunction, Request, Response } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { INSTANCE_DIR } from '../config/path.config';
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '../exceptions';
+import { BadRequestException, ForbiddenException } from '../exceptions';
 import { InstanceDto } from '../whatsapp/dto/instance.dto';
-import { Redis } from '../config/env.config';
 import { WAMonitoringService } from '../whatsapp/services/monitor.service';
 import { RedisCache } from '../cache/redis';
 import 'express-async-errors';
@@ -118,7 +113,9 @@ export class InstanceGuard {
     );
 
     if (!fetch) {
-      throw new NotFoundException(`The "${param.instanceName}" instance does not exist`);
+      throw new BadRequestException(
+        `The "${param.instanceName}" instance does not exist`,
+      );
     }
 
     return next();

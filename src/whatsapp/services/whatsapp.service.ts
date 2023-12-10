@@ -77,7 +77,7 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR } from '../../config/path.config';
-import { link, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import { v4 } from 'uuid';
@@ -109,11 +109,7 @@ import {
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
-import {
-  BadRequestException,
-  InternalServerErrorException,
-  NotFoundException,
-} from '../../exceptions';
+import { BadRequestException, InternalServerErrorException } from '../../exceptions';
 import {
   CreateGroupDto,
   GroupJid,
@@ -163,7 +159,10 @@ export class WAStartupService {
   private readonly userDevicesCache: CacheStore = new NodeCache();
   private readonly instanceQr: InstanceQrCode = { count: 0 };
   private readonly stateConnection: InstanceStateConnection = { state: 'close' };
-  private readonly typebotSession = new TypebotSessionService(this.repository);
+  private readonly typebotSession = new TypebotSessionService(
+    this.repository,
+    this.configService,
+  );
   private readonly databaseOptions: Database =
     this.configService.get<Database>('DATABASE');
 
@@ -1115,7 +1114,7 @@ export class WAStartupService {
       try {
         await this.client.groupMetadata(recipient);
       } catch (error) {
-        throw new NotFoundException('Group not found');
+        throw new BadRequestException('Group not found');
       }
     }
 
@@ -1146,7 +1145,7 @@ export class WAStartupService {
       });
 
       if (!quoted) {
-        throw new NotFoundException('Quoted message not found');
+        throw new BadRequestException('Quoted message not found');
       }
     }
 
@@ -1162,7 +1161,7 @@ export class WAStartupService {
       try {
         await this.client.groupMetadata(recipient);
       } catch (error) {
-        throw new NotFoundException('Group not found');
+        throw new BadRequestException('Group not found');
       }
     }
 
@@ -1772,7 +1771,7 @@ export class WAStartupService {
       if (reply === 'inner') {
         return;
       }
-      throw new NotFoundException('Error fetching group', error.toString());
+      throw new BadRequestException('Error fetching group', error.toString());
     }
   }
 
@@ -1781,7 +1780,7 @@ export class WAStartupService {
       const code = await this.client.groupInviteCode(id.groupJid);
       return { inviteUrl: `https://chat.whatsapp.com/${code}`, inviteCode: code };
     } catch (error) {
-      throw new NotFoundException('No invite code', error.toString());
+      throw new BadRequestException('No invite code', error.toString());
     }
   }
 
@@ -1790,7 +1789,7 @@ export class WAStartupService {
       const inviteCode = await this.client.groupRevokeInvite(id.groupJid);
       return { revoked: true, inviteCode };
     } catch (error) {
-      throw new NotFoundException('Revoke error', error.toString());
+      throw new BadRequestException('Revoke error', error.toString());
     }
   }
 
@@ -1799,7 +1798,7 @@ export class WAStartupService {
       const participants = (await this.client.groupMetadata(id.groupJid)).participants;
       return { participants };
     } catch (error) {
-      throw new NotFoundException('No participants', error.toString());
+      throw new BadRequestException('No participants', error.toString());
     }
   }
 

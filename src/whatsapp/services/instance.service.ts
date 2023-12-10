@@ -45,7 +45,7 @@ import { verify, sign } from 'jsonwebtoken';
 import { Logger } from '../../config/logger.config';
 import { v4 } from 'uuid';
 import { isJWT } from 'class-validator';
-import { BadRequestException, NotFoundException } from '../../exceptions';
+import { BadRequestException } from '../../exceptions';
 import axios from 'axios';
 import { Repository } from '../../repository/repository.service';
 import { WebhookEvents } from '../dto/webhook.dto';
@@ -129,7 +129,7 @@ export class InstanceService {
     try {
       const find = (await this.fetchInstance(instance.instanceName))[0];
       if (!find) {
-        throw new NotFoundException('Instance not found');
+        throw new BadRequestException('Instance not found');
       }
 
       const updated = await this.repository.instance.update({
