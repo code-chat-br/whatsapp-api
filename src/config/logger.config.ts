@@ -36,6 +36,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
+import { LoggerMiddleware } from '../middle/logger.middle';
 import { ConfigService, Log } from './env.config';
 import dayjs from 'dayjs';
 
@@ -138,7 +139,11 @@ export class Logger {
           typeValue !== 'object' ? value : '',
           Command.RESET,
         );
-        typeValue === 'object' ? console.log(Level.DARK, value, '\n') : '';
+        if (this.context === LoggerMiddleware.name) {
+          typeValue === 'object' ? console.log(Level.DARK, value, '\n') : '';
+        } else {
+          typeValue === 'object' ? console.log(value, '\n') : '';
+        }
       } else {
         console.log(
           '[CodeChat]',

@@ -218,6 +218,11 @@ export async function AppModule(context: Map<string, any>) {
 
   app.use(ErrorMiddle.appError, ErrorMiddle.pageNotFound);
 
+  app['close'] = async () => {
+    await repository.onModuleDestroy();
+    await redisCache.onModuleDestroy();
+  };
+
   context.set('app', app);
   context.set('module:logger', logger);
   context.set('module:repository', repository);

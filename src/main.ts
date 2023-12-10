@@ -41,7 +41,7 @@ import 'express-async-errors';
 
 const context = new Map<string, any>();
 
-async function bootstrap() {
+export async function bootstrap() {
   await AppModule(context);
 
   const configService = context.get('module:config') as ConfigService;
@@ -70,8 +70,7 @@ async function bootstrap() {
 bootstrap();
 
 process.on('SIGINT', async () => {
-  await context.get('module:repository').onModuleDestroy();
-  await context.get('module:redisCache').onModuleDestroy();
+  await context.get('app').close();
   context.get('module:logger').warn('APP MODULE - OFF');
   context.get('server:logger').warn('HTTP - OFF');
   process.exit(0);
