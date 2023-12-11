@@ -90,7 +90,7 @@ npx prisma migrate dev
 Em ambiente de produção:
 
 ```sh
-nps prisma migrate deploy
+npx prisma migrate deploy
 ```
 
 #### Estúdio prisma
