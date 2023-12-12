@@ -128,9 +128,9 @@ export async function AppModule(context: Map<string, any>) {
     async (req: Request, res: Response, next: NextFunction) =>
       await new LoggerMiddleware(repository, configService).use(req, res, next),
     async (req: Request, res: Response, next: NextFunction) =>
-      await new InstanceGuard(waMonitor, redisCache).canActivate(req, res, next),
-    async (req: Request, res: Response, next: NextFunction) =>
       await new JwtGuard(configService).canActivate(req, res, next),
+    async (req: Request, res: Response, next: NextFunction) =>
+      await new InstanceGuard(waMonitor, redisCache).canActivate(req, res, next),
   ];
 
   logger.info('WAMonitoringService - ON');
@@ -188,7 +188,7 @@ export async function AppModule(context: Map<string, any>) {
 
   const router = Router();
   router.use(...describeRoutes('/instance', instanceRouter, logger));
-  router.use(...describeRoutes('/views', viewsRouter, logger));
+  router.use(...describeRoutes('/instance', viewsRouter, logger));
   router.use(...describeRoutes('/message', messageRouter, logger));
   router.use(...describeRoutes('/chat', chatRouter, logger));
   router.use(...describeRoutes('/group', groupRouter, logger));

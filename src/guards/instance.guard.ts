@@ -114,7 +114,7 @@ export class InstanceGuard {
 
     if (!fetch) {
       throw new BadRequestException(
-        `The "${param.instanceName}" instance does not exist`,
+        `The "${param.instanceName}" instance does not exist or is not connected`,
       );
     }
 

@@ -75,7 +75,7 @@ export class JwtGuard {
 
     const jwtOpts = this.configService.get<Auth>('AUTHENTICATION').JWT;
     try {
-      const [bearer, token] = req.get('authorization').split(' ');
+      const [bearer, token] = req.get('authorization')?.split(' ');
 
       if (bearer.toLowerCase() !== 'bearer') {
         throw new UnauthorizedException();
