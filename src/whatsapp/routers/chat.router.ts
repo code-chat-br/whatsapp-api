@@ -41,6 +41,7 @@ import {
   deleteMessageSchema,
   messageValidateSchema,
   profilePictureSchema,
+  readMessageForIdSchema,
   readMessageSchema,
   updatePresenceSchema,
   whatsappNumberSchema,
@@ -50,6 +51,7 @@ import {
   DeleteMessage,
   NumberDto,
   ReadMessageDto,
+  ReadMessageIdDto,
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
@@ -77,6 +79,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         request: req,
         schema: readMessageSchema,
         execute: (instance, data) => chatController.readMessage(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .patch(routerPath('markMessageAsRead'), ...guards, async (req, res) => {
+      const response = await dataValidate<ReadMessageIdDto>({
+        request: req,
+        schema: readMessageForIdSchema,
+        execute: (instance, data) => chatController.readMessagesForId(instance, data),
       });
 
       return res.status(HttpStatus.OK).json(response);
@@ -109,6 +120,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       return res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
+      const response = await dataValidate<NumberDto>({
+        request: req,
+        schema: profilePictureSchema,
+        execute: (instance, data) => chatController.fetchProfilePicture(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .get(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
       const response = await dataValidate<NumberDto>({
         request: req,
         schema: profilePictureSchema,

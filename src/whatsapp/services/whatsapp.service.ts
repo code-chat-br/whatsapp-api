@@ -106,6 +106,7 @@ import {
   DeleteMessage,
   OnWhatsAppDto,
   ReadMessageDto,
+  ReadMessageIdDto,
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
@@ -1460,6 +1461,9 @@ export class WAStartupService {
     return onWhatsapp;
   }
 
+  /**
+   * @deprecated
+   */
   public async markMessageAsRead(data: ReadMessageDto) {
     try {
       const keys: proto.IMessageKey[] = [];
@@ -1472,6 +1476,34 @@ export class WAStartupService {
           });
         }
       });
+      await this.client.readMessages(keys);
+      return { message: 'Read messages', read: 'success' };
+    } catch (error) {
+      throw new InternalServerErrorException('Read messages fail', error.toString());
+    }
+  }
+
+  public async readMessages(data: ReadMessageIdDto) {
+    const keys: proto.IMessageKey[] = [];
+    try {
+      const messages = await this.repository.message.findMany({
+        where: { id: { in: data.messageId } },
+        select: {
+          keyFromMe: true,
+          keyId: true,
+          keyRemoteJid: true,
+          keyParticipant: true,
+        },
+      });
+
+      for (const message of messages) {
+        keys.push({
+          remoteJid: message.keyRemoteJid,
+          fromMe: message.keyFromMe,
+          id: message.keyId,
+          participant: message?.keyParticipant,
+        });
+      }
       await this.client.readMessages(keys);
       return { message: 'Read messages', read: 'success' };
     } catch (error) {

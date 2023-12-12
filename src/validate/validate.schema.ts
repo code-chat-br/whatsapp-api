@@ -307,6 +307,22 @@ export const readMessageSchema: JSONSchema7 = {
   required: ['readMessages'],
 };
 
+export const readMessageForIdSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    ids: {
+      type:'array',
+      minItems: 1,
+      uniqueItems: true,
+      items: {
+        type: 'integer'
+      }
+    }
+  },
+  required: ['ids']
+}
+
 export const updatePresenceSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',

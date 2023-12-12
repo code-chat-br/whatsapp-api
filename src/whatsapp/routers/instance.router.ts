@@ -56,7 +56,8 @@ export function InstanceRouter(
 
       return res.status(HttpStatus.CREATED).json(response);
     })
-    .get(routerPath('connect'), async (req, res) => {
+    .get(routerPath('connect'), ...guards, async (req, res) => {
+      console.log(req);
       const response = await dataValidate<InstanceDto>({
         request: req,
         schema: instanceNameSchema,

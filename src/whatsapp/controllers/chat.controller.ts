@@ -41,6 +41,7 @@ import {
   ReadMessageDto,
   UpdatePresenceDto,
   WhatsAppNumberDto,
+  ReadMessageIdDto,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
@@ -54,8 +55,15 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).whatsappNumber(data);
   }
 
+  /**
+   * @deprecated
+   */
   public async readMessage({ instanceName }: InstanceDto, data: ReadMessageDto) {
     return await this.waMonitor.waInstances.get(instanceName).markMessageAsRead(data);
+  }
+
+  public async readMessagesForId({instanceName}: InstanceDto, data: ReadMessageIdDto) {
+    return await this.waMonitor.waInstances.get(instanceName).readMessages(data)
   }
 
   public async archiveChat({ instanceName }: InstanceDto, data: ArchiveChatDto) {
