@@ -275,7 +275,7 @@ export class TypebotService {
   ) {
     const session = await this.repository.typebotSession.findFirst({
       where: {
-        sessionId: data.sessionId,
+        remoteJid: data.remoteJid,
         Typebot: { Instance: { name: instanceName } },
       },
     });
