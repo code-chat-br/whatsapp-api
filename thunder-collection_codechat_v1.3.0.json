@@ -1,0 +1,1106 @@
+{
+    "client": "Thunder Client",
+    "collectionName": "codechat_v1.3.0",
+    "dateExported": "2023-12-12T18:47:51.021Z",
+    "version": "1.1",
+    "folders": [
+        {
+            "_id": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Instance Controller",
+            "containerId": "",
+            "created": "2023-12-11T19:51:50.254Z",
+            "sortNum": 10000
+        },
+        {
+            "_id": "aed51d38-a57b-47a0-b491-903cfff972bb",
+            "name": "Views",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "created": "2023-12-11T22:37:15.494Z",
+            "sortNum": 20000
+        },
+        {
+            "_id": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Send Message Controller",
+            "containerId": "",
+            "created": "2023-12-11T22:43:15.129Z",
+            "sortNum": 30000
+        },
+        {
+            "_id": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Chat Controller",
+            "containerId": "",
+            "created": "2023-12-11T23:07:20.176Z",
+            "sortNum": 40000
+        },
+        {
+            "_id": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Group Controller",
+            "containerId": "",
+            "created": "2023-12-12T14:33:30.577Z",
+            "sortNum": 50000
+        },
+        {
+            "_id": "83e8dda4-24d5-4803-bcb5-8bac1c071409",
+            "name": "Jwt",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "created": "2023-12-12T14:42:19.841Z",
+            "sortNum": 60000
+        },
+        {
+            "_id": "8136c8ab-f41a-4dea-a47f-af1348d4e8fe",
+            "name": "Webhook Controller",
+            "containerId": "",
+            "created": "2023-12-12T16:18:51.915Z",
+            "sortNum": 70000
+        },
+        {
+            "_id": "c2a5d140-e343-4ec3-97ac-3480c84c0463",
+            "name": "S3 Bucket",
+            "containerId": "",
+            "created": "2023-12-12T16:21:11.810Z",
+            "sortNum": 80000
+        },
+        {
+            "_id": "0fc9a36e-b85f-4076-ab81-95afa8557264",
+            "name": "Typebot",
+            "containerId": "",
+            "created": "2023-12-12T16:23:31.163Z",
+            "sortNum": 90000
+        },
+        {
+            "_id": "93260354-2dd1-4059-bbb5-43bf433e8f1c",
+            "name": "Sessions",
+            "containerId": "0fc9a36e-b85f-4076-ab81-95afa8557264",
+            "created": "2023-12-12T16:23:55.379Z",
+            "sortNum": 100000
+        }
+    ],
+    "requests": [
+        {
+            "_id": "8bc976b9-1020-4b84-98ac-24bc0c7c228b",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Create",
+            "url": "{{host}}/instance/create",
+            "method": "POST",
+            "sortNum": 10000,
+            "created": "2023-12-11T19:43:26.492Z",
+            "modified": "2023-12-11T19:47:20.554Z",
+            "headers": [
+                {
+                    "name": "apikey",
+                    "value": "{{globalApiKey}}"
+                }
+            ],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"instanceName\": \"codechat\",\n  \"description\": \"teste de api\"\n}",
+                "form": []
+            },
+            "tests": []
+        },
+        {
+            "_id": "369eb936-3b7d-412e-bf2a-fb682746f9ae",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Fetch",
+            "url": "{{host}}/instance/fetchInstances?instanceName={{instanceName}}",
+            "method": "GET",
+            "sortNum": 20000,
+            "created": "2023-12-11T19:52:11.343Z",
+            "modified": "2023-12-11T22:35:34.833Z",
+            "headers": [
+                {
+                    "name": "apikey",
+                    "value": "{{globalApiKey}}"
+                }
+            ],
+            "params": [
+                {
+                    "name": "instanceName",
+                    "value": "{{instanceName}}",
+                    "isPath": false
+                }
+            ],
+            "tests": []
+        },
+        {
+            "_id": "480f17fc-196e-4928-bbc1-c7a801c19b0a",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Connect",
+            "url": "{{host}}/instance/connect/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 30000,
+            "created": "2023-12-11T19:55:33.144Z",
+            "modified": "2023-12-11T22:35:44.208Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "83a19dd8-cea3-4a61-b8cb-1fb4ecfb9a37",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Connection Status",
+            "url": "{{host}}/instance/connectionState/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 40000,
+            "created": "2023-12-11T19:57:59.742Z",
+            "modified": "2023-12-11T22:35:51.001Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "160e54ea-2b24-4b23-801e-e8bc4be0c626",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Logout",
+            "url": "{{host}}/instance/logout/{{instanceName}}",
+            "method": "DELETE",
+            "sortNum": 50000,
+            "created": "2023-12-11T22:15:01.026Z",
+            "modified": "2023-12-11T22:36:11.320Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "4a3685d8-e0b2-4f22-9562-8c3f2607fb88",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c7825379-a484-4a9c-af35-76754393a1f3",
+            "name": "Delete",
+            "url": "{{host}}/instance/delete/{{instanceName}}",
+            "method": "DELETE",
+            "sortNum": 60000,
+            "created": "2023-12-11T22:36:23.545Z",
+            "modified": "2023-12-11T22:36:45.401Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "d34901f9-e14d-40cc-a152-26d1ba12e763",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "aed51d38-a57b-47a0-b491-903cfff972bb",
+            "name": "QrCode",
+            "url": "{{host}}/instance/qrcode/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 70000,
+            "created": "2023-12-11T22:37:30.749Z",
+            "modified": "2023-12-11T22:40:33.688Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "0d48224b-a449-4af5-bdec-f220c38376b3",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Text",
+            "url": "{{host}}/message/sendText/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 80000,
+            "created": "2023-12-11T22:43:28.089Z",
+            "modified": "2023-12-11T23:04:28.810Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"number\": \"123@broadcast\",\n  \"options\": {\n    \"delay\": 1200,\n    \"presence\": \"composing\"\n  },\n  \"textMessage\": {\n    \"text\": \"text\"\n  }\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "3a909aa0-d4d8-4182-b3a8-b1d97d26f543",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Media",
+            "url": "{{host}}/message/sendMedia/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 90000,
+            "created": "2023-12-11T22:53:30.376Z",
+            "modified": "2023-12-11T23:04:27.098Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"number\": \"<string> - required\",\n  \"options\": {\n    \"delay\": \"<interger> - optional\",\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\",\n    \"quotedMessageId\": 1\n  },\n  \"mediaMessage\": {\n    \"mediatype\": \"<'image' | 'document' | 'video' | 'audio'> - required\",\n    \"fileName\": \"<string> - optional\",\n    \"caption\": \"<string> - optional\",\n    \"media\": \"<string> - URL - required\"\n  }\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "9bd0f970-001e-43ce-8a08-243e91d257f8",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Media File",
+            "url": "{{host}}/message/sendMediaFile/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 100000,
+            "created": "2023-12-11T22:57:35.162Z",
+            "modified": "2023-12-11T23:04:13.958Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "formdata",
+                "raw": "",
+                "form": [
+                    {
+                        "name": "number",
+                        "value": "5531999999999"
+                    },
+                    {
+                        "name": "caption",
+                        "value": "Text"
+                    },
+                    {
+                        "name": "mediaType",
+                        "value": "image"
+                    },
+                    {
+                        "name": "presence",
+                        "value": "composing"
+                    },
+                    {
+                        "name": "delay",
+                        "value": "1200"
+                    },
+                    {
+                        "name": "quotedMessageId",
+                        "value": "int"
+                    }
+                ],
+                "files": [
+                    {
+                        "name": "attachment",
+                        "value": "/home/cleber/Projects/whatsapp-api/src/whatsapp/routers/webhook.router.ts"
+                    }
+                ]
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "023ee9f9-c4ba-48ec-a0fa-95a88e062f58",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Location",
+            "url": "{{host}}/message/sendLocation/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 110000,
+            "created": "2023-12-11T23:00:38.852Z",
+            "modified": "2023-12-11T23:01:09.922Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\",\r\n    \"quotedMessageId\": 1\r\n  },\r\n  \"locationMessage\": {\r\n    \"name\": \"<string> - optional\",\r\n    \"address\": \"<string> - optional\",\r\n    \"latitude\": \"<interger> - required\",\r\n    \"longitude\": \"<interger> - required\"\r\n  }\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "a48b00e2-4fa2-46ab-8d74-2b39eed69400",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Contact",
+            "url": "{{host}}/message/sendContact/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 120000,
+            "created": "2023-12-11T23:01:24.203Z",
+            "modified": "2023-12-11T23:01:37.777Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"presence\": \"<'composing' | 'recording' | 'paused'> - optional\",\r\n    \"quotedMessageId\": 1\r\n  },\r\n  \"contactMessage\": [\r\n    {\r\n      \"fullName\": \"<string> - required\",\r\n      \"wuid\": \"<string> - required\",\r\n      \"phoneNumber\": \"<string> - required\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531988882222\",\r\n      \"phoneNumber\": \"+55 31 9 8888-2222\"\r\n    },\r\n    {\r\n      \"fullName\": \"Contact Name\",\r\n      \"wuid\": \"5531922228888\",\r\n      \"phoneNumber\": \"+55 31 9 2222-8888\"\r\n    }\r\n  ]\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "61507b3d-10e7-46f2-bd5e-347391bf1233",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Check Number",
+            "url": "{{host}}/chat/whatsappNumbers/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 120000,
+            "created": "2023-12-11T23:07:31.457Z",
+            "modified": "2023-12-11T23:08:05.971Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"numbers\": [\r\n    \"<string> - required\"\r\n  ]\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "4d615c4c-b4fb-404b-a1f9-38c020329d85",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "Reaction",
+            "url": "{{host}}/message/sendReaction/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 130000,
+            "created": "2023-12-11T23:01:52.626Z",
+            "modified": "2023-12-11T23:02:17.379Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"reactionMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    },\r\n    \"reaction\": \"<string> - required - max 1\"\r\n  }\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "b3d24a1b-fa73-4556-85f8-9af6fb467fc7",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Read Message - Deprecated",
+            "url": "{{host}}/chat/markMessageAsRead/{{instanceName}}",
+            "method": "PUT",
+            "sortNum": 130000,
+            "created": "2023-12-11T23:11:26.305Z",
+            "modified": "2023-12-12T14:15:43.516Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"readMessages\": [\r\n    {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    }\r\n  ]\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "0fbfd236-fcbf-407a-b936-08000e81657a",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "WhatsApp Audio",
+            "url": "{{host}}/message/sendWhatsAppAudio/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 140000,
+            "created": "2023-12-11T23:02:26.784Z",
+            "modified": "2023-12-11T23:04:19.885Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"number\": \"<string> - required\",\r\n  \"options\": {\r\n    \"delay\": \"<interger> - optional\",\r\n    \"quotedMessageId\": 1\r\n  },\r\n  \"audioMessage\": {\r\n    \"audio\": \"<string> - URL - required\"\r\n  }\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "a2400a4b-3033-463b-8070-71d84e1438fb",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Read Message For Id",
+            "url": "{{host}}/chat/markMessageAsRead/{{instanceName}}",
+            "method": "PATCH",
+            "sortNum": 140000,
+            "created": "2023-12-12T00:12:59.319Z",
+            "modified": "2023-12-12T14:15:06.134Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"ids\": [\n    1235,\n    1236\n  ]\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "24cff981-e809-4d1b-af61-6bf209405b46",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "f0204101-5717-40f1-912c-e87bcc45a187",
+            "name": "WhatsApp Audio - File",
+            "url": "{{host}}/message/sendReaction/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 150000,
+            "created": "2023-12-11T23:02:55.038Z",
+            "modified": "2023-12-11T23:04:03.665Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "formdata",
+                "raw": "",
+                "form": [
+                    {
+                        "name": "number",
+                        "value": "5531991122111"
+                    },
+                    {
+                        "name": "delay",
+                        "value": "1200"
+                    },
+                    {
+                        "name": "quotedMessageId",
+                        "value": "<int>"
+                    }
+                ]
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "243b4932-2311-478c-a99b-e900920fda5c",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Archive Chat",
+            "url": "{{host}}/chat/archiveChat/{{instanceName}}",
+            "method": "PUT",
+            "sortNum": 150000,
+            "created": "2023-12-12T14:09:48.748Z",
+            "modified": "2023-12-12T14:15:38.567Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"lastMessage\": {\r\n    \"key\": {\r\n      \"remoteJid\": \"<string> - required\",\r\n      \"fromMe\": \"<boolean> - required\",\r\n      \"id\": \"<string> - required\"\r\n    }\r\n  },\r\n  // false: to unarchive\r\n  // true: to archive\r\n  \"archive\": \"<boolean> - required\"\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "afcb8cac-848a-4012-a7c4-9e132774e554",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Delete Message",
+            "url": "{{host}}/chat/deleteMessageForEveryone/{{instanceName}}?id=2",
+            "method": "DELETE",
+            "sortNum": 160000,
+            "created": "2023-12-12T14:11:11.609Z",
+            "modified": "2023-12-12T14:12:05.038Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "id",
+                    "value": "2",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "6e7237ce-554b-43ce-abef-abb1bc7fea7e",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Create",
+            "url": "{{host}}/group/create/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 160000,
+            "created": "2023-12-12T14:33:40.582Z",
+            "modified": "2023-12-12T14:41:16.868Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"subject\": \"<string> - required\",  \n  \"description\": \"<string> - optional\",\n  \"participants\": [\n    \"<string> - required\"\n  ]\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "f4e2d229-234c-419a-9b0d-53af568ec7ca",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Fetch Picture Url - Deprecated",
+            "url": "{{host}}/chat/fetchProfilePictureUrl/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 170000,
+            "created": "2023-12-12T14:12:23.731Z",
+            "modified": "2023-12-12T14:30:00.757Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"number\": \"<string> - required\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "061b4ae3-5aa8-4808-811e-b5ba04ce0a75",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Update Group Picture",
+            "url": "{{host}}/group/updateGroupPicture/{{instanceName}}?groupJid=123@g.us",
+            "method": "PUT",
+            "sortNum": 170000,
+            "created": "2023-12-12T14:34:43.816Z",
+            "modified": "2023-12-12T14:35:52.998Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "92636568-4593-4325-ac85-ffddbe6eca85",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "83e8dda4-24d5-4803-bcb5-8bac1c071409",
+            "name": "Refresh Token",
+            "url": "{{host}}/instance/refreshToken/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 170000,
+            "created": "2023-12-12T14:42:55.327Z",
+            "modified": "2023-12-12T14:43:30.066Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"oldToken\": \"<string> - required\"\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "cb81154f-ff84-41d5-9e02-4f65d04f1bf4",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Fetch Picture Url",
+            "url": "{{host}}/chat/fetchProfilePictureUrl/{{instanceName}}?number=5531999999999",
+            "method": "GET",
+            "sortNum": 180000,
+            "created": "2023-12-12T14:13:15.904Z",
+            "modified": "2023-12-12T14:14:30.533Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "number",
+                    "value": "5531999999999",
+                    "isPath": false
+                },
+                {
+                    "name": "number",
+                    "value": "124@s.whatsapp.net",
+                    "isDisabled": true,
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "1ca6f863-cc29-4d89-aa43-6f008705c49b",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Find Group",
+            "url": "{{host}}/group/findGroupInfos/{{instanceName}}?groupJid=123@g.us",
+            "method": "GET",
+            "sortNum": 180000,
+            "created": "2023-12-12T14:36:03.510Z",
+            "modified": "2023-12-12T14:36:29.904Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "03274315-ea81-43d4-b788-15fa1af06431",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "8136c8ab-f41a-4dea-a47f-af1348d4e8fe",
+            "name": "Set",
+            "url": "{{host}}/webhook/set/{{instanceName}}",
+            "method": "PUT",
+            "sortNum": 180000,
+            "created": "2023-12-12T16:19:07.905Z",
+            "modified": "2023-12-12T16:19:40.824Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"enabled\": false,\r\n  \"url\": \"https://webhook.site/ddc933af-3e2b-4499-9c5e-5b296c40bc3e\",\r\n  \"events\": {\r\n    \"qrcodeUpdated\": true,\r\n    \"messagesSet\": false,\r\n    \"messagesUpsert\": true,\r\n    \"messagesUpdated\": true,\r\n    \"sendMessage\": true,\r\n    \"contactsSet\": true,\r\n    \"contactsUpsert\": true,\r\n    \"contactsUpdated\": true,\r\n    \"chatsSet\": false,\r\n    \"chatsUpsert\": true,\r\n    \"chatsUpdated\": true,\r\n    \"chatsDeleted\": true,\r\n    \"presenceUpdated\": true,\r\n    \"groupsUpsert\": true,\r\n    \"groupsUpdated\": true,\r\n    \"groupsParticipantsUpdated\": true,\r\n    \"connectionUpdated\": true,\r\n    \"statusInstance\": true,\r\n    \"refreshToken\": true\r\n  }\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "20307c6e-7de6-4b7f-b63c-b4027df1b316",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Find Contacts",
+            "url": "{{host}}/chat/findContacts/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 190000,
+            "created": "2023-12-12T14:18:32.248Z",
+            "modified": "2023-12-12T14:29:46.742Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "number",
+                    "value": "124@s.whatsapp.net",
+                    "isDisabled": true,
+                    "isPath": false
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  // A propriedade \"where\" é opcional\r\n  \"where\": {\r\n    \"remoteJid\": \"<string> - required\"\r\n  }\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "ab461a00-de55-47b9-b9e3-e2d9e6a4e080",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Find Participants",
+            "url": "{{host}}/group/participants/{{instanceName}}?groupJid=123@g.us",
+            "method": "GET",
+            "sortNum": 190000,
+            "created": "2023-12-12T14:36:35.571Z",
+            "modified": "2023-12-12T14:39:24.149Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "032c0ef6-628d-42b9-a973-9efefb564330",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "8136c8ab-f41a-4dea-a47f-af1348d4e8fe",
+            "name": "Find",
+            "url": "{{host}}/webhook/set/{{instanceName}}",
+            "method": "PUT",
+            "sortNum": 190000,
+            "created": "2023-12-12T16:19:43.098Z",
+            "modified": "2023-12-12T16:19:59.228Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"enabled\": false,\n  \"url\": \"https://webhook.site/ddc933af-3e2b-4499-9c5e-5b296c40bc3e\",\n  \"events\": {\n    \"qrcodeUpdated\": true,\n    \"messagesSet\": false,\n    \"messagesUpsert\": true,\n    \"messagesUpdated\": true,\n    \"sendMessage\": true,\n    \"contactsSet\": true,\n    \"contactsUpsert\": true,\n    \"contactsUpdated\": true,\n    \"chatsSet\": false,\n    \"chatsUpsert\": true,\n    \"chatsUpdated\": true,\n    \"chatsDeleted\": true,\n    \"presenceUpdated\": true,\n    \"groupsUpsert\": true,\n    \"groupsUpdated\": true,\n    \"groupsParticipantsUpdated\": true,\n    \"connectionUpdated\": true,\n    \"statusInstance\": true,\n    \"refreshToken\": true\n  }\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "a0850d88-7a31-4fa6-af79-534cdd73ec2e",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c2a5d140-e343-4ec3-97ac-3480c84c0463",
+            "name": "Find Medias",
+            "url": "{{host}}/s3/findMedias/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 190000,
+            "created": "2023-12-12T16:21:21.065Z",
+            "modified": "2023-12-12T16:21:54.907Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"id\": 1,\r\n  \"type\": \"documentMessage | videoMessage | imageMessage | stckerMessage\",\r\n  \"messageId\": 1912\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "5aeb2c84-1247-4803-8fc0-222289d4330f",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "554eb82b-a8e8-48d8-a39c-79299ba7d082",
+            "name": "Find Messages",
+            "url": "{{host}}/chat/findContacts/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 200000,
+            "created": "2023-12-12T14:30:07.791Z",
+            "modified": "2023-12-12T14:30:28.041Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "number",
+                    "value": "124@s.whatsapp.net",
+                    "isDisabled": true,
+                    "isPath": false
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  // where - optonal\r\n  \"where\": {\r\n    \"id\": 2, // optional\r\n    \"keyid\": \"string\", // optional\r\n    \"keyRemoteJid\": \"123@s.whatsapp.net\", // optional\r\n    \"keyFromMe\": \"true\", // optional\r\n    \"messageType\": \"iamgeMessage\", // optional\r\n    \"device\": \"web\", // optional [web, ios, android]\r\n    \"messageStatus\": \"DELIVERY_ACK\" // optional ['PENDING', 'DELIVERY_ACK', 'READ', 'PLAYED']\r\n  },\r\n  \"offset\": 20,\r\n  \"page\": 1\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "c0f361c0-9ab9-4e24-afeb-8b9503ec7b16",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Invitation Code",
+            "url": "{{host}}/group/inviteCode/{{instanceName}}?groupJid=123@g.us",
+            "method": "GET",
+            "sortNum": 200000,
+            "created": "2023-12-12T14:39:27.241Z",
+            "modified": "2023-12-12T14:39:47.227Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "fe2ca1c1-59b4-4a07-af47-6e0316cfa5cf",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "c2a5d140-e343-4ec3-97ac-3480c84c0463",
+            "name": "Find Media Url",
+            "url": "{{host}}/s3/media/urt/:mediaId/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 200000,
+            "created": "2023-12-12T16:22:11.766Z",
+            "modified": "2023-12-12T16:23:12.314Z",
+            "headers": [],
+            "params": [],
+            "tests": []
+        },
+        {
+            "_id": "40e7df3f-98dc-4d27-9b9e-01781f162e51",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Revoke Invite",
+            "url": "{{host}}/group/revokeInviteCode/{{instanceName}}?groupJid=123@g.us",
+            "method": "PUT",
+            "sortNum": 210000,
+            "created": "2023-12-12T14:39:59.986Z",
+            "modified": "2023-12-12T14:40:21.220Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "aad4c6dc-c20a-4a84-980f-e9c674a63f5d",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "93260354-2dd1-4059-bbb5-43bf433e8f1c",
+            "name": "Find",
+            "url": "{{host}}/typebot/sessions/find/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 210000,
+            "created": "2023-12-12T16:24:04.784Z",
+            "modified": "2023-12-12T16:30:00.255Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"remoteJid\":\"123@s.whatsapp.net\",\n  \"action\": \"open | closed | paused\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "f9f88636-78bc-4544-97de-7cdab72006e1",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Update Participant",
+            "url": "{{host}}/group/updateParticipant/{{instanceName}}?groupJid=123@g.us",
+            "method": "PUT",
+            "sortNum": 220000,
+            "created": "2023-12-12T14:40:32.302Z",
+            "modified": "2023-12-12T14:41:06.782Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"action\": \"<'add' | 'remove' | 'promote' | 'demote'> - required\",\r\n  \"participants\": [\r\n    \"<string> - required\"\r\n  ]\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "d81d34b2-4632-428e-b2c9-8c73f3c65fbd",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "93260354-2dd1-4059-bbb5-43bf433e8f1c",
+            "name": "Find Copy",
+            "url": "{{host}}/typebot/sessions/update/{{instanceName}}",
+            "method": "PATCH",
+            "sortNum": 220000,
+            "created": "2023-12-12T16:30:19.575Z",
+            "modified": "2023-12-12T16:35:13.280Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\n  \"remoteJid\":\"123@s.whatsapp.net\",\n  \"action\": \"open | closed | paused\"\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "4dd5dc24-3dcf-493b-b8ec-cc3b2adab5fb",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "0fc9a36e-b85f-4076-ab81-95afa8557264",
+            "name": "Create",
+            "url": "{{host}}/typebot/create/{{instanceName}}",
+            "method": "POST",
+            "sortNum": 220000,
+            "created": "2023-12-12T16:31:36.244Z",
+            "modified": "2023-12-12T16:35:04.314Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"publicId\": \"devasa-bot-realizar-un-pedido-5r20p3t\",\r\n  \"enabled\": true,\r\n  \"typebotUrl\": \"https://typebot.io\"\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "9d06602c-8c14-4c96-bbfb-69944b4c7b6f",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "57497a73-67a8-4a8f-b9a4-b427109ccc11",
+            "name": "Leave",
+            "url": "{{host}}/group/leaveGroup/{{instanceName}}?groupJid=123@g.us",
+            "method": "DELETE",
+            "sortNum": 230000,
+            "created": "2023-12-12T14:41:38.777Z",
+            "modified": "2023-12-12T14:42:06.333Z",
+            "headers": [],
+            "params": [
+                {
+                    "name": "groupJid",
+                    "value": "123@g.us",
+                    "isPath": false
+                }
+            ],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "ecc25276-ea50-4164-a220-e11e39947e1b",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "0fc9a36e-b85f-4076-ab81-95afa8557264",
+            "name": "Find",
+            "url": "{{host}}/typebot/find/{{instanceName}}",
+            "method": "GET",
+            "sortNum": 230000,
+            "created": "2023-12-12T16:33:09.349Z",
+            "modified": "2023-12-12T16:34:54.187Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "69338b57-9a21-4817-9fe6-f450159d9c55",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "0fc9a36e-b85f-4076-ab81-95afa8557264",
+            "name": "Update",
+            "url": "{{host}}/typebot/update/{{instanceName}}",
+            "method": "PUT",
+            "sortNum": 240000,
+            "created": "2023-12-12T16:33:28.309Z",
+            "modified": "2023-12-12T16:34:49.712Z",
+            "headers": [],
+            "params": [],
+            "body": {
+                "type": "json",
+                "raw": "{\r\n  \"publicId\": \"exibition-zwy88ap\",\r\n  \"enabled\": true,\r\n  \"typebotUrl\": \"https://typebot.io\"\r\n}",
+                "form": []
+            },
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        },
+        {
+            "_id": "d1bdc27e-447c-449b-8f6a-9e2892e2ac3e",
+            "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
+            "containerId": "0fc9a36e-b85f-4076-ab81-95afa8557264",
+            "name": "Find Copy",
+            "url": "{{host}}/typebot/delete/{{instanceName}}",
+            "method": "DELETE",
+            "sortNum": 250000,
+            "created": "2023-12-12T16:34:16.991Z",
+            "modified": "2023-12-12T16:34:38.773Z",
+            "headers": [],
+            "params": [],
+            "auth": {
+                "type": "bearer",
+                "bearer": "{{token}}"
+            },
+            "tests": []
+        }
+    ]
+}
