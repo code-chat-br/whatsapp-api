@@ -31,7 +31,7 @@ export class RedisCache {
   }
 
   public async onModuleDestroy() {
-    await this.client.disconnect();
+    await this.client?.disconnect();
     this.logger.warn('Cache:Redis - OFF');
   }
 
