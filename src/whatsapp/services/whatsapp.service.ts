@@ -221,7 +221,7 @@ export class WAStartupService {
 
   private get httpService() {
     const rejectUnauthorized =
-      this.configService.get('SSL_CONF').AXIOS_REJECT_UNAUTHORIZED === 'true';
+      this.configService.get('SSL_CONF').AXIOS_REJECT_UNAUTHORIZED === true;
     const agent = new Agent({
       rejectUnauthorized: rejectUnauthorized,
     });
