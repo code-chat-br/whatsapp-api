@@ -51,11 +51,13 @@ CORS:
     - DELETE
   CREDENTIALS: true
 
+# SSL
 # Install ssl certificate and replace string <domain> with domain name
 # Access: https://certbot.eff.org/instructions?ws=other&os=ubuntufocal
 SSL_CONF:
   PRIVKEY: /etc/letsencrypt/live/<domain>/privkey.pem
   FULLCHAIN: /etc/letsencrypt/live/<domain>/fullchain.pem
+  AXIOS_REJECT_UNAUTHORIZED: false # axios rejectUnauthorized
 
 # Determine the logs to be displayed
 LOG:
