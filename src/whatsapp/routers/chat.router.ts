@@ -83,7 +83,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
 
       return res.status(HttpStatus.OK).json(response);
     })
-    .patch(routerPath('markMessageAsRead'), ...guards, async (req, res) => {
+    .patch(routerPath('readMessages'), ...guards, async (req, res) => {
       const response = await dataValidate<ReadMessageIdDto>({
         request: req,
         schema: readMessageForIdSchema,

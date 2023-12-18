@@ -1,7 +1,7 @@
 {
     "client": "Thunder Client",
     "collectionName": "codechat_v1.3.0",
-    "dateExported": "2023-12-12T18:47:51.021Z",
+    "dateExported": "2023-12-18T10:04:49.744Z",
     "version": "1.1",
     "folders": [
         {
@@ -788,18 +788,13 @@
             "colId": "8fb1ca62-e60a-48eb-8430-88253a2977b8",
             "containerId": "8136c8ab-f41a-4dea-a47f-af1348d4e8fe",
             "name": "Find",
-            "url": "{{host}}/webhook/set/{{instanceName}}",
-            "method": "PUT",
+            "url": "{{host}}/webhook/find/{{instanceName}}",
+            "method": "GET",
             "sortNum": 190000,
             "created": "2023-12-12T16:19:43.098Z",
-            "modified": "2023-12-12T16:19:59.228Z",
+            "modified": "2023-12-17T11:52:17.897Z",
             "headers": [],
             "params": [],
-            "body": {
-                "type": "json",
-                "raw": "{\n  \"enabled\": false,\n  \"url\": \"https://webhook.site/ddc933af-3e2b-4499-9c5e-5b296c40bc3e\",\n  \"events\": {\n    \"qrcodeUpdated\": true,\n    \"messagesSet\": false,\n    \"messagesUpsert\": true,\n    \"messagesUpdated\": true,\n    \"sendMessage\": true,\n    \"contactsSet\": true,\n    \"contactsUpsert\": true,\n    \"contactsUpdated\": true,\n    \"chatsSet\": false,\n    \"chatsUpsert\": true,\n    \"chatsUpdated\": true,\n    \"chatsDeleted\": true,\n    \"presenceUpdated\": true,\n    \"groupsUpsert\": true,\n    \"groupsUpdated\": true,\n    \"groupsParticipantsUpdated\": true,\n    \"connectionUpdated\": true,\n    \"statusInstance\": true,\n    \"refreshToken\": true\n  }\n}",
-                "form": []
-            },
             "auth": {
                 "type": "bearer",
                 "bearer": "{{token}}"
