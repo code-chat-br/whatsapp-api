@@ -1132,9 +1132,6 @@ export class WAStartupService {
   ) {
     let quoted: PrismType.Message;
     if (options?.quotedMessageId) {
-      if (!this.databaseOptions?.ENABLED) {
-        throw new BadRequestException('Quoted message is not supported without database');
-      }
       if (!this.databaseOptions?.DB_OPTIONS?.NEW_MESSAGE) {
         throw new BadRequestException(
           'The DATABASE_SAVE_DATA_NEW_MESSAGE environment variable is disabled',

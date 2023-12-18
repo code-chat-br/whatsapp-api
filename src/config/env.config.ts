@@ -83,7 +83,6 @@ export type DBConnection = {
 };
 export type Database = {
   CONNECTION: DBConnection;
-  ENABLED: boolean;
   DB_OPTIONS: DBOptions;
 };
 
@@ -167,7 +166,6 @@ export class ConfigService {
         CONNECTION: {
           URL: process.env.DATABASE_URL,
         },
-        ENABLED: process.env?.DATABASE_ENABLED === 'true',
         DB_OPTIONS: {
           SYNC_MESSAGES: process.env?.DATABASE_SYNC_MESSAGES === 'true',
           NEW_MESSAGE: process.env?.DATABASE_SAVE_DATA_NEW_MESSAGE === 'true',
