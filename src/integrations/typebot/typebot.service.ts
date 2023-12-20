@@ -72,8 +72,6 @@ function formatter(data: ResponseMessage[]) {
       for (const richText of item.content.richText) {
         if (['p', 'variable'].includes(richText.type)) {
           for (const child of richText.children) {
-            const index = richText.children.indexOf(child);
-
             if (isArray(child?.children)) {
               const children = child.children;
               for (const child of children) {
@@ -82,19 +80,21 @@ function formatter(data: ResponseMessage[]) {
                     text = text.concat(formatterTextToWa(c));
                   }
                 } else {
-                  console.log(child);
                   text = text.concat(formatterTextToWa(child));
                 }
+                const isStyle = child.bold || child.italic;
+                if (!isStyle) {
+                  text = text.concat('\n');
+                }
               }
-            }
-            if (index !== richText.children.length - 1) {
-              text = text.concat('\n');
             }
 
             text = text.concat(formatterTextToWa(child));
           }
 
-          text = text.concat('\n');
+          if (text.endsWith('')) {
+            text = text.concat('\n');
+          }
         }
       }
 
@@ -376,6 +376,10 @@ export class TypebotSessionService {
       `${newMessage.instanceId}:${newMessage.keyRemoteJid}`,
     );
 
+    if (['pause', 'close'].includes(session?.status)) {
+      return;
+    }
+
     const toGroup = newMessage.isGroup && typebot.enableGroup;
 
     if (!typebot.enabled || newMessage.keyFromMe || toGroup) {
@@ -467,35 +471,43 @@ export class TypebotSessionService {
       sessionCache.get(`${newMessage.instanceId}:${newMessage.keyRemoteJid}`)?.sessionId;
 
     this.repository.typebotSession
-      .upsert({
-        where: { remoteJid: newMessage.keyRemoteJid },
-        create: {
-          sessionId,
-          remoteJid: newMessage.keyRemoteJid,
-          status: 'open',
-          typebotId: typebot.id,
-        },
-        update: {
-          sessionId,
-          remoteJid: newMessage.keyRemoteJid,
-          status: 'open',
-          typebotId: typebot.id,
-        },
+      .findFirst({
+        where: { sessionId, status: 'open', typebotId: typebot.id },
       })
-      .then((session) => {
-        /**
-         * @todo update message
-         * Vinculando a sessão à mensagem
-         */
-        if (newMessage?.id) {
-          this.repository.message.update({
-            where: { id: newMessage.id },
+      .then(async (session) => {
+        if (session) {
+          await this.repository.typebotSession.updateMany({
+            where: { remoteJid: newMessage.keyRemoteJid, typebotId: typebot.id },
+            data: { status: 'closed' },
+          });
+          session = await this.repository.typebotSession.update({
+            where: { id: session.id },
+            data: { status: 'open', sessionId },
+          });
+        } else {
+          session = await this.repository.typebotSession.create({
             data: {
-              typebotSessionId: session.id,
+              sessionId,
+              remoteJid: newMessage.keyRemoteJid,
+              status: 'open',
+              typebotId: typebot.id,
             },
           });
         }
-      })
-      .catch((error) => console.log(error));
+
+        if (newMessage?.id) {
+          this.logger.debug(newMessage);
+          try {
+            const up = await this.repository.message.update({
+              where: { id: newMessage.id },
+              data: {
+                typebotSessionId: session.id,
+              },
+            });
+          } catch (error) {
+            this.logger.error(error);
+          }
+        }
+      });
   }
 }
