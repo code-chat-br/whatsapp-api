@@ -15,59 +15,53 @@
 
 ## WhatsApp-Api-NodeJs
 
-This code is an implementation of [Baileys](https://github.com/WhiskeySockets/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
+This code is an implementation of [WhiskeySockets](https://github.com/WhiskeySockets/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
 With this one you can create multiservice chats, service bots or any other system that uses whatsapp. With this code you don't need to know javascript for nodejs , just start the server and make the language requests that you feel most comfortable with.
 
 ## Infrastructure
 
-### Nvm installation
+### 1. Docker installation
+
+* First, let's install Docker. Docker is a platform that allows us to quickly create, test and deploy applications in isolated environments called containers.
 
 ```sh
-curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker ${USER}
+```
+
+### 2. Installing the database
+
+* Now, we have configured our PostgreSQL database using Docker Compose.
+> PostgreSql [required]
+
+[compose from postgres](./postgres/docker-compose.yaml)
+
+### 3. Nvm installation
+
+```sh
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 # or
-wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 ```
 >
 > After finishing, restart the terminal to load the new information.
 >
 
-### Docker installation \[optional\]
+#### 3.1 Nodejs installation
 
-```sh
-curl -fsSL https://get.docker.com -o get-docker.sh
-
-sudo sh get-docker.sh
-
-sudo usermod -aG docker ${USER}
-```
-### Nodejs installation
+* Installing Node.js using NVM, a version manager that allows us to switch between different versions of Node.js easily.
 
 ```sh
 nvm install 20
 ```
 
-### pm2 installation
+### 4. pm2 installation
 ```sh
 npm i -g pm2
 ```
 
-```sh
-docker --version
-
-node --version
-```
-## PostgreSql [required]
-
-After installing docker and docker-compose, up the container.
-  - [compose from postgres](./postgres/docker-compose.yaml)
-
-In the same directory where the file is located, run the following command:
-```sh
-bash docker.sh
-```
-Using the database is optional.
-
-## Application startup
+### 5. Application startup
 
 Cloning the Repository
 ```
@@ -76,30 +70,6 @@ git clone https://github.com/code-chat-br/whatsapp-api.git
 
 Go to the project directory and install all dependencies.
 
-### Database Setup
-
-#### Usando o Prisma ORM
-
-O aplicativo aproveita o Prisma ORM para lidar com operações de banco de dados. O Prisma simplifica o acesso, a migração e o gerenciamento de banco de dados.
-
-Em ambiente de desenvolvimento:
-```sh
-npx prisma migrate dev
-```
-
-Em ambiente de produção:
-
-```sh
-npx prisma migrate deploy
-```
-
-#### Estúdio prisma
-
-Veja os seus dados:
-```sh
-npx prisma studio
-```
-
 >
 > Give preference to **npm** as it has greater compatibility.
 >
@@ -107,7 +77,35 @@ npx prisma studio
 ```sh
 cd whatsapp-api-v2
 
+npm install
+# or
 npm install --force
+```
+
+### 6. Environment variables
+See additional settings that can be applied through the **env** file by clicking **[here](./.env.dev)**.
+
+> **⚠️Attention⚠️:** copy the **.env.dev** file to **.env**.
+```sh
+cp .env.dev .env
+```
+
+### 7. Prism ORM
+
+* We're going to use Prisma ORM to manage our database. Prisma simplifies database access and ensures operations are secure and easy to maintain.
+* **Commands and Explanations:**
+  * **In development environment: npx prisma migrate dev**
+    * We use `migrate dev` in development to automatically create and apply migrations, making working with the database easier.
+  * **In production environment: npx prisma migrate deploy**
+    * In production, we use `migrate deploy` to apply migrations in a controlled and secure way.
+  * **Data visualization: npx prisma studio**
+    * Prisma Studio is a visual tool that helps us manage and visualize bank data in an intuitive way.
+
+Define the [DATABASE_URL](https://github.com/code-chat-br/whatsapp-api/blob/6d0ab3e27932c5d1a6d8275dc3c6cb5097ff099e/.env.dev#L48) environment variable for the database deployment.
+
+* Performing the database [deployment](https://www.prisma.io/docs/orm/reference/prisma-cli-reference#migrate-deploy).
+```sh
+bash deploy_db.sh
 ```
 
 Finally, run the command below to start the application:
@@ -117,8 +115,9 @@ npm run start:dev
 npm run start:prod
 
 # pm2
-pm2 start 'npm run start:prod' --name ApiCodechat
+pm2 start 'npm run start:prod' --name CodeChat_API_v1.3.0
 ```
+---
 
 ## Swagger - OpenAPI 3.0.0
 
@@ -127,7 +126,7 @@ pm2 start 'npm run start:prod' --name ApiCodechat
 
 ## Authentication
 
-You can define two authentication **types** for the routes in the **[env file](./dev-env.yml)**.
+You can define two authentication **types** for the routes in the **[env file](./env.dev)**.
 Authentications must be inserted in the request header.
 
 1. **jwt:** A JWT is a standard for authentication and information exchange defined with a signature.
@@ -138,7 +137,6 @@ Authentications must be inserted in the request header.
 
 ### App in Docker
   - [docker-compose](./docker-compose.yml)
-  - [env for docker](./Docker/.env)
   - [DockerHub-codechat/api](https://hub.docker.com/r/codechat/api)
 
 After building the application, in the same directory as the files above, run the following command:
@@ -162,7 +160,6 @@ docker-compose up
 | Send Reaction - emoji | ✔ |
 
 ## Postman collections
-  - [Postman Json](./postman.json)
   - [![Run in Postman](https://run.pstmn.io/button.svg)](https://elements.getpostman.com/redirect?entityId=14064846-194eec6c-c3d6-48d1-9660-93d8085fd83a&entityType=collection)
 
 ## Webhook Events
@@ -187,11 +184,6 @@ docker-compose up
 | GROUP_PARTICIPANTS_UPDATE | group-participants.update | JSON | Notifies when an action occurs involving a participant</br>'add' | 'remove' | 'promote' | 'demote' |
 | NEW_TOKEN | new.jwt | JSON | Notifies when the token (jwt) is updated
 
-## Env File
-
-See additional settings that can be applied through the **env** file by clicking **[here](./.env.dev)**.
-
-> **⚠️Attention⚠️:** copy the **.env.dev** file to **.env**.
 
 ## SSL
 
