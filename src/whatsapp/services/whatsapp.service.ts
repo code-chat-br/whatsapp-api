@@ -687,6 +687,10 @@ export class WAStartupService {
 
         const messageType = getContentType(m.message);
 
+        if (!messageType) {
+          continue;
+        }
+
         messagesRaw.push({
           keyId: m.key.id,
           keyRemoteJid: m.key.remoteJid,
