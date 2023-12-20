@@ -380,9 +380,9 @@ export class TypebotSessionService {
       return;
     }
 
-    const toGroup = newMessage.isGroup && typebot.enableGroup;
+    const toGroup = newMessage.isGroup && typebot?.enableGroup;
 
-    if (!typebot.enabled || newMessage.keyFromMe || toGroup) {
+    if (!typebot?.enabled || newMessage.keyFromMe || toGroup) {
       return;
     }
 
@@ -498,7 +498,7 @@ export class TypebotSessionService {
         if (newMessage?.id) {
           this.logger.debug(newMessage);
           try {
-            const up = await this.repository.message.update({
+            await this.repository.message.update({
               where: { id: newMessage.id },
               data: {
                 typebotSessionId: session.id,
