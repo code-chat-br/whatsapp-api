@@ -56,13 +56,10 @@ async function fetchInstanceFromCache(
   instanceName: string,
   waMonitor: WAMonitoringService,
   redisCache: RedisCache,
-  instanceController: InstanceController,
 ) {
   try {
-    const exists =
-      !!waMonitor.waInstances.get(instanceName) ||
-      !!(await instanceController.fetchInstances({ instanceName }));
-    if (redisCache.isConnected) {
+    const exists = !!waMonitor.waInstances.get(instanceName);
+    if (redisCache?.isConnected) {
       const keyExists = await redisCache.keys('*');
       return exists || keyExists[0];
     }
@@ -78,7 +75,6 @@ export class InstanceGuard {
   constructor(
     private readonly waMonitor: WAMonitoringService,
     private readonly redisCache: RedisCache,
-    private readonly instanceController: InstanceController,
   ) {}
   async canActivate(req: Request, _: Response, next: NextFunction) {
     if (req.originalUrl.includes('/instance/create')) {
@@ -88,7 +84,6 @@ export class InstanceGuard {
           instance.instanceName,
           this.waMonitor,
           this.redisCache,
-          this.instanceController,
         )
       ) {
         throw new ForbiddenException(
@@ -116,7 +111,6 @@ export class InstanceGuard {
       param.instanceName,
       this.waMonitor,
       this.redisCache,
-      this.instanceController,
     );
 
     if (!fetch) {
