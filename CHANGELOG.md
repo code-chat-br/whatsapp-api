@@ -4,6 +4,15 @@
 
 For full details, visit the official API documentation: [Official Documentation 1.3.0](https://docs.codechat.dev/api/v1.3.0), [Tags](https://docs.codechat.dev/change-log/tags/v-1)
 
+## Version 1.3.0 (2023-12-20)
+
+### Added
+- 🚀🔧📈 Addition of Prisma Migrations. [[15b94f4](https://github.com/code-chat-br/whatsapp-api/commit/15b94f4)]
+
+### Changed
+- 📚✍️🔍 Improved README Instructions. [[9f5a987](https://github.com/code-chat-br/whatsapp-api/commit/9f5a987)]
+- 🖋️🔗💾 Text Formatting and Session ID Linking. [[3a58e9c](https://github.com/code-chat-br/whatsapp-api/commit/3a58e9c)]
+
 ## Version 1.3.0 (2023-12-09)
 This version features significant improvements, including migration to the PostgreSQL database, integration with Prisma ORM, and new storage and interaction features.
 

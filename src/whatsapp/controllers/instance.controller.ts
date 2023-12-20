@@ -106,7 +106,7 @@ export class InstanceController {
     if (!find) {
       throw new NotFoundException('Instance not found');
     }
-    
+
     try {
       if (
         this.waMonitor.waInstances.get(instanceName)?.connectionStatus?.state === 'open'

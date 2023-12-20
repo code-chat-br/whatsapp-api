@@ -1413,7 +1413,6 @@ paths:
                       readMessages[0].fromMe is not one of enum values:
                       true,false
   
-
   /chat/archiveChat/{instanceName}:
     put:
       tags:
@@ -1474,7 +1473,7 @@ paths:
             content:
               application/json: {}
   
-  /chat/fetchProfilePictureUrl/{instanceNamce}:
+  /chat/fetchProfilePictureUrl/{instanceName}:
       post:
         tags:
           - Chat Controller
@@ -1503,7 +1502,7 @@ paths:
             content:
               application/json: {}
   
-  indContacts/{instanceName}:
+  /chat/findContacts/{instanceName}:
     post:
       tags:
         - Chat Controller
@@ -1795,6 +1794,7 @@ paths:
             description: Successful response
             content:
               application/json: {}
+  
   /chat/findChats/{inatnceName}:
     get:
       tags:

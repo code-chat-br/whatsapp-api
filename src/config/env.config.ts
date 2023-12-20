@@ -210,7 +210,7 @@ export class ConfigService {
           SECRET: process.env.AUTHENTICATION_JWT_SECRET,
         },
       },
-      SESSION_SECRET: process.env.SESSION_SECRET,
+      SESSION_SECRET: process.env.SESSION_HTTP_SECRET,
       S3: {
         ACCESS_KEY: process.env?.S3_ACCESS_KEY,
         SECRET_KEY: process.env?.S3_SECRET_KEY,

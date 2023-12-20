@@ -124,15 +124,6 @@ export async function AppModule(context: Map<string, any>) {
     redisCache,
   );
 
-  const middlewares = [
-    async (req: Request, res: Response, next: NextFunction) =>
-      await new LoggerMiddleware(repository, configService).use(req, res, next),
-    async (req: Request, res: Response, next: NextFunction) =>
-      await new JwtGuard(configService).canActivate(req, res, next),
-    async (req: Request, res: Response, next: NextFunction) =>
-      await new InstanceGuard(waMonitor, redisCache).canActivate(req, res, next),
-  ];
-
   logger.info('WAMonitoringService - ON');
   await waMonitor.loadInstance();
   logger.info('Load Instances - ON');
@@ -151,6 +142,21 @@ export async function AppModule(context: Map<string, any>) {
     redisCache,
   );
   logger.info('InstanceController - ON');
+
+  const middlewares = [
+    async (req: Request, res: Response, next: NextFunction) =>
+      await new LoggerMiddleware(repository, configService).use(req, res, next),
+    async (req: Request, res: Response, next: NextFunction) =>
+      await new JwtGuard(configService).canActivate(req, res, next),
+    async (req: Request, res: Response, next: NextFunction) =>
+      await new InstanceGuard(waMonitor, redisCache, instanceController).canActivate(
+        req,
+        res,
+        next,
+      ),
+  ];
+  logger.info('Middlewares - ON');
+
   const instanceRouter = InstanceRouter(instanceController, ...middlewares);
   logger.info('InstanceRouter - ON');
 
