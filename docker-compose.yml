@@ -45,17 +45,17 @@ services:
       - AUTHENTICATION_JWT_EXPIRES_IN=0
       - AUTHENTICATION_JWT_SECRET=3RFYiiRmvNiokSBrLZzx
 
-      - REDIS_ENABLED=true
+      - REDIS_ENABLED=false
       - REDIS_URI=redis://[HOST]/5
       - REDIS_PREFIX=codechat
 
-      - S3_ENABLED=true
-      - S3_ACCESS_KEY=XCXV6CawqzpOTlpGmZC2
-      - S3_SECRET_KEY=CEU2tqUv2VDsy1a3vNiQWfb16kW7UzLZ6Dg3hfSr
-      - S3_BUCKET=codechat-api-v1
-      - S3_PORT=443
-      - S3_ENDPOINT=s3.codechat.com.br
-      - S3_USE_SSL=true
+      - S3_ENABLED=false
+      - S3_ACCESS_KEY=[ACCESS_KEY]
+      - S3_SECRET_KEY=[SECRET_KEY]
+      - S3_BUCKET=[BUCKET]
+      - S3_PORT=9000
+      - S3_ENDPOINT=[ENDPOINT]
+      - S3_USE_SSL=false
     networks:
       - public-network
     depends_on:
