@@ -51,7 +51,7 @@ model Instance {
   name             String                    @unique @db.VarChar(255)
   description      String?                   @db.VarChar(255)
   connectionStatus InstanceConnectionStatus? @default(OFFLINE)
-  ownerJid         String?                   @unique @db.VarChar(100)
+  ownerJid         String?                   @db.VarChar(100)
   profilePicUrl    String?                   @db.VarChar(500)
   createdAt        DateTime?                 @default(now()) @db.Date
   updatedAt        DateTime?                 @updatedAt @db.Date
