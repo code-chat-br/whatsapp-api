@@ -204,9 +204,8 @@ export async function AppModule(context: Map<string, any>) {
     session({
       secret: configService.get<string>('SESSION_SECRET'),
       resave: false,
-      saveUninitialized: true,
+      saveUninitialized: false,
       name: 'codechat.api.sid',
-      cookie: { secure: true },
     }),
   );
 

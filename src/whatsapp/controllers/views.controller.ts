@@ -53,7 +53,7 @@ export class ViewsController {
     try {
       const param = request.params as unknown as InstanceDto;
       const instance = this.waMonit.waInstances[param.instanceName];
-      if (instance.connectionStatus.state === 'open') {
+      if (instance?.connectionStatus.state === 'open') {
         throw new BadRequestException('The instance is already connected');
       }
 
@@ -71,9 +71,8 @@ export class ViewsController {
 
       return response.status(HttpStatus.OK).render('qrcode', {
         ...param,
-        type: 'jwt',
         auth,
-        connectionState: instance.connectionStatus.state,
+        connectionState: instance?.connectionStatus.state || 'close',
       });
     } catch (error) {
       console.log('ERROR: ', error);

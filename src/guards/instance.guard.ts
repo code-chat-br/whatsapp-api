@@ -50,7 +50,6 @@ import { InstanceDto } from '../whatsapp/dto/instance.dto';
 import { WAMonitoringService } from '../whatsapp/services/monitor.service';
 import { RedisCache } from '../cache/redis';
 import 'express-async-errors';
-import { InstanceController } from '../whatsapp/controllers/instance.controller';
 
 async function fetchInstanceFromCache(
   instanceName: string,
@@ -98,7 +97,9 @@ export class InstanceGuard {
 
     if (
       req.originalUrl.includes('/instance/create') ||
-      req.originalUrl.includes('/instance/fetchInstances')
+      req.originalUrl.includes('/instance/fetchInstances') ||
+      req.originalUrl.includes('/instance/qrcode') ||
+      req.originalUrl.includes('/instance/connect')
     ) {
       return next();
     }

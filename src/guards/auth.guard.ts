@@ -73,6 +73,10 @@ export class JwtGuard {
       );
     }
 
+    if (req.originalUrl.includes('/instance/qrcode')) {
+      return next();
+    }
+
     const jwtOpts = this.configService.get<Auth>('AUTHENTICATION').JWT;
     try {
       const [bearer, token] = req.get('authorization')?.split(' ');
