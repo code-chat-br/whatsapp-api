@@ -217,6 +217,8 @@ export async function AppModule(context: Map<string, any>) {
 
   app.use(swaggerRouter);
 
+  app.use(swaggerRouter);
+
   app.use(ErrorMiddle.appError, ErrorMiddle.pageNotFound);
 
   app['close'] = async () => {
