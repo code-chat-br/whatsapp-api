@@ -1,5 +1,5 @@
 ### BASE IMAGE
-FROM node:20-bullseye-slim AS base
+FROM node:18.16-bullseye-slim AS base
 
 ### BUILD IMAGE
 FROM base AS builder
@@ -15,6 +15,7 @@ COPY ./public ./public
 COPY ./docs ./docs
 COPY ./prisma ./prisma
 COPY ./views ./views
+COPY .env.dev .env
 
 # Definindo a variável de ambiente DATABASE_URL aqui para a construção
 ENV DATABASE_URL=postgres://postgres:pass@localhost/db_test
@@ -25,6 +26,8 @@ RUN npm run build
 ### PRODUCTION IMAGE
 FROM base AS production
 
+WORKDIR /codechat
+
 # Copiando arquivos construídos do estágio builder
 COPY --from=builder /codechat/dist ./dist
 COPY --from=builder /codechat/docs ./docs
@@ -32,6 +35,8 @@ COPY --from=builder /codechat/prisma ./prisma
 COPY --from=builder /codechat/views ./views
 COPY --from=builder /codechat/node_modules ./node_modules
 COPY --from=builder /codechat/package*.json ./
+COPY --from=builder /codechat/.env ./
+COPY --from=builder /codechat/public ./public
 COPY ./deploy_db.sh ./
 
 RUN chmod +x ./deploy_db.sh
