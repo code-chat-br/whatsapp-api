@@ -45,6 +45,6 @@ export const swaggerRouter = router.use('/docs', swaggerUi.serve).get(
   swaggerUi.setup(document, {
     customCssUrl: '/css/dark-theme-swagger.css',
     customSiteTitle: 'CodeChat - WhatsApp API',
-    customfavIcon: '/images/logo.svg',
+    customfavIcon: '/images/logo.png',
   }),
 );
