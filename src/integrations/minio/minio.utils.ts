@@ -51,34 +51,42 @@ type Metadata = {
   'custom-header-mediaType': string;
 };
 
-const minioClient = new MinIo.Client({
-  endPoint: BUCKET.ENDPOINT,
-  port: BUCKET.PORT,
-  useSSL: BUCKET.USE_SSL,
-  accessKey: BUCKET.ACCESS_KEY,
-  secretKey: BUCKET.SECRET_KEY,
-});
+const minioClient = (() => {
+  if (BUCKET?.ENABLE) {
+    return new MinIo.Client({
+      endPoint: BUCKET.ENDPOINT,
+      port: BUCKET.PORT,
+      useSSL: BUCKET.USE_SSL,
+      accessKey: BUCKET.ACCESS_KEY,
+      secretKey: BUCKET.SECRET_KEY,
+    });
+  }
+})();
 
 const bucketName = process.env.S3_BUCKET;
 
 const bucketExists = async () => {
-  try {
-    const list = await minioClient.listBuckets();
-    return list.find((bucket) => bucket.name === bucketName);
-  } catch (error) {
-    return false;
+  if (minioClient) {
+    try {
+      const list = await minioClient.listBuckets();
+      return list.find((bucket) => bucket.name === bucketName);
+    } catch (error) {
+      return false;
+    }
   }
 };
 
 const createBucket = async () => {
-  try {
-    const exists = await bucketExists();
-    if (!exists) {
-      await minioClient.makeBucket(bucketName);
+  if (minioClient) {
+    try {
+      const exists = await bucketExists();
+      if (!exists) {
+        await minioClient.makeBucket(bucketName);
+      }
+      return true;
+    } catch (error) {
+      return false;
     }
-    return true;
-  } catch (error) {
-    return false;
   }
 };
 
@@ -89,34 +97,38 @@ const uploadFile = async (
   file: Buffer | Transform | Readable,
   metadata: Metadata,
 ) => {
-  const objectName = join('codechat_v1', fileName);
-  try {
-    metadata['custom-header-application'] = 'codechat-api-v1';
-    const o = await minioClient.putObject(bucketName, objectName, file, metadata);
+  if (minioClient) {
+    const objectName = join('codechat_v1', fileName);
+    try {
+      metadata['custom-header-application'] = 'codechat-api-v1';
+      const o = await minioClient.putObject(bucketName, objectName, file, metadata);
 
-    await minioClient.setObjectTagging(bucketName, objectName, {
-      mediaType: metadata['custom-header-mediaType'],
-      application: metadata['custom-header-application'],
-      sender: metadata['custom-header-keyRemoteJid'],
-      contentType: metadata['Content-Type'],
-      fromMe: metadata['custom-header-fromMe'],
-    });
-    return o;
-  } catch (error) {
-    console.log('ERROR: ', error);
-    return error;
+      await minioClient.setObjectTagging(bucketName, objectName, {
+        mediaType: metadata['custom-header-mediaType'],
+        application: metadata['custom-header-application'],
+        sender: metadata['custom-header-keyRemoteJid'],
+        contentType: metadata['Content-Type'],
+        fromMe: metadata['custom-header-fromMe'],
+      });
+      return o;
+    } catch (error) {
+      console.log('ERROR: ', error);
+      return error;
+    }
   }
 };
 
 const getObjectUrl = async (fileName: string, expiry?: number) => {
-  try {
-    const objectName = join('codechat_v1', fileName);
-    if (expiry) {
-      return await minioClient.presignedGetObject(bucketName, objectName, expiry);
+  if (minioClient) {
+    try {
+      const objectName = join('codechat_v1', fileName);
+      if (expiry) {
+        return await minioClient.presignedGetObject(bucketName, objectName, expiry);
+      }
+      return await minioClient.presignedGetObject(bucketName, objectName);
+    } catch (error) {
+      throw new BadRequestException(error?.message);
     }
-    return await minioClient.presignedGetObject(bucketName, objectName);
-  } catch (error) {
-    throw new BadRequestException(error?.message);
   }
 };
 
