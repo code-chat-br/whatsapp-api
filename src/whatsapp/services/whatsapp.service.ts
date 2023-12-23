@@ -125,7 +125,7 @@ import {
 } from '../../utils/use-multi-file-auth-state-redis-db';
 import mime from 'mime-types';
 import { Instance, Webhook } from '@prisma/client';
-import { WebhookEvents, WebhookEventsType } from '../dto/webhook.dto';
+import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
 import { Query, Repository } from '../../repository/repository.service';
 import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
@@ -202,12 +202,13 @@ export class WAStartupService {
     return this.instanceQr;
   }
 
-  private async loadWebhook() {
+  public async loadWebhook() {
     const data = await this.repository.webhook.findFirst({
       where: { instanceId: this.instance.id },
     });
     this.webhook.url = data?.url;
     this.webhook.enabled = data?.enabled;
+    this.webhook.events = data?.events;
   }
 
   public async setWebhook(data: typeof this.webhook) {
@@ -248,21 +249,20 @@ export class WAStartupService {
   }
 
   private async sendDataWebhook<T = any>(event: WebhookEventsType, data: T) {
+    const eventDesc = WebhookEventsEnum[event];
+    console.log(1, eventDesc);
     try {
       if (this.webhook?.enabled && isURL(this.webhook?.url)) {
-        if (this.webhook?.events) {
-          const eventDesc = this.webhook.events?.[event];
-          if (eventDesc) {
-            await axios.post(
-              this.webhook.url,
-              { event: eventDesc, data },
-              { headers: { 'Resource-Owner': this.instance.ownerJid } },
-            );
-          }
+        if (this.webhook?.events && this.webhook?.events[event]) {
+          await axios.post(
+            this.webhook.url,
+            { event: eventDesc, data },
+            { headers: { 'Resource-Owner': this.instance.ownerJid } },
+          );
         } else {
           await axios.post(
             this.webhook.url,
-            { event, data },
+            { event: eventDesc, data },
             { headers: { 'Resource-Owner': this.instance.ownerJid } },
           );
         }
@@ -293,7 +293,7 @@ export class WAStartupService {
         await axios.post(
           globalWebhook.URL,
           {
-            event,
+            event: eventDesc,
             instance: this.instance.name,
             data,
           },
