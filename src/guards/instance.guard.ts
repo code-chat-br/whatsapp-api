@@ -99,7 +99,8 @@ export class InstanceGuard {
       req.originalUrl.includes('/instance/create') ||
       req.originalUrl.includes('/instance/fetchInstances') ||
       req.originalUrl.includes('/instance/qrcode') ||
-      req.originalUrl.includes('/instance/connect')
+      req.originalUrl.includes('/instance/connect') ||
+      req.originalUrl.includes('/webhook')
     ) {
       return next();
     }

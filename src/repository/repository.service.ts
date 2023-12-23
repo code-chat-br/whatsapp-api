@@ -89,6 +89,10 @@ export class Repository extends PrismaClient {
           continue;
         }
 
+        if (!find?.events) {
+          break;
+        }
+
         const k = `ARRAY['${key}']`;
         const v = `to_jsonb(${value}::boolean)`;
 
@@ -106,6 +110,7 @@ export class Repository extends PrismaClient {
         data: {
           url: data?.url,
           enabled: data?.enabled,
+          events: !find?.events ? data?.events : undefined,
         },
         select: {
           id: true,

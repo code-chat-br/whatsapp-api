@@ -130,6 +130,7 @@ export class InstanceController {
 
       switch (state) {
         case 'close':
+          await instance.loadWebhook();
           await instance.connectToWhatsapp();
           await delay(2000);
           return instance.qrCode;

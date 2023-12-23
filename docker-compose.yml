@@ -7,7 +7,7 @@ networks:
 services:
   api:
     container_name: codechat_api
-    image: codechat/develop
+    image: codechat/api:latest
     restart: unless-stopped
     ports:
       - 8084:8084
