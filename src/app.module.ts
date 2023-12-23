@@ -138,7 +138,7 @@ export async function AppModule(context: Map<string, any>) {
   ];
   logger.info('Middlewares - ON');
 
-  const webhookService = new WebhookService(waMonitor);
+  const webhookService = new WebhookService(waMonitor, repository);
   logger.info('WebhookService - ON');
 
   const instanceService = new InstanceService(configService, waMonitor, repository);
