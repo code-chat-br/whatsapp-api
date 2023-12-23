@@ -35,6 +35,7 @@
 export class WebhookDto {
   enabled?: boolean;
   url?: string;
+  events?: WebhookEvents;
 }
 
 export class WebhookEvents {
