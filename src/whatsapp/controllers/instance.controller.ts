@@ -156,7 +156,7 @@ export class InstanceController {
   }
 
   public async connectionState({ instanceName }: InstanceDto) {
-    return this.waMonitor.waInstances.get(instanceName).connectionStatus;
+    return this.waMonitor.waInstances.get(instanceName)?.connectionStatus;
   }
 
   public async fetchInstances({ instanceName }: InstanceDto) {
@@ -183,7 +183,7 @@ export class InstanceController {
 
   public async deleteInstance({ instanceName }: InstanceDto, force?: boolean) {
     const stateConn = await this.connectionState({ instanceName });
-    if (stateConn.state === 'open') {
+    if (stateConn?.state === 'open') {
       throw new BadRequestException([
         'Deletion failed',
         'The instance needs to be disconnected',
