@@ -219,10 +219,10 @@ export class InstanceService {
       });
 
       if (!force && (c1 || c2 || c3 || c4 || c5 || c6)) {
-        throw new BadRequestException(
-          'This instance has dependencies and cannot be deleted',
-          '"force" parameter to delete all dependencies',
-        );
+        throw [
+          new Error('This instance has dependencies and cannot be deleted'),
+          new Error('"force" parameter to delete all dependencies'),
+        ];
       }
 
       delete this.waMonitor.waInstances[instance.instanceName];
@@ -230,7 +230,9 @@ export class InstanceService {
       return await this.repository.instance.delete({
         where: { name: instance.instanceName },
       });
-    } catch (error) {}
+    } catch (error) {
+      throw new BadRequestException(error);
+    }
   }
 
   public async refreshToken({ oldToken }: OldToken) {

@@ -190,8 +190,9 @@ export class InstanceController {
       ]);
     }
     try {
-      await this.instanceService.deleteInstance({ instanceName }, force);
-      return { error: false, message: 'Instance deleted' };
+      const del = await this.instanceService.deleteInstance({ instanceName }, force);
+      del['deletedAt'] = new Date();
+      return del;
     } catch (error) {
       throw new BadRequestException(error?.message);
     }
