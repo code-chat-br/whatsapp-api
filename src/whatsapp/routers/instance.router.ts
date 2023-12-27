@@ -114,7 +114,8 @@ export function InstanceRouter(
       const response = await dataValidate<InstanceDto>({
         request: req,
         schema: instanceNameSchema,
-        execute: (instance) => instanceController.deleteInstance(instance),
+        execute: (instance) =>
+          instanceController.deleteInstance(instance, req?.query?.force === 'true'),
       });
 
       return res.status(HttpStatus.OK).json(response);

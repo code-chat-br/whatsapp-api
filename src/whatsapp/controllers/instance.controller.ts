@@ -164,7 +164,11 @@ export class InstanceController {
       throw new BadRequestException('instanceName must be a string');
     }
     if (instanceName) {
-      return (await this.instanceService.fetchInstance(instanceName))[0] || {};
+      const i = await this.instanceService.fetchInstance(instanceName);
+      if (i.length === 0) {
+        throw new BadRequestException('Instance not found');
+      }
+      return i;
     }
 
     return await this.instanceService.fetchInstance();
@@ -189,13 +193,9 @@ export class InstanceController {
         'The instance needs to be disconnected',
       ]);
     }
-    try {
-      const del = await this.instanceService.deleteInstance({ instanceName }, force);
-      del['deletedAt'] = new Date();
-      return del;
-    } catch (error) {
-      throw new BadRequestException(error?.message);
-    }
+    const del = await this.instanceService.deleteInstance({ instanceName }, force);
+    del['deletedAt'] = new Date();
+    return del;
   }
 
   public async refreshToken(instance: InstanceDto, oldToken: OldToken, req: Request) {

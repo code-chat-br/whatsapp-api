@@ -44,7 +44,7 @@ import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
 import { Logger } from '../../config/logger.config';
 import { v4 } from 'uuid';
-import { isJWT } from 'class-validator';
+import { isArray, isJWT } from 'class-validator';
 import { BadRequestException } from '../../exceptions';
 import axios from 'axios';
 import { Repository } from '../../repository/repository.service';
@@ -231,7 +231,11 @@ export class InstanceService {
         where: { name: instance.instanceName },
       });
     } catch (error) {
-      throw new BadRequestException(error);
+      if (isArray(error)) {
+        throw new BadRequestException(...error.map((e) => e.message));
+      }
+
+      throw new BadRequestException(error?.message);
     }
   }
 
