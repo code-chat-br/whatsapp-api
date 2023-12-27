@@ -13,6 +13,10 @@
   
 <div align="center"><img src="./public/images/cover.png"></div>
 
+## Project Structure
+
+* [Look here](./PROJECT_STRUCTURE.md)
+
 ## WhatsApp-Api-NodeJs
 
 This code is an implementation of [WhiskeySockets](https://github.com/WhiskeySockets/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
