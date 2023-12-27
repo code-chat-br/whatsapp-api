@@ -167,12 +167,16 @@ export class WAMonitoringService {
           ?.client?.ev.removeAllListeners('connection.update');
         this.waInstances.get(instance.name)?.client?.ev.flush();
         this.waInstances.delete(instance.name);
-      } catch {}
+      } catch (error) {
+        this.logger.subContext('removeInstance');
+        this.logger.error(error);
+        this.logger.subContext();
+      }
 
       try {
         await this.cleaningUp(instance);
       } finally {
-        this.logger.warn(`Instance "${instance.name}" - REMOVED`);
+        this.logger.warn(`Instance "${instance?.name}" - REMOVED`);
       }
     });
   }
