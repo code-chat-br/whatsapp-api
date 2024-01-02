@@ -58,12 +58,15 @@ async function fetchInstanceFromCache(
 ) {
   try {
     const exists = !!waMonitor.waInstances.get(instanceName);
+    if (exists) {
+      return exists;
+    }
     if (redisCache?.isConnected) {
       const keyExists = await redisCache.keys('*');
-      return exists || keyExists[0]?.includes(instanceName);
+      return keyExists[0]?.includes(instanceName);
     }
 
-    return exists || existsSync(join(INSTANCE_DIR, instanceName));
+    return existsSync(join(INSTANCE_DIR, instanceName));
   } catch (error) {
     console.log('Error fetching instance from cache', error);
     return false;
