@@ -250,19 +250,27 @@ export class WAStartupService {
 
   private async sendDataWebhook<T = any>(event: WebhookEventsType, data: T) {
     const eventDesc = WebhookEventsEnum[event];
-    console.log(1, eventDesc);
+
     try {
       if (this.webhook?.enabled && isURL(this.webhook?.url)) {
         if (this.webhook?.events && this.webhook?.events[event]) {
           await axios.post(
             this.webhook.url,
-            { event: eventDesc, data },
+            {
+              event: eventDesc,
+              instance: this.instance,
+              data,
+            },
             { headers: { 'Resource-Owner': this.instance.ownerJid } },
           );
         } else {
           await axios.post(
             this.webhook.url,
-            { event: eventDesc, data },
+            {
+              event: eventDesc,
+              instance: this.instance,
+              data,
+            },
             { headers: { 'Resource-Owner': this.instance.ownerJid } },
           );
         }
@@ -294,7 +302,7 @@ export class WAStartupService {
           globalWebhook.URL,
           {
             event: eventDesc,
-            instance: this.instance.name,
+            instance: this.instance,
             data,
           },
           { headers: { 'Resource-owner': this.instance.ownerJid } },
@@ -413,6 +421,7 @@ export class WAStartupService {
       this.instance.profilePicUrl = (
         await this.profilePicture(this.instance.ownerJid)
       ).profilePictureUrl;
+      this.instance.connectionStatus = 'ONLINE';
 
       this.repository.instance
         .update({
@@ -420,7 +429,7 @@ export class WAStartupService {
           data: {
             ownerJid: this.instance.ownerJid,
             profilePicUrl: this.instance.profilePicUrl,
-            connectionStatus: 'ONLINE',
+            connectionStatus: this.instance.connectionStatus,
           },
         })
         .catch((err) => this.logger.error(err));
@@ -1321,8 +1330,6 @@ export class WAStartupService {
 
   public async mediaMessage(data: SendMediaDto) {
     const generate = await this.prepareMediaMessage(data.mediaMessage);
-
-    console.log(generate);
 
     return await this.sendMessageWithTyping(
       data.number,
