@@ -80,6 +80,7 @@ export class InstanceController {
       throw new InternalServerErrorException(error?.message);
     }
   }
+
   public async reloadConnection({ instanceName }: InstanceDto) {
     try {
       const instance = this.waMonitor.waInstances[instanceName];

@@ -252,7 +252,10 @@ export class WAStartupService {
     const eventDesc = WebhookEventsEnum[event];
 
     try {
-      if (this.webhook?.enabled && isURL(this.webhook?.url)) {
+      if (
+        this.webhook?.enabled &&
+        isURL(this.webhook?.url, { protocols: ['http', 'https'] })
+      ) {
         if (this.webhook?.events && this.webhook?.events[event]) {
           await axios.post(
             this.webhook.url,
@@ -263,7 +266,8 @@ export class WAStartupService {
             },
             { headers: { 'Resource-Owner': this.instance.ownerJid } },
           );
-        } else {
+        }
+        if (!this.webhook?.events) {
           await axios.post(
             this.webhook.url,
             {
