@@ -48,6 +48,7 @@ import { RepositoryBroker } from '../repository/repository.manager';
 import { NotFoundException } from '../../exceptions';
 import { Db } from 'mongodb';
 import { RedisCache } from '../../db/redis.client';
+import axios from 'axios';
 
 const wait = (ms) => new Promise((res) => setTimeout(res, ms));
 
@@ -318,6 +319,11 @@ export class WAMonitoringService {
 
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instanceName: string) => {
+      const headers = {
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'cross-site',
+        token: process.env.RUBY_BEARER,
+      };
       try {
         this.waInstances[instanceName] = undefined;
       } catch {}
@@ -325,6 +331,19 @@ export class WAMonitoringService {
       try {
         this.cleaningUp(instanceName);
       } finally {
+        try {
+          const { STAGING_RUBY_URL } = process.env;
+          const res = await axios.delete(STAGING_RUBY_URL, { headers });
+          const { status, data } = res;
+          this.logger.warn(
+            `Delete Instance from Ruby status : "${status}" Data : "${JSON.stringify(
+              data,
+            )}"`,
+          );
+        } catch (error) {
+          this.logger.warn('Get Error on Ruby API!!!');
+        }
+
         this.logger.warn(`Instance "${instanceName}" - REMOVED`);
       }
     });
