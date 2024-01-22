@@ -690,7 +690,7 @@ export class WAStartupService {
           message: { ...received.message },
           messageTimestamp: received.messageTimestamp as number,
           owner: this.instance.wuid,
-          source: getDevice(received.key.id),
+          source: getDevice(received.key.id) as any,
         });
 
         this.logger.log(received);
