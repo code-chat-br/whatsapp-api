@@ -58,7 +58,7 @@ export class WebhookService {
           },
         });
         if (!i) {
-          throw new BadRequestException('Instance not found');
+          throw new Error('Instance not found');
         }
 
         if (i?.Webhook) {
