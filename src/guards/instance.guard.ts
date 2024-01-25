@@ -57,7 +57,7 @@ async function fetchInstanceFromCache(
   redisCache: RedisCache,
 ) {
   try {
-    cons"t exists = !!waMonitor.waInstances.get(instanceName);
+    const exists = !!waMonitor.waInstances.get(instanceName);
     if (exists) {
       return exists;
     }
