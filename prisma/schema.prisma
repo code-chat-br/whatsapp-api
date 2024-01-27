@@ -83,6 +83,8 @@ enum DeviceMessage {
   ios
   android
   web
+  unknown
+  desktop
 }
 
 model Message {

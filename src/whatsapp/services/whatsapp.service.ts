@@ -1235,7 +1235,7 @@ export class WAStartupService {
             if (Long.isLong(m.messageTimestamp)) {
               return m.messageTimestamp.toNumber();
             }
-            return m.messageTimestamp;
+            return m.messageTimestamp as number;
           })(),
           instanceId: this.instance.id,
           device: getDevice(m.key.id),
