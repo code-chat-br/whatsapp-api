@@ -62,8 +62,8 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).markMessageAsRead(data);
   }
 
-  public async readMessagesForId({instanceName}: InstanceDto, data: ReadMessageIdDto) {
-    return await this.waMonitor.waInstances.get(instanceName).readMessages(data)
+  public async readMessagesForId({ instanceName }: InstanceDto, data: ReadMessageIdDto) {
+    return await this.waMonitor.waInstances.get(instanceName).readMessages(data);
   }
 
   public async archiveChat({ instanceName }: InstanceDto, data: ArchiveChatDto) {

@@ -36,8 +36,10 @@ sudo usermod -aG docker ${USER}
 
 ### 2. Installing the database
 
-* Now, we have configured our PostgreSQL database using Docker Compose.
 > PostgreSql [required]
+
+* Now, we have configured our PostgreSQL database using Docker Compose.
+* Access your postgre manager and create a database.
 
 [compose from postgres](./postgres/docker-compose.yaml)
 

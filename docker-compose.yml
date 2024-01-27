@@ -45,17 +45,17 @@ services:
       - AUTHENTICATION_JWT_EXPIRES_IN=0
       - AUTHENTICATION_JWT_SECRET=3RFYiiRmvNiokSBrLZzx
 
-      - REDIS_ENABLED=false
-      - REDIS_URI=redis://[HOST]/5
-      - REDIS_PREFIX=codechat
+      # - REDIS_ENABLED=false
+      # - REDIS_URI=redis://[HOST]/5
+      # - REDIS_PREFIX=codechat
 
-      - S3_ENABLED=false
-      - S3_ACCESS_KEY=[ACCESS_KEY]
-      - S3_SECRET_KEY=[SECRET_KEY]
-      - S3_BUCKET=[BUCKET]
-      - S3_PORT=9000
-      - S3_ENDPOINT=[ENDPOINT]
-      - S3_USE_SSL=false
+      # - S3_ENABLED=false
+      # - S3_ACCESS_KEY=[ACCESS_KEY]
+      # - S3_SECRET_KEY=[SECRET_KEY]
+      # - S3_BUCKET=[BUCKET]
+      # - S3_PORT=9000
+      # - S3_ENDPOINT=[ENDPOINT]
+      # - S3_USE_SSL=false
     networks:
       - public-network
   

@@ -312,16 +312,16 @@ export const readMessageForIdSchema: JSONSchema7 = {
   type: 'object',
   properties: {
     ids: {
-      type:'array',
+      type: 'array',
       minItems: 1,
       uniqueItems: true,
       items: {
-        type: 'integer'
-      }
-    }
+        type: 'integer',
+      },
+    },
   },
-  required: ['ids']
-}
+  required: ['ids'],
+};
 
 export const updatePresenceSchema: JSONSchema7 = {
   $id: v4(),

@@ -69,7 +69,7 @@ export class ReadMessageDto {
 }
 
 export class ReadMessageIdDto {
-  messageId: number[]
+  messageId: number[];
 }
 
 class LastMessage {
