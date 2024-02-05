@@ -160,6 +160,11 @@ export class WAMonitoringService {
 
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instance: Instance) => {
+      if (!instance || !instance.name) {
+        // Handle the case where instance or instance.name is null or undefined
+        this.logger.error('Invalid instance or instance name.');
+        return;
+      }
       try {
         await this.waInstances.get(instance.name)?.client?.logout();
         this.waInstances
