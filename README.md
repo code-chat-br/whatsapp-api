@@ -104,7 +104,7 @@ cp .env.dev .env
     * We use `migrate dev` in development to automatically create and apply migrations, making working with the database easier.
   * **In production environment: npx prisma migrate deploy**
     * In production, we use `migrate deploy` to apply migrations in a controlled and secure way.
-  * **Data visualization: npx prisma studio**
+  * **Data visualization:** `npx prisma studio`
     * Prisma Studio is a visual tool that helps us manage and visualize bank data in an intuitive way.
 
 Define the [DATABASE_URL](https://github.com/code-chat-br/whatsapp-api/blob/6d0ab3e27932c5d1a6d8275dc3c6cb5097ff099e/.env.dev#L48) environment variable for the database deployment.
