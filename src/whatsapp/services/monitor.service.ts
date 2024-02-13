@@ -161,12 +161,14 @@ export class WAMonitoringService {
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instance: Instance) => {
       try {
-        await this.waInstances.get(instance.name)?.client?.logout();
-        this.waInstances
-          .get(instance.name)
-          ?.client?.ev.removeAllListeners('connection.update');
-        this.waInstances.get(instance.name)?.client?.ev.flush();
-        this.waInstances.delete(instance.name);
+        if (instance) {
+          await this.waInstances.get(instance.name)?.client?.logout();
+          this.waInstances
+            .get(instance.name)
+            ?.client?.ev.removeAllListeners('connection.update');
+          this.waInstances.get(instance.name)?.client?.ev.flush();
+          this.waInstances.delete(instance.name);
+        }
       } catch (error) {
         this.logger.subContext('removeInstance');
         this.logger.error(error);
@@ -174,7 +176,9 @@ export class WAMonitoringService {
       }
 
       try {
-        await this.cleaningUp(instance);
+        if (instance) {
+          await this.cleaningUp(instance);
+        }
       } finally {
         this.logger.warn(`Instance "${instance?.name}" - REMOVED`);
       }
