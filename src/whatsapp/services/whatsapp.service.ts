@@ -426,24 +426,22 @@ export class WAStartupService {
     const store = this.configService.get<StoreConf>('STORE');
     const database = this.configService.get<Database>('DATABASE');
     if (store?.CLEANING_INTERVAL && !database.ENABLED) {
-      setInterval(
-        () => {
-          try {
-            for (const [key, value] of Object.entries(store)) {
-              if (value === true) {
-                execSync(
-                  `rm -rf ${join(
-                    this.storePath,
-                    key.toLowerCase(),
-                    this.instance.wuid,
-                  )}/*.json`,
-                );
-              }
+      const callback = () => {
+        try {
+          for (const [key, value] of Object.entries(store)) {
+            if (value === true) {
+              execSync(
+                `rm -rf ${join(
+                  this.storePath,
+                  key.toLowerCase(),
+                  this.instance.wuid,
+                )}/*.json`,
+              );
             }
-          } catch (error) {}
-        },
-        (store?.CLEANING_INTERVAL ?? 3600) * 1000,
-      );
+          }
+        } catch (error) {}
+      };
+      setInterval(callback, (store?.CLEANING_INTERVAL ?? 3600) * 1000);
     }
   }
 
