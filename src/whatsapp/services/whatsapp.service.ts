@@ -137,6 +137,7 @@ import NodeCache from 'node-cache';
 import { useMultiFileAuthStateRedisDb } from '../../utils/use-multi-file-auth-state-redis-db';
 import { RedisCache } from '../../db/redis.client';
 import mime from 'mime-types';
+import { Agent } from 'https';
 
 export class WAStartupService {
   constructor(
@@ -233,14 +234,26 @@ export class WAStartupService {
     return await this.repository.webhook.find(this.instanceName);
   }
 
+  private httpService(url: string) {
+    const rejectUnauthorized =
+      this.configService.get('SSL_CONF').AXIOS_REJECT_UNAUTHORIZED === 'true';
+    const agent = new Agent({
+      rejectUnauthorized: rejectUnauthorized,
+    });
+    const httpService = axios.create({
+      baseURL: url,
+      httpsAgent: agent,
+    });
+    return httpService;
+  }
+
   private async sendDataWebhook<T = any>(event: Events, data: T) {
     const webhook = this.configService.get<Webhook>('WEBHOOK');
     const we = event.replace(/[\.-]/gm, '_').toUpperCase();
     if (webhook.EVENTS[we]) {
       try {
         if (this.localWebhook.enabled && isURL(this.localWebhook.url)) {
-          const httpService = axios.create({ baseURL: this.localWebhook.url });
-          await httpService.post(
+          await this.httpService(this.localWebhook.url).post(
             '',
             {
               event,
@@ -266,8 +279,7 @@ export class WAStartupService {
       try {
         const globalWebhook = this.configService.get<Webhook>('WEBHOOK').GLOBAL;
         if (globalWebhook && globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
-          const httpService = axios.create({ baseURL: globalWebhook.URL });
-          await httpService.post(
+          await this.httpService(globalWebhook.URL).post(
             '',
             {
               event,
@@ -414,24 +426,22 @@ export class WAStartupService {
     const store = this.configService.get<StoreConf>('STORE');
     const database = this.configService.get<Database>('DATABASE');
     if (store?.CLEANING_INTERVAL && !database.ENABLED) {
-      setInterval(
-        () => {
-          try {
-            for (const [key, value] of Object.entries(store)) {
-              if (value === true) {
-                execSync(
-                  `rm -rf ${join(
-                    this.storePath,
-                    key.toLowerCase(),
-                    this.instance.wuid,
-                  )}/*.json`,
-                );
-              }
+      const callback = () => {
+        try {
+          for (const [key, value] of Object.entries(store)) {
+            if (value === true) {
+              execSync(
+                `rm -rf ${join(
+                  this.storePath,
+                  key.toLowerCase(),
+                  this.instance.wuid,
+                )}/*.json`,
+              );
             }
-          } catch (error) {}
-        },
-        (store?.CLEANING_INTERVAL ?? 3600) * 1000,
-      );
+          }
+        } catch (error) {}
+      };
+      setInterval(callback, (store?.CLEANING_INTERVAL ?? 3600) * 1000);
     }
   }
 

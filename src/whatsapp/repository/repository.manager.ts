@@ -68,6 +68,7 @@ export class RepositoryBroker {
     this.__init_repo_without_db__();
   }
 
+  private readonly isWin = process.platform === 'win32';
   private dbClient?: MongoClient;
 
   public get dbServer() {
@@ -90,7 +91,12 @@ export class RepositoryBroker {
         if (existsSync(path)) {
           continue;
         }
-        execSync(`mkdir -p ${path}`);
+
+        if (this.isWin) {
+          execSync(`mkdir ${path}`);
+        } else {
+          execSync(`mkdir -p ${path}`);
+        }
       }
     }
   }
