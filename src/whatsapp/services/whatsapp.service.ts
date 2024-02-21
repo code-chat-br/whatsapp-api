@@ -339,7 +339,7 @@ export class WAStartupService {
     lastDisconnect,
   }: Partial<ConnectionState>) {
     if (qr) {
-      if (this.qrCode === this.configService.get<QrCode>('QRCODE').LIMIT) {
+      if (this.qrCode.count === this.configService.get<QrCode>('QRCODE').LIMIT) {
         this.sendDataWebhook('qrcodeUpdated', {
           message: 'QR code limit reached, please login again',
           statusCode: DisconnectReason.badSession,
