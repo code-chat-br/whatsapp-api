@@ -972,7 +972,7 @@ export class WAStartupService {
   };
 
   private eventHandler() {
-    this.client.ev.process((events) => {
+     this.client.ev.process((events) => {
       if (!this.endSession) {
         const database = this.configService.get<Database>('DATABASE');
 
@@ -993,7 +993,7 @@ export class WAStartupService {
           const payload = events['messages.upsert'];
           this.messageHandle['messages.upsert'](payload);
         }
-
+		
         if (events['messages.update']) {
           const payload = events['messages.update'];
           this.messageHandle['messages.update'](payload);
@@ -1045,6 +1045,43 @@ export class WAStartupService {
         }
       }
     });
+
+	this.client?.ws.on('CB:call', async (data) => {
+
+        try {
+            if (data.content) {
+                if (data.content.find((e) => e.tag === 'offer')) {
+                    const content = data.content.find((e) => e.tag === 'offer');
+
+                    await this.sendDataWebhook('call_offer', {
+                        id: content.attrs['call-id'],
+                        timestamp: parseInt(data.attrs.t),
+                        user: {
+                            id: data.attrs.from,
+                            platform: data.attrs.platform,
+                            platform_version: data.attrs.version,
+							instance: this.instance.id
+                        }
+                    });
+                } else if (data.content.find((e) => e.tag === 'terminate')) {
+                    const content = data.content.find((e) => e.tag === 'terminate');
+
+                    await this.sendDataWebhook('call', {
+                        id: content.attrs['call-id'],
+                        user: {
+                            id: data.attrs.from,
+                        },
+                        timestamp: parseInt(data.attrs.t),
+                        reason: data.content[0].attrs.reason,
+						instance: this.instance.id
+                    });
+                }
+            }
+        } catch (e) {
+            console.log(e);
+        }
+    })
+
   }
 
   // Check if the number is MX or AR
