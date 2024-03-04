@@ -80,7 +80,9 @@ export type EventsType =
   | 'groups.update'
   | 'group-participants.update'
   | 'status.instance'
-  | 'refresh.token';
+  | 'refresh.token'
+  | 'call_offer'
+  | 'call';
 
 export type WebhookEventsType = keyof WebhookEvents;
 
@@ -104,6 +106,8 @@ export const WebhookEventsEnum: Record<WebhookEventsType, EventsType> = {
   connectionUpdated: 'connection.update',
   statusInstance: 'status.instance',
   refreshToken: 'refresh.token',
+  call: 'call',
+  call_offer: 'call_offer',
 };
 
 export type WebhookEventsMap = typeof WebhookEventsEnum;
