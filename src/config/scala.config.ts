@@ -1,7 +1,7 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename main.ts                                                            │
+ * │ @filename scala.config                                                       │
  * │ Developed by: Cleber Wilson                                                  │
  * │ Creation date: Aug 13, 2023                                                  │
  * │ Contact: contato@codechat.dev                                                │
@@ -33,18 +33,18 @@
 
 import { Router } from 'express';
 import { join } from 'path';
-import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
-
-const document = YAML.load(join(process.cwd(), 'docs', 'swagger.yaml'));
+import { apiReference } from '@scalar/express-api-reference';
 
 const router = Router();
 
-export const swaggerRouter = router.use('/docs', swaggerUi.serve).get(
+export const docsRouter = router.use(
   '/docs',
-  swaggerUi.setup(document, {
-    customCssUrl: '/css/dark-theme-swagger.css',
-    customSiteTitle: 'CodeChat - WhatsApp API',
-    customfavIcon: '/images/logo.png',
+  apiReference({
+    spec: {
+      content() {
+        return YAML.load(join(process.cwd(), 'docs', 'swagger.yaml'));
+      },
+    },
   }),
 );

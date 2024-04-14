@@ -65,7 +65,6 @@ import { MessageRouter } from './whatsapp/routers/sendMessage.router';
 import { GroupRouter } from './whatsapp/routers/group.router';
 import { WebhookRouter } from './whatsapp/routers/webhook.router';
 import session from 'express-session';
-import { swaggerRouter } from './config/swagger.config';
 import { ROOT_DIR } from './config/path.config';
 import { join } from 'path';
 import { LoggerMiddleware } from './middle/logger.middle';
@@ -73,6 +72,7 @@ import { InstanceGuard } from './guards/instance.guard';
 import { JwtGuard } from './guards/auth.guard';
 import { ErrorMiddle } from './middle/error.middle';
 import 'express-async-errors';
+import { docsRouter } from './config/scala.config';
 
 export function describeRoutes(
   rootPath: string,
@@ -215,7 +215,7 @@ export async function AppModule(context: Map<string, any>) {
 
   app.use('/', router);
 
-  app.use(swaggerRouter);
+  app.use(docsRouter);
 
   app.use(ErrorMiddle.appError, ErrorMiddle.pageNotFound);
 
