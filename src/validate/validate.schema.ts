@@ -538,6 +538,7 @@ export const webhookSchema: JSONSchema7 = {
         connectionUpdated: { type: 'boolean', enum: [true, false] },
         statusInstance: { type: 'boolean', enum: [true, false] },
         refreshToken: { type: 'boolean', enum: [true, false] },
+        callUpsert: { type: 'boolean', enum: [true, false] },
       },
     },
   },

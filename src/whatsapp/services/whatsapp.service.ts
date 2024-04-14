@@ -62,6 +62,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   UserFacingSocketConfig,
   WABrowserDescription,
+  WACallEvent,
   WAConnectionState,
   WAMediaUpload,
   WAMessageUpdate,
@@ -971,77 +972,88 @@ export class WAStartupService {
     },
   };
 
+  private readonly callHandler = {
+    'call.upsert': (call: WACallEvent[]) => {
+      call.forEach((c) => {
+        this.sendDataWebhook('callUpsert', c);
+      });
+    },
+  };
+
   private eventHandler() {
     this.client.ev.process((events) => {
       if (!this.endSession) {
-        const database = this.configService.get<Database>('DATABASE');
-
-        if (events['connection.update']) {
+        if (events?.['connection.update']) {
           this.connectionUpdate(events['connection.update']);
         }
 
-        if (events['creds.update']) {
+        if (events?.['creds.update']) {
           this.authState.saveCreds();
         }
 
-        if (events['messaging-history.set']) {
+        if (events?.['messaging-history.set']) {
           const payload = events['messaging-history.set'];
           this.messageHandle['messaging-history.set'](payload);
         }
 
-        if (events['messages.upsert']) {
+        if (events?.['messages.upsert']) {
           const payload = events['messages.upsert'];
           this.messageHandle['messages.upsert'](payload);
         }
 
-        if (events['messages.update']) {
+        if (events?.['messages.update']) {
           const payload = events['messages.update'];
           this.messageHandle['messages.update'](payload);
         }
 
-        if (events['presence.update']) {
+        if (events?.['presence.update']) {
           const payload = events['presence.update'];
           this.sendDataWebhook('presenceUpdated', payload);
         }
 
-        if (events['groups.upsert']) {
+        if (events?.['groups.upsert']) {
           const payload = events['groups.upsert'];
           this.groupHandler['groups.upsert'](payload);
         }
 
-        if (events['groups.update']) {
+        if (events?.['groups.update']) {
           const payload = events['groups.update'];
           this.groupHandler['groups.update'](payload);
         }
 
-        if (events['group-participants.update']) {
+        if (events?.['group-participants.update']) {
           const payload = events['group-participants.update'];
           this.groupHandler['group-participants.update'](payload);
         }
 
-        if (events['chats.upsert']) {
+        if (events?.['chats.upsert']) {
           const payload = events['chats.upsert'];
           this.chatHandle['chats.upsert'](payload);
         }
 
-        if (events['chats.update']) {
+        if (events?.['chats.update']) {
           const payload = events['chats.update'];
           this.chatHandle['chats.update'](payload);
         }
 
-        if (events['chats.delete']) {
+        if (events?.['chats.delete']) {
           const payload = events['chats.delete'];
           this.chatHandle['chats.delete'](payload);
         }
 
-        if (events['contacts.upsert']) {
+        if (events?.['contacts.upsert']) {
           const payload = events['contacts.upsert'];
           this.contactHandle['contacts.upsert'](payload);
         }
 
-        if (events['contacts.update']) {
+        if (events?.['contacts.update']) {
           const payload = events['contacts.update'];
           this.contactHandle['contacts.update'](payload);
+        }
+
+        if (events?.['call']) {
+          const payload = events['call'];
+          this.callHandler['call.upsert'](payload);
         }
       }
     });
