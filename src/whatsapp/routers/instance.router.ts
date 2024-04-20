@@ -120,7 +120,7 @@ export function InstanceRouter(
 
       return res.status(HttpStatus.OK).json(response);
     })
-    .put('/refreshToken', async (req, res) => {
+    .put(routerPath('refreshToken'), async (req, res) => {
       const response = await dataValidate<OldToken>({
         request: req,
         schema: oldTokenSchema,
