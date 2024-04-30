@@ -114,7 +114,7 @@ const uploadFile = async (
           contentType: metadata['Content-Type'],
           fromMe: metadata['custom-header-fromMe'],
         },
-        { versionId: '_1' },
+        { versionId: '_1""' },
       );
       return o;
     } catch (error) {
