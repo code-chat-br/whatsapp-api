@@ -780,7 +780,7 @@ export class WAStartupService {
           try {
             const media = await this.getMediaMessage(messageRaw, true);
             if (media) {
-              const { stream, mediaType, fileName } = media;
+              const { stream, mediaType, fileName, size } = media;
               const { id, name } = this.instance;
               const mimetype = mime.lookup(fileName).toString();
               const fullName = join(
@@ -789,7 +789,7 @@ export class WAStartupService {
                 mediaType,
                 fileName,
               );
-              await s3Service.uploadFile(fullName, stream, {
+              await s3Service.uploadFile(fullName, stream, size.fileLength, {
                 'Content-Type': mimetype,
                 'custom-header-fromMe': String(!!received.key?.fromMe),
                 'custom-header-keyRemoteJid': received.key.remoteJid,

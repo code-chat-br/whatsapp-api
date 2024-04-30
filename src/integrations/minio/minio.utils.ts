@@ -42,14 +42,14 @@ import { Bucket, ConfigService } from '../../config/env.config';
 
 const BUCKET = new ConfigService().get<Bucket>('S3');
 
-type Metadata = {
+interface Metadata extends MinIo.ItemBucketMetadata {
   'Content-Type': string;
   'custom-header-keyRemoteJid': string;
   'custom-header-pushName': string;
   'custom-header-messageId': string;
   'custom-header-fromMe': string;
   'custom-header-mediaType': string;
-};
+}
 
 const minioClient = (() => {
   if (BUCKET?.ENABLE) {
@@ -95,21 +95,27 @@ createBucket();
 const uploadFile = async (
   fileName: string,
   file: Buffer | Transform | Readable,
+  size: number,
   metadata: Metadata,
 ) => {
   if (minioClient) {
     const objectName = join('codechat_v1', fileName);
     try {
       metadata['custom-header-application'] = 'codechat-api-v1';
-      const o = await minioClient.putObject(bucketName, objectName, file, metadata);
+      const o = await minioClient.putObject(bucketName, objectName, file, size, metadata);
 
-      await minioClient.setObjectTagging(bucketName, objectName, {
-        mediaType: metadata['custom-header-mediaType'],
-        application: metadata['custom-header-application'],
-        sender: metadata['custom-header-keyRemoteJid'],
-        contentType: metadata['Content-Type'],
-        fromMe: metadata['custom-header-fromMe'],
-      });
+      await minioClient.setObjectTagging(
+        bucketName,
+        objectName,
+        {
+          mediaType: metadata['custom-header-mediaType'],
+          application: metadata['custom-header-application'],
+          sender: metadata['custom-header-keyRemoteJid'],
+          contentType: metadata['Content-Type'],
+          fromMe: metadata['custom-header-fromMe'],
+        },
+        { versionId: '_1' },
+      );
       return o;
     } catch (error) {
       console.log('ERROR: ', error);
