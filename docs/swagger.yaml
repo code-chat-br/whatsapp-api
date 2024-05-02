@@ -96,6 +96,17 @@ tags:
     description: Chatbot platform for creating virtual assistants.
   - name: Typebot > Sessions
     description: Management of chatbot sessions on the Typebot platform.
+  
+servers: 
+  - url: https://{{prod_host}} 
+    variables:
+      prod_host:
+        default: apiv1.codechat.dev
+  - url: http://{{dev_host}}
+    variables:
+      dev_host:
+        default: 127.0.0.1:8084
+
 paths:
   /instance/qrcode/{instanceName}:
     get:
