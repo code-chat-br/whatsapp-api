@@ -1376,9 +1376,7 @@ export class WAStartupService {
     return this.sendMessageWithTyping<AnyMessageContent>(
       data.number,
       {
-        audio: isURL(data.audioMessage.audio)
-          ? { url: data.audioMessage.audio }
-          : Buffer.from(data.audioMessage.audio, 'base64'),
+        audio: { url: data.audioMessage.audio },
         ptt: true,
         mimetype: 'audio/aac',
       },
