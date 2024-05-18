@@ -85,3 +85,8 @@ export class ArchiveChatDto {
 export class DeleteMessage {
   id: string;
 }
+
+export class RejectCallDto {
+  callId: string;
+  callFrom: string;
+}

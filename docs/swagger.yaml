@@ -1104,39 +1104,6 @@ paths:
       responses:
         '200':
           description: Created
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            Content-Length:
-              schema:
-                type: integer
-                example: '89'
-            ETag:
-              schema:
-                type: string
-                example: W/"59-URVyjOOmCv5REmYHceVfaEO5zy8"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 09:40:00 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
           content:
             application/json:
               schema:
@@ -1148,39 +1115,6 @@ paths:
                   exists: false
         '400':
           description: Bad Request
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            Content-Length:
-              schema:
-                type: integer
-                example: '134'
-            ETag:
-              schema:
-                type: string
-                example: W/"86-boH/kjKBqKGrErvvnEE3ns9kl5c"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 09:39:13 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
           content:
             application/json:
               schema:
@@ -1219,39 +1153,6 @@ paths:
       responses:
         '200':
           description: Created
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            Content-Length:
-              schema:
-                type: integer
-                example: '44'
-            ETag:
-              schema:
-                type: string
-                example: W/"2c-tW10vEx5idqx9Xi/GkjeHN7xexQ"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 09:49:41 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
           content:
             application/json:
               schema:
@@ -1261,39 +1162,6 @@ paths:
                 read: success
         '400':
           description: Bad Request
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            Content-Length:
-              schema:
-                type: integer
-                example: '260'
-            ETag:
-              schema:
-                type: string
-                example: W/"104-TcFMmI8BdcX4HGvv2iRKVzw5igE"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 09:49:07 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
           content:
             application/json:
               schema:
@@ -1334,39 +1202,6 @@ paths:
       responses:
         '200':
           description: Created
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            Content-Length:
-              schema:
-                type: integer
-                example: '44'
-            ETag:
-              schema:
-                type: string
-                example: W/"2c-tW10vEx5idqx9Xi/GkjeHN7xexQ"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 09:49:41 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
           content:
             application/json:
               schema:
@@ -1376,39 +1211,6 @@ paths:
                 read: success
         '400':
           description: Bad Request
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            Content-Length:
-              schema:
-                type: integer
-                example: '260'
-            ETag:
-              schema:
-                type: string
-                example: W/"104-TcFMmI8BdcX4HGvv2iRKVzw5igE"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 09:49:07 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
           content:
             application/json:
               schema:
@@ -1821,90 +1623,67 @@ paths:
           example: 'codechat_v1'
       responses:
         '200':
-          description: OK
-          headers:
-            X-Powered-By:
-              schema:
-                type: string
-                example: Express
-            Content-Type:
-              schema:
-                type: string
-                example: application/json; charset=utf-8
-            ETag:
-              schema:
-                type: string
-                example: W/"10e1-fHtzEfDU1mbrWbONYhOxLSlARCw"
-            Vary:
-              schema:
-                type: string
-                example: Accept-Encoding
-            Content-Encoding:
-              schema:
-                type: string
-                example: gzip
-            Date:
-              schema:
-                type: string
-                example: Tue, 05 Dec 2023 14:38:56 GMT
-            Connection:
-              schema:
-                type: string
-                example: keep-alive
-            Keep-Alive:
-              schema:
-                type: string
-                example: timeout=5
-            Transfer-Encoding:
-              schema:
-                type: string
-                example: chunked
+          description: Successful response
           content:
-            application/json:
-              schema:
-                type: object
-              example:
-                - id: 1
-                  remoteJid: 123@s.whatsapp.net
-                  createdAt: '2023-12-05T00:00:00.000Z'
-                  updatedAt: '2023-12-05T00:00:00.000Z'
-                  instanceId: 1
-                - id: 2
-                  remoteJid: 456@s.whatsapp.net
-                  createdAt: '2023-12-05T00:00:00.000Z'
-                  updatedAt: '2023-12-05T00:00:00.000Z'
-                  instanceId: 1
+            application/json: {}
   
   /chat/updatePresence/{instanceName}:
-      patch:
-        tags:
-          - Chat Controller
-        summary: Update Presence
-        description: |
-          This endpoint is used to update the presence status of a user in a chat instance.
-          The presence status can be set to one of the following values: 'unavailable', 'available', 'composing', 'recording', 'paused'.
-        requestBody:
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  number: <string>
-                  presence: >-
-                    'unavailable' | 'available' | 'composing' | 'recording' |
-                    'paused'
-        parameters:
-          - name: instanceName
-            in: path
+    patch:
+      tags:
+        - Chat Controller
+      summary: Update Presence
+      description: |
+        This endpoint is used to update the presence status of a user in a chat instance.
+        The presence status can be set to one of the following values: 'unavailable', 'available', 'composing', 'recording', 'paused'.
+      requestBody:
+        content:
+          application/json:
             schema:
-              type: string
-            required: true
-            example: 'codechat_v1'
-        responses:
-          '200':
-            description: Successful response
-            content:
-              application/json: {}
+              type: object
+              example:
+                number: <string>
+                presence: >-
+                  'unavailable' | 'available' | 'composing' | 'recording' |
+                  'paused'
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 'codechat_v1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+  
+  /chat/rejectCall/{instanceName}:
+    patch:
+      tags:
+        - Chat Controller
+      summary: Reject Call
+      description: Rejecting an incoming call.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              example:
+                callId: string
+                callFrom: string 
+      parameters:
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          example: 'codechat_v1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   
   /group/create/{instanceName}:
       post:
@@ -1969,33 +1748,33 @@ paths:
             application/json: {}
   
   /group/findGroupInfos/{instanceName}:
-      get:
-        tags:
-          - Group Controller
-        summary: Find Group
-        description: |
-          This endpoint is used to retrieve information about a specific group in the WhatsApp API.
-          It requires the `groupJid` parameter as a query parameter and the `instanceName` parameter as a path parameter.
-          The `groupJid` parameter represents the unique identifier of the group, while the `instanceName` parameter represents the name of the instance.
-        parameters:
-          - name: groupJid
-            in: query
-            schema:
-              type: string
-            description: '- required'
-            example: '{{groupJid}}'
-          - name: instanceName
-            in: path
-            schema:
-              type: string
-            required: true
-            description: '- required'
-            example: 'codechat_v1'
-        responses:
-          '200':
-            description: Successful response
-            content:
-              application/json: {}
+    get:
+      tags:
+        - Group Controller
+      summary: Find Group
+      description: |
+        This endpoint is used to retrieve information about a specific group in the WhatsApp API.
+        It requires the `groupJid` parameter as a query parameter and the `instanceName` parameter as a path parameter.
+        The `groupJid` parameter represents the unique identifier of the group, while the `instanceName` parameter represents the name of the instance.
+      parameters:
+        - name: groupJid
+          in: query
+          schema:
+            type: string
+          description: '- required'
+          example: '{{groupJid}}'
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: 'codechat_v1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   
   /group/participants/{instanceName}:
     get:
@@ -2023,32 +1802,32 @@ paths:
             application/json: {}
   
   /group/inviteCode/{instanceName}:
-      get:
-        tags:
-          - Group Controller
-        summary: Invite Code
-        description: |
-          This endpoint retrieves the invite code for a specific group instance.
-          The invite code is used to join the group.
-        parameters:
-          - name: groupJid
-            in: query
-            schema:
-              type: string
-            description: '- required'
-            example: '{{groupJid}}'
-          - name: instanceName
-            in: path
-            schema:
-              type: string
-            required: true
-            description: '- required'
-            example: 'codechat_v1'
-        responses:
-          '200':
-            description: Successful response
-            content:
-              application/json: {}
+    get:
+      tags:
+        - Group Controller
+      summary: Invite Code
+      description: |
+        This endpoint retrieves the invite code for a specific group instance.
+        The invite code is used to join the group.
+      parameters:
+        - name: groupJid
+          in: query
+          schema:
+            type: string
+          description: '- required'
+          example: '{{groupJid}}'
+        - name: instanceName
+          in: path
+          schema:
+            type: string
+          required: true
+          description: '- required'
+          example: 'codechat_v1'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
   
   /group/revokeInviteCode/{instanceName}:
     put:

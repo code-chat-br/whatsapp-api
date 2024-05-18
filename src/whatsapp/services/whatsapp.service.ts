@@ -108,6 +108,7 @@ import {
   OnWhatsAppDto,
   ReadMessageDto,
   ReadMessageIdDto,
+  RejectCallDto,
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
@@ -132,7 +133,6 @@ import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
 import { RedisCache } from '../../cache/redis';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
-import { error } from 'console';
 
 type InstanceQrCode = {
   count: number;
@@ -1797,6 +1797,22 @@ export class WAStartupService {
     return await this.repository.chat.findMany({
       where: { instanceId: this.instance.id },
     });
+  }
+
+  public async rejectCall(data: RejectCallDto) {
+    try {
+      await this.client.rejectCall(data.callId, data.callFrom);
+      return {
+        call: data,
+        rejected: true,
+        status: 'rejected',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to reject a call',
+        error?.toString(),
+      );
+    }
   }
 
   // Group

@@ -396,6 +396,17 @@ export const profilePictureSchema: JSONSchema7 = {
   ...isNotEmpty('number'),
 };
 
+export const rejectCallSchema: JSONSchema7 = {
+  $id: v4(),
+  type: 'object',
+  properties: {
+    callId: { type: 'string' },
+    callFrom: { type: 'string' },
+  },
+  ...isNotEmpty('callId', 'callFrom'),
+  required: ['callId', 'callFrom'],
+};
+
 export const messageValidateSchema: JSONSchema7 = {
   $id: v4(),
   type: 'object',
