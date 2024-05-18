@@ -729,7 +729,7 @@ export class WAStartupService {
           keyRemoteJid: m.key.remoteJid,
           keyFromMe: m.key.fromMe,
           pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-          keyParticipant: m?.participant,
+          keyParticipant: m?.participant || m.key?.participant,
           messageType,
           content: m.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: m.messageTimestamp as number,
