@@ -132,6 +132,7 @@ import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
 import { RedisCache } from '../../cache/redis';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
+import { error } from 'console';
 
 type InstanceQrCode = {
   count: number;
@@ -519,7 +520,7 @@ export class WAStartupService {
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
       userDevicesCache: this.userDevicesCache,
-      transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
+      transactionOpts: { maxCommitRetries: 5, delayBetweenTriesMs: 50 },
     };
 
     return makeWASocket(socketConfig);
@@ -620,7 +621,7 @@ export class WAStartupService {
 
         contactsRaw.push({
           remoteJid: contact.id,
-          pushName: contact?.name || contact?.verifiedName,
+          pushName: contact?.name || contact.id,
           profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
           instanceId: this.instance.id,
         } as unknown as PrismType.Contact);
@@ -634,16 +635,26 @@ export class WAStartupService {
     'contacts.update': async (contacts: Partial<Contact>[]) => {
       const contactsRaw: PrismType.Contact[] = [];
       for await (const contact of contacts) {
-        contactsRaw.push({
+        const data = {
           remoteJid: contact.id,
           pushName: contact?.name ?? contact?.verifiedName,
           profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
           instanceId: this.instance.id,
-        } as unknown as PrismType.Contact);
+        } as unknown as PrismType.Contact;
+        this.repository.contact
+          .updateMany({
+            where: {
+              remoteJid: data.remoteJid,
+              instanceId: this.instance.id,
+            },
+            data,
+          })
+          .catch((error) => this.logger.error(error));
+
+        contactsRaw.push(data);
       }
-      await this.repository.contact.createMany({
-        data: contactsRaw,
-      });
+
+      await this.sendDataWebhook('contactsUpdated', contactsRaw);
     },
   };
 
@@ -661,6 +672,14 @@ export class WAStartupService {
         data: message,
       });
     }
+  }
+
+  private getEditedMessage(data: proto.IWebMessageInfo) {
+    if (data.message?.protocolMessage?.editedMessage) {
+      data.message = data.message?.protocolMessage?.editedMessage;
+    }
+
+    return data.message;
   }
 
   private readonly messageHandle = {
@@ -709,8 +728,8 @@ export class WAStartupService {
           keyId: m.key.id,
           keyRemoteJid: m.key.remoteJid,
           keyFromMe: m.key.fromMe,
-          pushName: m?.pushName,
-          keyParticipant: m.participant,
+          pushName: m?.pushName || m.key.remoteJid.split('@')[0],
+          keyParticipant: m?.participant,
           messageType,
           content: m.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: m.messageTimestamp as number,
@@ -736,29 +755,26 @@ export class WAStartupService {
       type: MessageUpsertType;
     }) => {
       for (const received of messages) {
-        if (
-          type !== 'notify' ||
-          !received?.message ||
-          received.message?.protocolMessage ||
-          received.message.senderKeyDistributionMessage
-        ) {
+        if (!received?.message) {
           return;
         }
 
         this.client.sendPresenceUpdate('unavailable');
 
-        if (Long.isLong(received.messageTimestamp)) {
-          received.messageTimestamp = received.messageTimestamp?.toNumber();
+        if (Long.isLong(received?.messageTimestamp)) {
+          received.messageTimestamp = received.messageTimestamp.toNumber();
         }
 
         const messageType = getContentType(received.message);
+
+        received.message = this.getEditedMessage(received);
 
         const messageRaw = {
           keyId: received.key.id,
           keyRemoteJid: received.key.remoteJid,
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          keyParticipant: received.participant,
+          keyParticipant: received?.participant || received.key?.participant,
           messageType,
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp as number,
@@ -767,12 +783,13 @@ export class WAStartupService {
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
+        this.logger.log('Type: ' + type);
+        console.log(messageRaw);
+
         if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
           const { id } = await this.repository.message.create({ data: messageRaw });
           messageRaw.id = id;
         }
-
-        this.logger.log(messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
 
