@@ -45,7 +45,7 @@
     "@hapi/boom": "^10.0.1",
     "@prisma/client": "^5.14.0",
     "@scalar/express-api-reference": "^0.4.42",
-    "@whiskeysockets/baileys": "^6.7.2",
+    "@whiskeysockets/baileys": "6.6.0",
     "axios": "^1.6.2",
     "class-validator": "^0.14.0",
     "cross-env": "^7.0.3",
