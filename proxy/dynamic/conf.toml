@@ -1,0 +1,141 @@
+[http]
+  # Agrupamento de middlewares no namespace "middlewares"
+  [http.middlewares]
+    # Reemitir a solicitações um determinado número de vezes para um servidor 
+    # back-end se esse servidor não responder.
+    #
+    [http.middlewares.try_retry.retry]
+      # Número de tentativas
+      # 
+      attempts = 2
+      # Tempo de espera para uma nova tentativa
+      #
+      initialInterval = "500ms"
+    
+    # Reproduzindo a solicitação com "retryExpression"
+    #
+    [http.middlewares.limit_body.buffering]
+      # Em caso de:
+      # IsNetworkError(): se o código de resposta está relacionado ao erro de rede;
+      # Attempts(): número de tentativas
+      #
+      retryExpression = "IsNetworkError() && Attempts() < 2"
+
+      # Tamanho máximo do corpo da requisição
+      # 1024 * 3 * 1000
+      #
+      maxRequestBodyBytes = 3072000
+
+    # Middleware de autenticação para exibição do dashboard
+    #
+    [http.middlewares.dashboard_auth_traefik.basicAuth]
+      #---------------------------------------------
+      # Gerando Senha
+      # openssl passwd -apr1 -stdin <<< "sua_senha_1"
+      #---------------------------------------------
+      # user=codechat
+      # pass=$apr1$/a8pff2v$lxxb/jjz0bL3GhUbtyWOV/
+      #
+      users = [
+        "codechat:$apr1$nWn0eGv2$XT4pvuV353HeM7stkcq/B/"
+      ]
+
+    # Middleware de autenticação para exibição do prisma studio
+    [http.middlewares.prisma_db_auth.basicAuth]
+      #---------------------------------------------
+      # Gerando Senha
+      # openssl passwd -apr1 -stdin <<< "sua_senha_2"
+      #---------------------------------------------
+      # user=codechat
+      # pass=$apr1$0.Skc2fw$l4e/9KllHQrAB.Qsmtgeu.
+      #
+      users = [
+        "codechat:$apr1$/RFAfXKf$DjmgFM6FHQpWa6U16F6cI/"
+      ]
+
+  # REDUNDÂNCIA
+  # [http.routers.http_catch_all]
+  #   entryPoints = "web"
+  #   priority = 1
+  #   rule = "HostRegexp(`{host:.+}`)"
+  #   service = "traefik_dashboard"
+
+  # Interceptando todas as requisições HTTP que correspondam a qualquer HOST
+  # e direcionando o tráfico para o router "traefik_dashboard"
+  # 
+  # [http.routers.catch_all]
+  #   rule = "HostRegexp(`{host:.+}`)"
+  #   priority = 1
+  #   entryPoints = ["web"]
+  #   service = "traefik_dashboard"
+
+  ###############################################################
+### Roteador e serviço do "traefik_dashboard"
+  ###############################################################
+  # 1. Roteador
+  #
+  [http.routers.traefik_dashboard]
+    rule = "Host(`traefik.domain.com`)"
+    entryPoints = ["web_secure"]
+    service = "api@internal"
+    middlewares = ["dashboard_auth_traefik"]
+    [http.routers.traefik_dashboard.tls]
+      certresolver = "letsencrypt_resolver"
+
+  # 2. Serviço
+  #
+  [http.services.traefik_dashboard]
+    [http.services.traefik_dashboard.loadbalancer]
+      passHostHeader = true
+      # Na instrução abaixo é esperado uma lista de servidores
+      # http para o loadbalancer. Vamos inserir uma lista com
+      # um único servidor.
+      [[http.services.traefik_dashboard.loadbalancer.servers]]
+        url = "http://127.0.0.1:80"
+      #
+      # Exemplo de outro item da lista de servidores
+      # [[http.service.traefik_dashboard.loadbalancer.servers]]
+      #   url = "http://127.0.0.1:8080"
+      #
+
+  ###############################################################
+### Roteador e serviço do "studio_db_v1"
+  ###############################################################
+  # 1. Roteador
+  #
+  [http.routers.studio_db_v1]
+    rule = "Host(`paneldb.domain.com`)"
+    entryPoints = ["web_secure"]
+    service = "studio_db_v1"
+    middlewares = ["prisma_db_auth"]
+    [http.routers.studio_db_v1.tls]
+      certresolver = "letsencrypt_resolver"
+  
+  # 2. Serviço
+  #
+  [http.services.studio_db_v1]
+    [http.services.studio_db_v1.loadbalancer]
+      passHostHeader = true
+    [[http.services.studio_db_v1.loadbalancer.servers]]
+        url = "http://127.0.0.1:4444"
+
+  ###############################################################
+### Roteador e serviço do "codechat_api_v1"
+  ###############################################################
+  # 1. Roteador
+  #
+  [http.routers.codechat_api_v1]
+    rule = "Host(`api.domain.com`)"
+    entryPoints = ["web_secure"]
+    service = "codechat_api_v1"
+    middlewares = ["limit_body", "try_retry"]
+    [http.routers.codechat_api_v1.tls]
+      certresolver = "letsencrypt_resolver"
+
+  # 2. Service
+  #
+  [http.services.codechat_api_v1]
+    [http.services.codechat_api_v1.loadbalancer]
+      passHostHeader = true
+    [[http.services.codechat_api_v1.loadbalancer.servers]]
+        url = "http://127.0.0.1:8084"
