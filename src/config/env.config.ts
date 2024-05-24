@@ -69,6 +69,7 @@ export type DBOptions = {
   MESSAGE_UPDATE: boolean;
   CONTACTS: boolean;
   CHATS: boolean;
+  LOGS: boolean;
 };
 
 export type StoreConf = {
@@ -172,6 +173,7 @@ export class ConfigService {
           MESSAGE_UPDATE: process.env?.DATABASE_SAVE_MESSAGE_UPDATE === 'true',
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
+          LOGS: process.env?.DATABASE_SAVE_LOGS === 'true',
         },
       },
       REDIS: {

@@ -45,7 +45,7 @@ import { Prisma, PrismaClient, Webhook } from '@prisma/client';
 import { WebhookEvents } from '../whatsapp/dto/webhook.dto';
 import { BadRequestException, NotFoundException } from '../exceptions';
 import { Logger } from '../config/logger.config';
-import { ConfigService } from '../config/env.config';
+import { ConfigService, Database } from '../config/env.config';
 
 type CreateLogs = {
   context: string;
@@ -128,6 +128,9 @@ export class Repository extends PrismaClient {
   }
 
   public async createLogs(instance: string, logs: CreateLogs) {
+    if (!this.configService.get<Database>('DATABASE').DB_OPTIONS?.LOGS) {
+      return;
+    }
     return await this.activityLogs.create({
       data: {
         ...logs,
