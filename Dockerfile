@@ -1,5 +1,5 @@
 ### BASE IMAGE
-FROM node:18.16-bullseye-slim AS base
+FROM node:20-bullseye-slim AS base
 
 ### BUILD IMAGE
 FROM base AS builder
@@ -7,7 +7,8 @@ FROM base AS builder
 WORKDIR /codechat
 
 COPY package*.json ./
-RUN npm i --force
+
+RUN apt-get update && apt-get install -y git && npm install
 
 COPY tsconfig.json .
 COPY ./src ./src
@@ -27,6 +28,10 @@ RUN npm run build
 FROM base AS production
 
 WORKDIR /codechat
+
+LABEL API_VERSION="1.3.1"
+LABEL MANTAINER="https://github.com/code-chat-br"
+LABEL REPOSITORY="https://github.com/code-chat-br/whatsapp-api"
 
 # Copiando arquivos construídos do estágio builder
 COPY --from=builder /codechat/dist ./dist
