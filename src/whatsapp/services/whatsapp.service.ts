@@ -516,6 +516,8 @@ export class WAStartupService {
       qrTimeout: EXPIRATION_TIME * 1000,
       emitOwnEvents: true,
       msgRetryCounterCache: this.msgRetryCounterCache,
+      retryRequestDelayMs: 5 * 1000,
+      maxMsgRetryCount: 1000,
       getMessage: this.getMessage as any,
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
@@ -538,6 +540,8 @@ export class WAStartupService {
 
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
+      this.instanceQr.count = 0;
+
       this.loadWebhook();
       this.client = await this.setSocket();
       this.eventHandler();
