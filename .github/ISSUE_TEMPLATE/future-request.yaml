@@ -45,7 +45,8 @@ body:
       label: Como o recurso deve ser desenvolvido?
       description: |
         Deve ser inserido diretamente no código?
-        Deve ser construído uma aplicação diferente que atuará como uma extenção da api? Um `worker`
+        Deve ser construído uma aplicação diferente que atuará como uma extenção da api? 
+        Por exemplo: um `worker`?
       placeholder: Insira ideias para o recurso
     validations:
       required: true
