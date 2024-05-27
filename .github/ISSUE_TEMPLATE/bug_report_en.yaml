@@ -1,0 +1,76 @@
+name: Bug Report (CodeChat - EN)
+description: Create a report to help us improve.
+body:
+   - type: checkboxes
+     id: terms
+     attributes:
+       label: Welcome!
+       description: |
+         The issue tracker is only for reporting bugs and feature requests.
+         For end-user related support questions, please visit [Group](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5).
+
+         DO NOT OPEN AN ISSUE FOR GENERAL SUPPORT QUESTIONS.
+
+       options:
+         - label: Yes, I searched for similar issues on [GitHub](https://github.com/code-chat-br/whatsapp-api/issues) and didn't find any.
+           required: true
+
+   - type: textarea
+     attributes:
+       label: What did you do?
+       description: |
+         How to write a good bug report?
+
+         - Respect the problem model as much as possible.
+         - The title must be short and descriptive.
+         - Explain the conditions that led you to report this problem: the context.
+         - The context should lead to something, idea or problem you are facing.
+         - Be clear and concise.
+         - Format your messages to help the reader focus on what matters and understand the structure of your message, use [Markdown syntax](https://help.github.com/articles/github-flavored-markdown)
+       placeholder: What did you do?
+     validations:
+       required: true
+
+   - type: textarea
+     attributes:
+       label: What did you expect?
+       placeholder: What did you expect?
+     validations:
+       required: true
+
+   - type: textarea
+     attributes:
+       label: What did you observe instead of what you expected?
+       placeholder: What did you observe instead of what you expected?
+     validations:
+       required: true
+
+   - type: textarea
+     attributes:
+       label: Which API version are you using?
+       description: |
+         Enter your version number that is in the `version` property of **package.json**.
+       placeholder: Paste the version here.
+     validations:
+       required: true
+
+   - type: dropdown
+     id: select
+     attributes:
+       label: What is your environment?
+       options:
+         - Windows
+         - Linux
+         - Mac
+         - Docker
+         - Other
+     validations:
+       required: true
+
+   - type: textarea
+     attributes:
+       label: If applicable, paste the log output
+       description: "`application console`"
+       placeholder: Paste the application log here
+     validations:
+       required: false
