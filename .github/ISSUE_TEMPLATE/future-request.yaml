@@ -60,6 +60,6 @@ body:
       description: |
         Quais nós podem ser usados?
         Descreva o fluxo.
-      placeholder: Insira ideias para o recurso
+      placeholder: descreva o workflow
     validations:
       required: false
