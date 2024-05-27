@@ -1,5 +1,9 @@
 name: Bug Report (CodeChat - EN)
 description: Create a report to help us improve.
+labels:
+  - bug
+  - help wanted
+assignees: jrcleber
 body:
    - type: checkboxes
      id: terms

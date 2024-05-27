@@ -1,5 +1,8 @@
 name: Solicitação de recursos (CodeChat)
 description: Sugira ideias para o projeto.
+assignees: jrcleber
+labels:
+  - enhancement
 body:
   - type: checkboxes
     id: terms
