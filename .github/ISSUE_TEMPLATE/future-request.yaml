@@ -1,5 +1,5 @@
-name: Solicitação de recursos (Traefik)
-description: Sugira ideisas para o projeto.
+name: Solicitação de recursos (CodeChat)
+description: Sugira ideias para o projeto.
 body:
   - type: checkboxes
     id: terms
