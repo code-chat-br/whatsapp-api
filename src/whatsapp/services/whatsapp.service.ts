@@ -108,6 +108,7 @@ import {
   OnWhatsAppDto,
   ReadMessageDto,
   ReadMessageIdDto,
+  RejectCallDto,
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
@@ -515,11 +516,13 @@ export class WAStartupService {
       qrTimeout: EXPIRATION_TIME * 1000,
       emitOwnEvents: true,
       msgRetryCounterCache: this.msgRetryCounterCache,
+      retryRequestDelayMs: 5 * 1000,
+      maxMsgRetryCount: 1000,
       getMessage: this.getMessage as any,
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
       userDevicesCache: this.userDevicesCache,
-      transactionOpts: { maxCommitRetries: 1, delayBetweenTriesMs: 10 },
+      transactionOpts: { maxCommitRetries: 5, delayBetweenTriesMs: 50 },
     };
 
     return makeWASocket(socketConfig);
@@ -537,6 +540,8 @@ export class WAStartupService {
 
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
+      this.instanceQr.count = 0;
+
       this.loadWebhook();
       this.client = await this.setSocket();
       this.eventHandler();
@@ -620,7 +625,7 @@ export class WAStartupService {
 
         contactsRaw.push({
           remoteJid: contact.id,
-          pushName: contact?.name || contact?.verifiedName,
+          pushName: contact?.name || contact.id,
           profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
           instanceId: this.instance.id,
         } as unknown as PrismType.Contact);
@@ -634,16 +639,26 @@ export class WAStartupService {
     'contacts.update': async (contacts: Partial<Contact>[]) => {
       const contactsRaw: PrismType.Contact[] = [];
       for await (const contact of contacts) {
-        contactsRaw.push({
+        const data = {
           remoteJid: contact.id,
           pushName: contact?.name ?? contact?.verifiedName,
           profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
           instanceId: this.instance.id,
-        } as unknown as PrismType.Contact);
+        } as unknown as PrismType.Contact;
+        this.repository.contact
+          .updateMany({
+            where: {
+              remoteJid: data.remoteJid,
+              instanceId: this.instance.id,
+            },
+            data,
+          })
+          .catch((error) => this.logger.error(error));
+
+        contactsRaw.push(data);
       }
-      await this.repository.contact.createMany({
-        data: contactsRaw,
-      });
+
+      await this.sendDataWebhook('contactsUpdated', contactsRaw);
     },
   };
 
@@ -661,6 +676,14 @@ export class WAStartupService {
         data: message,
       });
     }
+  }
+
+  private getEditedMessage(data: proto.IWebMessageInfo) {
+    if (data.message?.protocolMessage?.editedMessage) {
+      data.message = data.message?.protocolMessage?.editedMessage;
+    }
+
+    return data.message;
   }
 
   private readonly messageHandle = {
@@ -709,8 +732,8 @@ export class WAStartupService {
           keyId: m.key.id,
           keyRemoteJid: m.key.remoteJid,
           keyFromMe: m.key.fromMe,
-          pushName: m?.pushName,
-          keyParticipant: m.participant,
+          pushName: m?.pushName || m.key.remoteJid.split('@')[0],
+          keyParticipant: m?.participant || m.key?.participant,
           messageType,
           content: m.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: m.messageTimestamp as number,
@@ -736,29 +759,30 @@ export class WAStartupService {
       type: MessageUpsertType;
     }) => {
       for (const received of messages) {
-        if (
-          type !== 'notify' ||
-          !received?.message ||
-          received.message?.protocolMessage ||
-          received.message.senderKeyDistributionMessage
-        ) {
+        if (!received?.message) {
           return;
         }
 
         this.client.sendPresenceUpdate('unavailable');
 
-        if (Long.isLong(received.messageTimestamp)) {
-          received.messageTimestamp = received.messageTimestamp?.toNumber();
+        if (Long.isLong(received?.messageTimestamp)) {
+          received.messageTimestamp = received.messageTimestamp.toNumber();
         }
 
         const messageType = getContentType(received.message);
+
+        if (typeof received.message[messageType] === 'string') {
+          received.message[messageType] = {
+            text: received.message[messageType],
+          } as any;
+        }
 
         const messageRaw = {
           keyId: received.key.id,
           keyRemoteJid: received.key.remoteJid,
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          keyParticipant: received.participant,
+          keyParticipant: received?.participant || received.key?.participant,
           messageType,
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp as number,
@@ -767,12 +791,28 @@ export class WAStartupService {
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
-        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
+        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE && type === 'notify') {
           const { id } = await this.repository.message.create({ data: messageRaw });
           messageRaw.id = id;
         }
 
-        this.logger.log(messageRaw);
+        if (type === 'append') {
+          const find = await this.repository.message.findFirst({
+            where: {
+              keyId: messageRaw.keyId,
+              instanceId: messageRaw.instanceId,
+            },
+          });
+
+          if (find?.id) {
+            messageRaw.id = find.id;
+          }
+        }
+
+        messageRaw['info'] = { type };
+
+        this.logger.log('Type: ' + type);
+        console.log(messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
 
@@ -1376,9 +1416,7 @@ export class WAStartupService {
     return this.sendMessageWithTyping<AnyMessageContent>(
       data.number,
       {
-        audio: isURL(data.audioMessage.audio)
-          ? { url: data.audioMessage.audio }
-          : Buffer.from(data.audioMessage.audio, 'base64'),
+        audio: { url: data.audioMessage.audio },
         ptt: true,
         mimetype: 'audio/aac',
       },
@@ -1782,6 +1820,22 @@ export class WAStartupService {
     return await this.repository.chat.findMany({
       where: { instanceId: this.instance.id },
     });
+  }
+
+  public async rejectCall(data: RejectCallDto) {
+    try {
+      await this.client.rejectCall(data.callId, data.callFrom);
+      return {
+        call: data,
+        rejected: true,
+        status: 'rejected',
+      };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Failed to reject a call',
+        error?.toString(),
+      );
+    }
   }
 
   // Group

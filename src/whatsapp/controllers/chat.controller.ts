@@ -42,6 +42,7 @@ import {
   UpdatePresenceDto,
   WhatsAppNumberDto,
   ReadMessageIdDto,
+  RejectCallDto,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
@@ -99,5 +100,9 @@ export class ChatController {
 
   public async fetchChats({ instanceName }: InstanceDto) {
     return await this.waMonitor.waInstances.get(instanceName).fetchChats();
+  }
+
+  public async rejectCall({ instanceName }: InstanceDto, data: RejectCallDto) {
+    return await this.waMonitor.waInstances.get(instanceName).rejectCall(data);
   }
 }

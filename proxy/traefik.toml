@@ -1,0 +1,220 @@
+# https://doc.traefik.io/traefik/reference/static-configuration/file/
+
+###############################################################
+# Configuração global
+###############################################################
+
+[global]
+  checkNewVersion = true
+  sendAnonymousUsage = true
+
+###############################################################
+# Configuração de pontos de entrada
+###############################################################
+
+# Definição de pontos de entrada
+#
+[entryPoints]
+  [entryPoints.web_secure]
+    address = ":443"
+    [entryPoints.web_secure.http]
+      tls = {  }
+
+  [entryPoints.web]
+    address = ":80"
+    # Redirecionamento permanente para https
+    [entryPoints.web.http]
+      [entryPoints.web.http.redirections]
+        [entryPoints.web.http.redirections.entryPoint]
+          to = "web_secure"
+          scheme = "https"
+          permanent = true
+          priority = 1
+
+###############################################################
+# Configuração de logs do Traefik
+###############################################################
+
+# registros do Traefik
+# Habilitado por padrão e logado em stdout
+#
+[log]
+
+  # Nível de registro
+  #
+  # níveis=TRACE, DEBUG, INFO, WARN, ERROR, FATAL, e PANIC
+  #
+  level = "DEBUG"
+
+  # Define o caminho do arquivo para o log do traefik. Se não for especificado, stdout será usado.
+  # Diretórios intermediários são criados se necessário.
+  #
+  # mkdir -p /var/log/traefik/
+  #
+  filePath = "/var/log/traefik/traefik.json"
+
+  # O formato é "json" ou "common".
+  #
+  # Opcional
+  # Padrão: "common"
+  #
+  format = "json"
+
+  # Tamanho máximo dos logs
+  # 100 mb
+  #
+  maxSize = 100
+
+  # Número máximo de dias para reter arquivos de log antigos com base no carimbo de data/hora
+  # 30 dias
+  #
+  maxAge = 30
+
+###############################################################
+# Configuração de logs de acesso
+###############################################################
+
+[accessLog]
+
+  # Define o caminho do arquivo para o log de acesso. Se não for especificado, stdout será usado.
+  # Diretórios intermediários são criados se necessário.
+  #
+  # Opcional
+  # Padrão: os.Stdout
+  #
+  # mkdir -p /var/log/traefik/
+  #
+  filePath = "/var/log/traefik/access.log"
+
+  # Format is either "json" or "common".
+  #
+  # Optional
+  # Default: "common"
+  #
+  format = "json"
+
+  # Número de linha para gravação de logs de forma assíncrona
+  # 100 linhas
+  #
+  bufferingSize = 100
+
+################################################################
+# Configuração de API e painel
+################################################################
+
+# Hailitabdo Api e dashboard
+#
+[api]
+  # Habilite a API em modo inseguro
+  #
+  # Opcional
+  # Padrão: false
+  #
+  # insecure = true
+
+  # Painel habilitado
+  #
+  # Opcional
+  # Padrão: true
+  #
+  dashboard = true
+
+# Habilitar ping
+# [ping]
+
+  # Nome do ponto de entrada relacionado
+  #
+  # Opcional
+  # Padrão: "traefik"
+  #
+  # Caminho = /traefik
+  # Métodos = GET,HEAD
+  # Descrição: Um endpoint para verificar a atividade do processo Traefik. Retorne um código 200com o conteúdo:OK
+  #
+  # entryPoint = "traefik"
+
+###############################################################
+# PROVEDORES
+###############################################################
+
+[providers]
+  ###############################################################
+### Back-end de configuração do file
+  ###############################################################
+
+  # Habilita o back-end de configuração para arquivo
+  [providers.file]
+
+  # Caminho do arquivo de configuração
+  # mkdir -p /etc/traefik/dynamic
+  # cp ./dynamic/conf.toml ./etc/traefik/dynamic/conf.toml
+  #
+  filename = "/etc/traefik/dynamic/conf.toml"
+
+  # Defina a watch opção para true  permitir que o Traefik observe automaticamente as 
+  # alterações do arquivo
+  #
+  # Padão: true
+  #
+  watch = true
+
+  ###############################################################
+### Back-end de configuração do docker
+  ###############################################################
+
+  # Habilita o back-end de configuração para docker swarm
+  [providers.docker]
+    # Documentação
+    # https://doc.traefik.io/traefik/providers/swarm/#usebindportip
+    #
+    # useBindPortIP = true
+
+    # Endpoint do servidor Docker. Pode ser um endpoint de soquete tcp ou unix.
+    #
+    # Obrigatório
+    # Padrão: "unix:///var/run/docker.sock"
+    #
+    endpoint = "unix:///var/run/docker.sock"
+
+    # Expor contêineres por padrão no traefik
+    #
+    # Opcional
+    # Padrão: true
+    #
+    exposedByDefault = false
+
+    # Definindo a rede publica de comunicação entre os containers
+    #
+    network = "local_network"
+
+    # Assista aos eventos do Docker.
+    #
+    # Padão: true
+    #
+    watch = true
+
+###############################################################
+# Resolvedores de certificados
+###############################################################
+
+
+[certificatesResolvers.letsencrypt_resolver.acme]
+  # Endereço de e-mail usado para registro.
+  #
+  # Obrigatório
+  #
+  email = "cleber@codechat.dev"
+
+  # Arquivo ou chave usada para armazenamento de certificados.
+  # mkdir -p /etc/traefik/letsencrypt
+  # 
+  # Obrigatório
+  # 
+  storage = "/etc/traefik/letsencrypt/acme.json"
+
+  # Use um desafio HTTP-01 ACME.
+  #
+  # Opcional
+  #
+  [certificatesResolvers.letsencrypt_resolver.acme.httpChallenge]
+    entryPoint = "web"

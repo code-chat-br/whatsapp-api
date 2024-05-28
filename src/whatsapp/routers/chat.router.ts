@@ -43,6 +43,7 @@ import {
   profilePictureSchema,
   readMessageForIdSchema,
   readMessageSchema,
+  rejectCallSchema,
   updatePresenceSchema,
   whatsappNumberSchema,
 } from '../../validate/validate.schema';
@@ -52,6 +53,7 @@ import {
   NumberDto,
   ReadMessageDto,
   ReadMessageIdDto,
+  RejectCallDto,
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
@@ -180,6 +182,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         request: req,
         schema: null,
         execute: (instance) => chatController.fetchChats(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .post(routerPath('rejectCall'), ...guards, async (req, res) => {
+      const response = await dataValidate<RejectCallDto>({
+        request: req,
+        schema: rejectCallSchema,
+        execute: (instance, data) => chatController.rejectCall(instance, data),
       });
 
       return res.status(HttpStatus.OK).json(response);
