@@ -773,6 +773,12 @@ export class WAStartupService {
 
         received.message = this.getEditedMessage(received);
 
+        if (typeof received.message[messageType] === 'string') {
+          received.message[messageType] = {
+            text: received.message[messageType],
+          } as any;
+        }
+
         const messageRaw = {
           keyId: received.key.id,
           keyRemoteJid: received.key.remoteJid,
@@ -787,13 +793,28 @@ export class WAStartupService {
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
-        this.logger.log('Type: ' + type);
-        console.log(messageRaw);
+        messageRaw['info'] = { type };
 
-        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
+        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE && type === 'notify') {
           const { id } = await this.repository.message.create({ data: messageRaw });
           messageRaw.id = id;
         }
+
+        if (type === 'append') {
+          const find = await this.repository.message.findFirst({
+            where: {
+              keyId: messageRaw.keyId,
+              instanceId: messageRaw.instanceId,
+            },
+          });
+
+          if (find?.id) {
+            messageRaw.id = find.id;
+          }
+        }
+
+        this.logger.log('Type: ' + type);
+        console.log(messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
 
