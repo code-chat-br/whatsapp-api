@@ -771,8 +771,6 @@ export class WAStartupService {
 
         const messageType = getContentType(received.message);
 
-        received.message = this.getEditedMessage(received);
-
         if (typeof received.message[messageType] === 'string') {
           received.message[messageType] = {
             text: received.message[messageType],
@@ -793,8 +791,6 @@ export class WAStartupService {
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
-        messageRaw['info'] = { type };
-
         if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE && type === 'notify') {
           const { id } = await this.repository.message.create({ data: messageRaw });
           messageRaw.id = id;
@@ -812,6 +808,8 @@ export class WAStartupService {
             messageRaw.id = find.id;
           }
         }
+
+        messageRaw['info'] = { type };
 
         this.logger.log('Type: ' + type);
         console.log(messageRaw);
