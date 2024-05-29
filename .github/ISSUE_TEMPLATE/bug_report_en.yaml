@@ -1,80 +1,129 @@
-name: Bug Report (CodeChat - EN)
+name: Bug Report (CodeChat)
 description: Create a report to help us improve.
 labels:
   - bug
   - help wanted
+  - en
 assignees: jrcleber
 body:
-   - type: checkboxes
-     id: terms
-     attributes:
-       label: Welcome!
-       description: |
-         The issue tracker is only for reporting bugs and feature requests.
-         For end-user related support questions, please visit [Group](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5).
+  - type: markdown
+    attributes:
+      value: '## Welcome!'
 
-         DO NOT OPEN AN ISSUE FOR GENERAL SUPPORT QUESTIONS.
+  - type: markdown
+    attributes:
+      value: |
+        The issue tracker is only for reporting bugs and feature requests.
+        For end-user support questions, please visit the [Group](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5).
 
-       options:
-         - label: Yes, I searched for similar issues on [GitHub](https://github.com/code-chat-br/whatsapp-api/issues) and didn't find any.
-           required: true
+        **DO NOT OPEN AN ISSUE FOR GENERAL SUPPORT QUESTIONS.**
 
-   - type: textarea
-     attributes:
-       label: What did you do?
-       description: |
-         How to write a good bug report?
+  - type: markdown
+    attributes:
+      value: |
+        How to write a good bug report?
 
-         - Respect the problem model as much as possible.
-         - The title must be short and descriptive.
-         - Explain the conditions that led you to report this problem: the context.
-         - The context should lead to something, idea or problem you are facing.
-         - Be clear and concise.
-         - Format your messages to help the reader focus on what matters and understand the structure of your message, use [Markdown syntax](https://help.github.com/articles/github-flavored-markdown)
-       placeholder: What did you do?
-     validations:
-       required: true
+        - Follow the issue template as much as possible.
+        - The title should be short and descriptive.
+        - Explain the conditions that led you to report this issue: the context.
+        - The context should lead to something, an idea or problem you are facing.
+        - Be clear and concise.
+        - Format your messages to help the reader focus on what matters and understand the structure of your message, use [Markdown syntax](https://help.github.com/articles/github-flavored-markdown)
 
-   - type: textarea
-     attributes:
-       label: What did you expect?
-       placeholder: What did you expect?
-     validations:
-       required: true
+        ---
 
-   - type: textarea
-     attributes:
-       label: What did you observe instead of what you expected?
-       placeholder: What did you observe instead of what you expected?
-     validations:
-       required: true
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: I have searched for similar issues on [GitHub](https://github.com/code-chat-br/whatsapp-api/issues) and found none.
+      description: Search both open and closed issues.
+      options:
+        - label: Yes
+          required: true
 
-   - type: textarea
-     attributes:
-       label: Which API version are you using?
-       description: |
-         Enter your version number that is in the `version` property of **package.json**.
-       placeholder: Paste the version here.
-     validations:
-       required: true
+  - type: markdown
+    attributes:
+      value: '### What did you do?'
+  - type: textarea
+    attributes:
+      label: 'Steps to reproduce the issue'
+      placeholder: Describe
+    validations:
+      required: true
 
-   - type: dropdown
-     id: select
-     attributes:
-       label: What is your environment?
-       options:
-         - Windows
-         - Linux
-         - Mac
-         - Docker
-         - Other
-     validations:
-       required: true
+  - type: markdown
+    attributes:
+      value: '### What did you expect?'
+  - type: textarea
+    attributes:
+      label: Describe what you expected to happen.
+      placeholder: What did you expect?
+    validations:
+      required: true
 
-   - type: textarea
-     attributes:
-       label: If applicable, paste the log output
-       description: "`application console`"
-       placeholder: Paste the application log here
-     validations:
-       required: false
+  - type: markdown
+    attributes:
+      value: '### What did you observe instead of what you expected?'
+  - type: textarea
+    attributes:
+      label: Explain what actually happens when you follow the steps above.
+      placeholder: What did you observe instead of what you expected?
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: '### Which version of the API are you using?'
+  - type: textarea
+    attributes:
+      label: Enter the version number found in the `version` property of **package.json**.
+      placeholder: Paste the version here.
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: '### Screenshots/Videos'
+  - type: textarea
+    attributes:
+      label: |
+        If possible, add screenshots or videos that illustrate the issue.
+        This can be extremely helpful to better understand the issue.
+      placeholder: media that helps identify the issue
+
+  - type: markdown
+    attributes:
+      value: '### What is your environment?'
+  - type: dropdown
+    id: select
+    attributes:
+      label: The environment in which the application is running
+      options:
+        - Windows
+        - Linux
+        - Mac
+        - Docker
+        - Other
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: '### If applicable, paste the log output'
+  - type: textarea
+    attributes:
+      label: |
+        Please attach any logs that might be related to the issue.
+        If the logs contain sensitive information, consider sending them privately to one of the project maintainers.
+      placeholder: Paste the application log here
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: '### Additional Notes'
+  - type: textarea
+    attributes:
+      label: Include any other information you think might be useful to understand or resolve the bug.
+    validations:
+      required: false
