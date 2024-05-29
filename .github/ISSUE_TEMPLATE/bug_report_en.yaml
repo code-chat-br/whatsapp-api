@@ -38,7 +38,7 @@ body:
       label: I have searched for similar issues on [GitHub](https://github.com/code-chat-br/whatsapp-api/issues) and found none.
       description: Search both open and closed issues.
       options:
-        - label: Yes
+        - label: 'Yes'
           required: true
 
   - type: markdown
