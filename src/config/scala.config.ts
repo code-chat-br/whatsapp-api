@@ -35,15 +35,26 @@ import { Router } from 'express';
 import { join } from 'path';
 import YAML from 'yamljs';
 import { apiReference } from '@scalar/express-api-reference';
+import { readFileSync } from 'fs';
 
 const router = Router();
+
+const yamlFile = readFileSync(join(process.cwd(), 'docs', 'swagger.yaml'), {
+  encoding: 'utf8',
+});
+
+const json = YAML.parse(yamlFile);
+
+if (process.env?.BASE_URL) {
+  json.servers[0].variables.prod_host.default = process.env?.BASE_URL;
+}
 
 export const docsRouter = router.use(
   '/docs',
   apiReference({
     spec: {
       content() {
-        return YAML.load(join(process.cwd(), 'docs', 'swagger.yaml'));
+        return json;
       },
     },
   }),
