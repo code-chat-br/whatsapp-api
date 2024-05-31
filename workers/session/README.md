@@ -33,4 +33,4 @@ As discurções sobre esse worker devem ser realizadas [aqui](https://github.com
 
 - [Dockerfile](./Dockerfile)
 - [docker-compose](./docker-compose.yaml)
-- [codechat/worher:develop](https://hub.docker.com/r/codechat/worker/tags)
+- [codechat/worker:develop](https://hub.docker.com/r/codechat/worker/tags)
