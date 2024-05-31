@@ -47,31 +47,33 @@ import {
   ConfigService,
   Database,
   InstanceExpirationTime,
-  Redis,
+  ProviderSession,
 } from '../../config/env.config';
 import { Repository } from '../../repository/repository.service';
-import { RedisCache } from '../../cache/redis';
 import { Instance } from '@prisma/client';
+import { ProviderFiles } from '../../provider/sessions';
 
 export class WAMonitoringService {
   constructor(
     private readonly eventEmitter: EventEmitter2,
     private readonly configService: ConfigService,
     private readonly repository: Repository,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {
     this.removeInstance();
     this.noConnection();
 
     Object.assign(this.db, configService.get<Database>('DATABASE'));
-    Object.assign(this.redis, configService.get<Redis>('REDIS'));
   }
 
   private readonly db: Partial<Database> = {};
-  private readonly redis: Partial<Redis> = {};
 
   private readonly logger = new Logger(this.configService, WAMonitoringService.name);
   public readonly waInstances = new Map<string, WAStartupService>();
+
+  private readonly providerSession = Object.freeze(
+    this.configService.get<ProviderSession>('PROVIDER'),
+  );
 
   public delInstanceTime(instance: string) {
     const time = this.configService.get<InstanceExpirationTime>(
@@ -90,12 +92,12 @@ export class WAMonitoringService {
     }
   }
 
-  private async cleaningUp({ name, id }: Instance) {
+  private async cleaningUp({ name }: Instance) {
     this.waInstances.get(name)?.client?.ev.removeAllListeners('connection.update');
     this.waInstances.get(name)?.client?.ev.flush();
     this.waInstances.delete(name);
-    if (this.redis?.ENABLED) {
-      await this.redisCache.del(`${id}:${name}`);
+    if (this.providerSession?.ENABLED) {
+      await this.providerFiles.removeSession(name);
     } else {
       rmSync(join(INSTANCE_DIR, name), { recursive: true, force: true });
     }
@@ -120,7 +122,7 @@ export class WAMonitoringService {
         this.configService,
         this.eventEmitter,
         this.repository,
-        this.redisCache,
+        this.providerFiles,
       );
       await init.setInstanceName(name);
       await init.connectToWhatsapp();
@@ -128,14 +130,12 @@ export class WAMonitoringService {
     };
 
     try {
-      if (this.redis.ENABLED) {
-        const keys = await this.redisCache.keys('*');
-        if (keys?.length > 0) {
-          keys.forEach(async (key) => {
-            const [prefix, id, name] = key.split(':');
-            await set(name);
-          });
-        }
+      if (this.providerSession.ENABLED) {
+        const [instances] = await this.providerFiles.allInstances();
+        instances.data.forEach(async (name: string) => {
+          await set(name);
+        });
+
         return;
       }
 
@@ -161,7 +161,9 @@ export class WAMonitoringService {
   private removeInstance() {
     this.eventEmitter.on('remove.instance', async (instance: Instance) => {
       try {
-        await this.waInstances.get(instance.name)?.client?.logout();
+        if (!instance?.name) {
+          return;
+        }
         this.waInstances
           .get(instance.name)
           ?.client?.ev.removeAllListeners('connection.update');

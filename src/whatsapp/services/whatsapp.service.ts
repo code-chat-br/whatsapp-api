@@ -74,7 +74,7 @@ import {
   Database,
   GlobalWebhook,
   QrCode,
-  Redis,
+  ProviderSession,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR } from '../../config/path.config';
@@ -123,16 +123,16 @@ import Long from 'long';
 import NodeCache from 'node-cache';
 import {
   AuthState,
-  AuthStateRedis,
-} from '../../utils/use-multi-file-auth-state-redis-db';
+  AuthStateProvider,
+} from '../../utils/use-multi-file-auth-state-provider-files';
 import mime from 'mime-types';
 import { Instance, Webhook } from '@prisma/client';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
 import { Query, Repository } from '../../repository/repository.service';
 import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
-import { RedisCache } from '../../cache/redis';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
+import { ProviderFiles } from '../../provider/sessions';
 
 type InstanceQrCode = {
   count: number;
@@ -150,9 +150,12 @@ export class WAStartupService {
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     private readonly repository: Repository,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {
-    this.authStateRedis = new AuthStateRedis(this.configService, this.redisCache);
+    this.authStateProvider = new AuthStateProvider(
+      this.configService,
+      this.providerFiles,
+    );
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -172,7 +175,7 @@ export class WAStartupService {
   private endSession = false;
   public client: WASocket;
   private authState: Partial<AuthState> = {};
-  private authStateRedis: AuthStateRedis;
+  private authStateProvider: AuthStateProvider;
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -477,12 +480,10 @@ export class WAStartupService {
   }
 
   private async defineAuthState() {
-    const redis = this.configService.get<Redis>('REDIS');
+    const provider = this.configService.get<ProviderSession>('PROVIDER');
 
-    if (redis?.ENABLED) {
-      return await this.authStateRedis.authStateRedisDb(
-        `${this.instance.id}:${this.instance.name}`,
-      );
+    if (provider?.ENABLED) {
+      return await this.authStateProvider.authStateProvider(this.instance.name);
     }
 
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
@@ -676,14 +677,6 @@ export class WAStartupService {
         data: message,
       });
     }
-  }
-
-  private getEditedMessage(data: proto.IWebMessageInfo) {
-    if (data.message?.protocolMessage?.editedMessage) {
-      data.message = data.message?.protocolMessage?.editedMessage;
-    }
-
-    return data.message;
   }
 
   private readonly messageHandle = {

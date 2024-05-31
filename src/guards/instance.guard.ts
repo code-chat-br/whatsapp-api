@@ -48,22 +48,22 @@ import { INSTANCE_DIR } from '../config/path.config';
 import { BadRequestException, ForbiddenException } from '../exceptions';
 import { InstanceDto } from '../whatsapp/dto/instance.dto';
 import { WAMonitoringService } from '../whatsapp/services/monitor.service';
-import { RedisCache } from '../cache/redis';
 import 'express-async-errors';
+import { ProviderFiles } from '../provider/sessions';
 
 async function fetchInstanceFromCache(
   instanceName: string,
   waMonitor: WAMonitoringService,
-  redisCache: RedisCache,
+  providerFiles: ProviderFiles,
 ) {
   try {
     const exists = !!waMonitor.waInstances.get(instanceName);
     if (exists) {
       return exists;
     }
-    if (redisCache?.isConnected) {
-      const keyExists = await redisCache.keys('*');
-      return keyExists[0]?.includes(instanceName);
+    if (providerFiles.isEnabled) {
+      const [keyExists] = await providerFiles.allInstances();
+      return keyExists?.data.includes(instanceName);
     }
 
     return existsSync(join(INSTANCE_DIR, instanceName));
@@ -76,7 +76,7 @@ async function fetchInstanceFromCache(
 export class InstanceGuard {
   constructor(
     private readonly waMonitor: WAMonitoringService,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {}
   async canActivate(req: Request, _: Response, next: NextFunction) {
     if (req.originalUrl.includes('/instance/create')) {
@@ -85,7 +85,7 @@ export class InstanceGuard {
         await fetchInstanceFromCache(
           instance.instanceName,
           this.waMonitor,
-          this.redisCache,
+          this.providerFiles,
         )
       ) {
         throw new ForbiddenException(
@@ -118,7 +118,7 @@ export class InstanceGuard {
     const fetch = await fetchInstanceFromCache(
       param.instanceName,
       this.waMonitor,
-      this.redisCache,
+      this.providerFiles,
     );
 
     if (!fetch) {
