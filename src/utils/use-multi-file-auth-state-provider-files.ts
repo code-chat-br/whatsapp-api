@@ -45,50 +45,60 @@ import {
   SignalDataTypeMap,
 } from '@whiskeysockets/baileys';
 import { Logger } from '../config/logger.config';
-import { ConfigService, Redis } from '../config/env.config';
-import { RedisCache } from '../cache/redis';
+import { ConfigService } from '../config/env.config';
+import { ProviderFiles } from '../provider/sessions';
+import { isNotEmpty } from 'class-validator';
 
-export class AuthStateRedis {
+export class AuthStateProvider {
   constructor(
     private readonly configService: ConfigService,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {}
 
-  private readonly logger = new Logger(this.configService, AuthStateRedis.name);
-  private readonly config = Object.freeze(this.configService.get<Redis>('REDIS'));
+  private readonly logger = new Logger(this.configService, AuthStateProvider.name);
 
-  public async authStateRedisDb(instance: string): Promise<AuthState> {
-    const defaultKey = `${this.config.PREFIX_KEY}:${instance}`;
+  public async authStateProvider(instance: string): Promise<AuthState> {
+    const [, error] = await this.providerFiles.create(instance);
+    if (error) {
+      this.logger.error([
+        'Failed to create folder on file server',
+        error?.message,
+        error?.stack,
+      ]);
+      return;
+    }
 
     const writeData = async (data: any, key: string): Promise<any> => {
-      try {
-        const json = JSON.stringify(data, BufferJSON.replacer);
-        return await this.redisCache.client.hSet(defaultKey, key, json);
-      } catch (error) {
-        this.logger.error({ localError: 'writeData', error });
+      const json = JSON.stringify(data, BufferJSON.replacer);
+      const [response, error] = await this.providerFiles.write(instance, key, {
+        data: json,
+      });
+      if (error) {
+        this.logger.error([error?.message, error?.stack]);
         return;
       }
+      return response;
     };
 
     const readData = async (key: string): Promise<any> => {
-      try {
-        const data = await this.redisCache.client.hGet(defaultKey, key);
-        if (data) {
-          return JSON.parse(data, BufferJSON.reviver);
-        }
-      } catch (error) {
-        this.logger.error({ readData: 'writeData', error });
+      const [response, error] = await this.providerFiles.read(instance, key);
+      if (error) {
+        this.logger.error([error?.message, error?.stack]);
         return;
+      }
+      if (isNotEmpty(response?.data)) {
+        return JSON.parse(JSON.stringify(response.data), BufferJSON.reviver);
       }
     };
 
     const removeData = async (key: string) => {
-      try {
-        return await this.redisCache.client.hDel(defaultKey, key);
-      } catch (error) {
-        this.logger.error({ readData: 'removeData', error });
+      const [response, error] = await this.providerFiles.delete(instance, key);
+      if (error) {
+        this.logger.error([error?.message, error?.stack]);
         return;
       }
+
+      return response;
     };
 
     const creds: AuthenticationCreds = (await readData('creds')) || initAuthCreds();
