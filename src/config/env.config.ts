@@ -87,10 +87,10 @@ export type Database = {
   DB_OPTIONS: DBOptions;
 };
 
-export type Redis = {
+export type ProviderSession = {
   ENABLED: boolean;
-  URI: string;
-  PREFIX_KEY: string;
+  HOST: string;
+  PORT: string;
 };
 
 export type QrCode = {
@@ -111,7 +111,7 @@ export interface Env {
   SERVER: HttpServer;
   STORE: StoreConf;
   DATABASE: Database;
-  REDIS: Redis;
+  PROVIDER: ProviderSession;
   LOG: Log;
   INSTANCE_EXPIRATION_TIME: InstanceExpirationTime;
   GLOBAL_WEBHOOK: GlobalWebhook;
@@ -176,10 +176,10 @@ export class ConfigService {
           LOGS: process.env?.DATABASE_SAVE_LOGS === 'true',
         },
       },
-      REDIS: {
-        ENABLED: process.env?.REDIS_ENABLED === 'true',
-        URI: process.env.REDIS_URI,
-        PREFIX_KEY: process.env?.REDIS_PREFIX || 'codechat_v1',
+      PROVIDER: {
+        ENABLED: process.env?.PROVIDER_ENABLED === 'true',
+        HOST: process.env.PROVIDER_HOST,
+        PORT: process.env?.PROVIDER_PORT || '5656',
       },
       LOG: {
         LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],

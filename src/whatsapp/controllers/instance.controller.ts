@@ -54,7 +54,7 @@ import { Repository } from '../../repository/repository.service';
 import { InstanceService, OldToken } from '../services/instance.service';
 import { WAStartupService } from '../services/whatsapp.service';
 import { isString } from 'class-validator';
-import { RedisCache } from '../../cache/redis';
+import { ProviderFiles } from '../../provider/sessions';
 
 export class InstanceController {
   constructor(
@@ -63,7 +63,7 @@ export class InstanceController {
     private readonly repository: Repository,
     private readonly eventEmitter: EventEmitter2,
     private readonly instanceService: InstanceService,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {}
 
   private readonly logger = new Logger(this.configService, InstanceController.name);
@@ -119,7 +119,7 @@ export class InstanceController {
         this.configService,
         this.eventEmitter,
         this.repository,
-        this.redisCache,
+        this.providerFiles,
       );
       await instance.setInstanceName(instanceName);
       this.waMonitor.waInstances.set(instance.instanceName, instance);
