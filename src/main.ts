@@ -23,7 +23,6 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @function initWA @param undefined                                            │
  * | @function bootstrap @param undefined                                         │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
@@ -57,10 +56,11 @@ export async function bootstrap() {
     logger.log('HTTP' + ' - ON: ' + httpServer.PORT);
     new Logger(configService, 'Swagger Docs').warn(
       `
-      ┌──────────────────────────────┐
-      │         Swagger Docs         │
-      │  http://localhost:${httpServer.PORT}/docs  │
-      └──────────────────────────────┘`.replace(/^ +/gm, '  '),
+        ..
+        .       Swagger Docs
+        . http://localhost:${httpServer.PORT}/docs
+        . https://${process.env?.BASE_URL || 'no-value'}/docs
+        .. `.replace(/^ +/gm, '  '),
     );
   });
 

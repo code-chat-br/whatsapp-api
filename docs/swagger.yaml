@@ -55,7 +55,7 @@ info:
     can build stronger and more authentic relationships with their customers, generating lasting satisfaction and loyalty.
 
     [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/api/fbe06c7b-7647-4c71-81ee-841f5b2e90d8?action=share&creator=14064846)
-  version: 1.3.0
+  version: 1.3.1
   contact:
     name: jrCleber
     email: cleber@codechat.dev
@@ -1265,7 +1265,7 @@ paths:
         summary: Delete Message
         description: |
             This endpoint is used to delete a message for everyone in a chat instance.
-            It requires the `instanceName` parameter in the path and the `messageId` parameter in the query.
+            It requires the `instanceName` parameter in the path and the `id` parameter in the query.
         parameters:
           - name: instanceName
             in: path
@@ -1274,7 +1274,7 @@ paths:
             required: true
             description: '- required'
             example: 'codechat_v1'
-          - name: messageId
+          - name: id
             in: query
             schema:
               type: string
