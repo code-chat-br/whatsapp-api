@@ -7,7 +7,7 @@ networks:
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:latest
+    image: codechat/api:develop
     restart: unless-stopped
     ports:
       - 8084:8084
@@ -44,6 +44,12 @@ services:
       - AUTHENTICATION_GLOBAL_AUTH_TOKEN=zYzP7ocstxh3SJ23D4FZTCu4ehnM8v4hu
       - AUTHENTICATION_JWT_EXPIRES_IN=0
       - AUTHENTICATION_JWT_SECRET=3RFYiiRmvNiokSBrLZzx
+
+      - PROVIDER_ENABLED=true
+      - PROVIDER_HOST=127.0.0.1
+      - PROVIDER_PORT=5656
+
+      - BASE_URL=
 
       # - REDIS_ENABLED=false
       # - REDIS_URI=redis://[HOST]/5
