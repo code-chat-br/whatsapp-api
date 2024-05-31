@@ -1,0 +1,20 @@
+version: '3.8'
+
+networks:
+  public-network:
+    driver: bridge
+    # external: true
+
+services:
+  worker_sessions:
+    image: codechat/worker:develop
+    container_name: codechat_worker
+    restart: unless-stopped
+    ports:
+      - 5656:5656
+    volumes:
+      - instances_connecteds:/worker/instances
+
+volumes:
+  instances_connecteds:
+    driver: local
