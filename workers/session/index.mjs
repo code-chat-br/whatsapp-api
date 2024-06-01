@@ -63,10 +63,11 @@ app.options('/session/ping', function (req, res) {
   res.status(200).json({ pong: true });
 });
 
-app.post('/session', function (req, res) {
+app.post('/session/:prefix', function (req, res) {
+  const { prefix } = req.params;
   const body = req.body;
 
-  const path = join(INSTANCE_PATH, body.instance);
+  const path = join(`${INSTANCE_PATH}/${prefix}`, body.instance);
 
   if (!existsSync(path)) {
     mkdirSync(path, { recursive: true });
@@ -75,21 +76,21 @@ app.post('/session', function (req, res) {
   res.status(202).send();
 });
 
-app.post(`/session/:instance/:key`, function (req, res) {
-  const { instance, key } = req.params;
+app.post(`/session/:prefix/:instance/:key`, function (req, res) {
+  const { prefix, instance, key } = req.params;
   const body = req.body;
 
-  const path = join(INSTANCE_PATH, instance, key + '.json');
+  const path = join(`${INSTANCE_PATH}/${prefix}`, instance, key + '.json');
 
   writeFileSync(path, body.data || {}, { encoding: 'utf8' });
 
   res.status(202).send();
 });
 
-app.get('/session/:instance/:key', function (req, res) {
-  const { instance, key } = req.params;
+app.get('/session/:prefix/:instance/:key', function (req, res) {
+  const { prefix, instance, key } = req.params;
 
-  const path = join(INSTANCE_PATH, instance, key + '.json');
+  const path = join(`${INSTANCE_PATH}/${prefix}`, instance, key + '.json');
 
   if (existsSync(path)) {
     const data = readFileSync(path, { encoding: 'utf8' });
@@ -99,28 +100,36 @@ app.get('/session/:instance/:key', function (req, res) {
   res.status(200).send();
 });
 
-app.delete('/session/:instance/:key', function (req, res) {
-  const { instance, key } = req.params;
+app.delete('/session/:prefix/:instance/:key', function (req, res) {
+  const { prefix, instance, key } = req.params;
 
-  const path = join(INSTANCE_PATH, instance, key + '.json');
+  const path = join(`${INSTANCE_PATH}/${prefix}`, instance, key + '.json');
 
   rmSync(path, { recursive: true });
 
   res.status(200).send();
 });
 
-app.delete(`/session/:instance`, function (req, res) {
-  const { instance } = req.params;
+app.delete(`/session/:prefix/:instance`, function (req, res) {
+  const { prefix, instance } = req.params;
 
-  const path = join(INSTANCE_PATH, instance);
+  const path = join(`${INSTANCE_PATH}/${prefix}`, instance);
 
   execSync(`rm -rf ${path}`);
 
   res.status(200).send();
 });
 
-app.get('/session/list-instances', function (req, res) {
-  const files = readdirSync(INSTANCE_PATH);
+app.get('/session/list-instances/:prefix', function (req, res) {
+  const { prefix } = req.params;
+
+  const path = `${INSTANCE_PATH}/${prefix}`;
+
+  if (!existsSync(path)) {
+    mkdirSync(path, { recursive: true });
+  }
+
+  const files = readdirSync(path);
 
   res.status(200).json(files);
 });

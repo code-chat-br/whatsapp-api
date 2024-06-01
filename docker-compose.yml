@@ -48,6 +48,7 @@ services:
       - PROVIDER_ENABLED=true
       - PROVIDER_HOST=127.0.0.1
       - PROVIDER_PORT=5656
+      - PROVIDER_PREFIX=codechat
 
       - BASE_URL=
 

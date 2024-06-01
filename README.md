@@ -132,6 +132,7 @@ To use the worker with the API it is necessary to define the following environme
 - `PROVIDER_ENABLED=true`: This variable enables the use of the provider (worker) in the API.
 - `PROVIDER_HOST=127.0.0.1`: Defines the host where the worker is listening for requests.
 - `PROVIDER_PORT=5656`: Defines the port where the worker is listening for requests.
+- `PROVIDER_PREFIX=codechat`: Set prefix for instance grouping on worker
 
 ---
 

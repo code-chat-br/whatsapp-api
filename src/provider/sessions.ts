@@ -21,6 +21,10 @@ export class ProviderFiles {
     this.configService.get<ProviderSession>('PROVIDER'),
   );
 
+  private readonly prefix = Object.freeze(
+    this.configService.get<ProviderSession>('PROVIDER').PREFIX,
+  );
+
   get isEnabled() {
     return !!this.config?.ENABLED;
   }
@@ -53,7 +57,7 @@ export class ProviderFiles {
 
   public async create(instance: string): ResponseProvider {
     try {
-      const response = await this._client.post('', { instance });
+      const response = await this._client.post(`/${this.prefix}`, { instance });
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
@@ -62,7 +66,7 @@ export class ProviderFiles {
 
   public async write(instance: string, key: string, data: any): ResponseProvider {
     try {
-      const response = await this._client.post(`/${instance}/${key}`, data);
+      const response = await this._client.post(`/${this.prefix}/${instance}/${key}`, data);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
@@ -71,7 +75,7 @@ export class ProviderFiles {
 
   public async read(instance: string, key: string): ResponseProvider {
     try {
-      const response = await this._client.get(`/${instance}/${key}`);
+      const response = await this._client.get(`/${this.prefix}/${instance}/${key}`);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
@@ -80,7 +84,7 @@ export class ProviderFiles {
 
   public async delete(instance: string, key: string): ResponseProvider {
     try {
-      const response = await this._client.delete(`/${instance}/${key}`);
+      const response = await this._client.delete(`/${this.prefix}/${instance}/${key}`);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
@@ -89,7 +93,7 @@ export class ProviderFiles {
 
   public async allInstances(): ResponseProvider {
     try {
-      const response = await this._client.get('/list-instances');
+      const response = await this._client.get(`/list-instances/${this.prefix}`);
       return [{ status: response.status, data: response?.data as string[] }];
     } catch (error) {
       return [, error];
