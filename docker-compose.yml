@@ -48,12 +48,9 @@ services:
       - PROVIDER_ENABLED=true
       - PROVIDER_HOST=127.0.0.1
       - PROVIDER_PORT=5656
+      - PROVIDER_PREFIX=codechat
 
       - BASE_URL=
-
-      # - REDIS_ENABLED=false
-      # - REDIS_URI=redis://[HOST]/5
-      # - REDIS_PREFIX=codechat
 
       # - S3_ENABLED=false
       # - S3_ACCESS_KEY=[ACCESS_KEY]
@@ -64,19 +61,7 @@ services:
       # - S3_USE_SSL=false
     networks:
       - public-network
-  
-  # redis_cache:
-  #   image: redis:latest
-  #   container_name: redis_cache
-  #   volumes:
-  #     - redis_data:/data
-  #   ports:
-  #     - "6379:6379"
-  #   networks:
-  #     - public_network
 
 volumes:
   instances_connecteds:
     driver: local
-  # redis_data:
-  #   driver: local
