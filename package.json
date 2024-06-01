@@ -8,6 +8,8 @@
     "start": "ts-node --files --transpile-only ./src/main.ts",
     "start:prod": "bash start.sh",
     "start:dev": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
+    "worker:start": "node workers/session/index.mjs",
+    "worker:start:dev": "clear && node workers/session/index.mjs",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
   },
   "repository": {
