@@ -35,7 +35,7 @@ export class ProviderFiles {
         baseURL: `http://${this.config.HOST}:${this.config.PORT}/session`,
       });
       try {
-        const response = await this._client.options('/ping');
+        const response = await this._client.options(`/${this.prefix}/ping`);
         if (!response?.data?.pong) {
           throw new Error('Offline file provider.');
         }
@@ -66,7 +66,10 @@ export class ProviderFiles {
 
   public async write(instance: string, key: string, data: any): ResponseProvider {
     try {
-      const response = await this._client.post(`/${this.prefix}/${instance}/${key}`, data);
+      const response = await this._client.post(
+        `/${this.prefix}/${instance}/${key}`,
+        data,
+      );
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
@@ -93,7 +96,7 @@ export class ProviderFiles {
 
   public async allInstances(): ResponseProvider {
     try {
-      const response = await this._client.get(`/list-instances/${this.prefix}`);
+      const response = await this._client.get(`/${this.prefix}/list-instances`);
       return [{ status: response.status, data: response?.data as string[] }];
     } catch (error) {
       return [, error];
@@ -102,7 +105,7 @@ export class ProviderFiles {
 
   public async removeSession(instance: string): ResponseProvider {
     try {
-      const response = await this._client.delete(`/${instance}`);
+      const response = await this._client.delete(`/${this.prefix}/${instance}`);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
