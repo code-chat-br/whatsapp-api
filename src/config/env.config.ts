@@ -91,6 +91,7 @@ export type ProviderSession = {
   ENABLED: boolean;
   HOST: string;
   PORT: string;
+  PREFIX: string;
 };
 
 export type QrCode = {
@@ -180,6 +181,7 @@ export class ConfigService {
         ENABLED: process.env?.PROVIDER_ENABLED === 'true',
         HOST: process.env.PROVIDER_HOST,
         PORT: process.env?.PROVIDER_PORT || '5656',
+        PREFIX: process.env?.PROVIDER_PREFIX,
       },
       LOG: {
         LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],

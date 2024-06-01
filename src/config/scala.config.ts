@@ -46,7 +46,7 @@ const yamlFile = readFileSync(join(process.cwd(), 'docs', 'swagger.yaml'), {
 const json = YAML.parse(yamlFile);
 
 if (process.env?.BASE_URL) {
-  json.servers[0].variables.prod_host.default = process.env?.BASE_URL;
+  json.servers[0].variables.prod_host.default = process.env?.API_BACKEND;
 }
 
 export const docsRouter = router.use(

@@ -28,7 +28,7 @@ export class ProviderFiles {
   public async onModuleInit() {
     if (this.config.ENABLED) {
       this._client = axios.create({
-        baseURL: `http://${this.config.HOST}:${this.config.PORT}/session`,
+        baseURL: `http://${this.config.HOST}:${this.config.PORT}/session/${this.config.PREFIX}`,
       });
       try {
         const response = await this._client.options('/ping');
@@ -53,7 +53,7 @@ export class ProviderFiles {
 
   public async create(instance: string): ResponseProvider {
     try {
-      const response = await this._client.post('', { instance });
+      const response = await this._client.post(`/`, { instance });
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
@@ -89,7 +89,7 @@ export class ProviderFiles {
 
   public async allInstances(): ResponseProvider {
     try {
-      const response = await this._client.get('/list-instances');
+      const response = await this._client.get(`/list-instances`);
       return [{ status: response.status, data: response?.data as string[] }];
     } catch (error) {
       return [, error];

@@ -59,7 +59,7 @@ export async function bootstrap() {
         ..
         .       Swagger Docs
         . http://localhost:${httpServer.PORT}/docs
-        . https://${process.env?.BASE_URL || 'no-value'}/docs
+        . https://${process.env?.API_BACKEND || 'no-value'}/docs
         .. `.replace(/^ +/gm, '  '),
     );
   });
