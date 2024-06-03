@@ -132,6 +132,7 @@ export class WAMonitoringService {
     try {
       if (this.providerSession.ENABLED) {
         const [instances] = await this.providerFiles.allInstances();
+        console.log('INSTANCES: ', instances);
         instances.data.forEach(async (name: string) => {
           await set(name);
         });

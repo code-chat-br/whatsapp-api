@@ -74,7 +74,7 @@ export class AuthStateProvider {
         data: json,
       });
       if (error) {
-        this.logger.error([error?.message, error?.stack]);
+        // this.logger.error([error?.message, error?.stack]);
         return;
       }
       return response;
@@ -83,7 +83,7 @@ export class AuthStateProvider {
     const readData = async (key: string): Promise<any> => {
       const [response, error] = await this.providerFiles.read(instance, key);
       if (error) {
-        this.logger.error([error?.message, error?.stack]);
+        // this.logger.error([error?.message, error?.stack]);
         return;
       }
       if (isNotEmpty(response?.data)) {
@@ -94,7 +94,7 @@ export class AuthStateProvider {
     const removeData = async (key: string) => {
       const [response, error] = await this.providerFiles.delete(instance, key);
       if (error) {
-        this.logger.error([error?.message, error?.stack]);
+        // this.logger.error([error?.message, error?.stack]);
         return;
       }
 

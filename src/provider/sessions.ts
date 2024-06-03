@@ -35,7 +35,7 @@
  */
 
 import axios, { Axios } from 'axios';
-import { ConfigService, ProviderSession } from '../config/env.config';
+import { Auth, ConfigService, ProviderSession } from '../config/env.config';
 import { Logger } from '../config/logger.config';
 import { execSync } from 'child_process';
 
@@ -63,14 +63,21 @@ export class ProviderFiles {
 
   public async onModuleInit() {
     if (this.config.ENABLED) {
-      this._client = axios.create({
-        baseURL: `http://${this.config.HOST}:${this.config.PORT}/session/${this.config.PREFIX}`,
-      });
+      const url = `http://${this.config.HOST}:${this.config.PORT}`;
+      const globalApiToken =
+        this.configService.get<Auth>('AUTHENTICATION').GLOBAL_AUTH_TOKEN;
+
       try {
-        const response = await this._client.options('/ping');
-        if (!response?.data?.pong) {
+        const response = await axios.options(url + '/ping');
+        if (response?.data != 'pong') {
           throw new Error('Offline file provider.');
         }
+
+        await axios.post(
+          `${url}/session`,
+          { group: this.config.PREFIX },
+          { headers: { apikey: globalApiToken } },
+        );
       } catch (error) {
         this.logger.error([
           'Failed to connect to the file server',
@@ -80,6 +87,13 @@ export class ProviderFiles {
         const pid = process.pid;
         execSync(`kill -9 ${pid}`);
       }
+
+      this._client = axios.create({
+        baseURL: `http://${this.config.HOST}:${this.config.PORT}/session/${this.config.PREFIX}`,
+        headers: {
+          apikey: globalApiToken,
+        },
+      });
     }
   }
 
@@ -89,7 +103,7 @@ export class ProviderFiles {
 
   public async create(instance: string): ResponseProvider {
     try {
-      const response = await this._client.post(`/`, { instance });
+      const response = await this._client.post('', { instance });
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
       return [, error];
