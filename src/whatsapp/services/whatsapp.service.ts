@@ -211,6 +211,10 @@ export class WAStartupService {
     const data = await this.repository.webhook.findFirst({
       where: { instanceId: this.instance.id },
     });
+    if (!data) {
+      return;
+    }
+
     this.webhook.url = data?.url;
     this.webhook.enabled = data?.enabled;
     this.webhook.events = data?.events;
@@ -542,8 +546,7 @@ export class WAStartupService {
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
       this.instanceQr.count = 0;
-
-      this.loadWebhook();
+      await this.loadWebhook();
       this.client = await this.setSocket();
       this.eventHandler();
 

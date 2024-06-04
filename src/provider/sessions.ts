@@ -34,10 +34,12 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import axios, { Axios } from 'axios';
+import axios, { Axios, AxiosError } from 'axios';
 import { Auth, ConfigService, ProviderSession } from '../config/env.config';
 import { Logger } from '../config/logger.config';
 import { execSync } from 'child_process';
+import { writeFileSync } from 'fs';
+import { join } from 'path';
 
 type ResponseSuccess = { status: number; data?: any };
 type ResponseProvider = Promise<[ResponseSuccess?, Error?]>;
@@ -89,7 +91,7 @@ export class ProviderFiles {
       }
 
       this._client = axios.create({
-        baseURL: `http://${this.config.HOST}:${this.config.PORT}/session/${this.config.PREFIX}`,
+        baseURL: `${url}/session/${this.config.PREFIX}`,
         headers: {
           apikey: globalApiToken,
         },
