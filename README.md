@@ -125,7 +125,12 @@ pm2 start 'npm run start:prod' --name CodeChat_API_v1.3.0
 ```
 ---
 
-## Worker Sessions
+## Worker
+
+### Worker options for session management
+
+- **[session-manager:files-v0.0.1](https://github.com/code-chat-br/session-manager)**
+- **[session-manager:sqlite-v0.0.1](https://github.com/code-chat-br/session-manager/tree/sqlite)**
 
 To use the worker with the API it is necessary to define the following environment variables in the API:
 

@@ -1,1 +1,0 @@
-Movido para [session-manager](https://github.com/code-chat-br/session-manager).
