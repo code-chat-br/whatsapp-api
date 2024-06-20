@@ -1,3 +1,4 @@
+import { QrCode } from './../../config/env.config';
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
@@ -374,11 +375,12 @@ export class WAStartupService {
 
       this.instanceQr.count++;
 
+      const qrCodeOptions: QrCode = this.configService.get<QrCode>('QRCODE');
       const optsQrcode: QRCodeToDataURLOptions = {
         margin: 3,
         scale: 4,
         errorCorrectionLevel: 'H',
-        color: { light: '#ffffff', dark: '#198754' },
+        color: { light: qrCodeOptions.LIGHT_COLOR, dark: qrCodeOptions.DARK_COLOR },
       };
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {

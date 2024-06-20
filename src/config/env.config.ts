@@ -98,6 +98,8 @@ export type ProviderSession = {
 export type QrCode = {
   LIMIT: number;
   EXPIRATION_TIME: number;
+  LIGHT_COLOR: string;
+  DARK_COLOR: string;
 };
 
 export type Jwt = { EXPIRIN_IN: number; SECRET: string };
@@ -203,6 +205,8 @@ export class ConfigService {
       QRCODE: {
         LIMIT: Number.parseInt(process.env?.QRCODE_LIMIT || '10'),
         EXPIRATION_TIME: Number.parseInt(process.env?.QRCODE_EXPIRATION_TIME || '60'),
+        LIGHT_COLOR: process.env?.QRCODE_LIGHT_COLOR ? process.env?.QRCODE_LIGHT_COLOR : '#ffffff',
+        DARK_COLOR: process.env?.QRCODE_DARK_COLOR ? process.env?.QRCODE_DARK_COLOR : '#198754'
       },
       CONNECTION_TIMEOUT: Number.parseInt(process.env?.CONNECTION_TIMEOUT || '300'),
       AUTHENTICATION: {
