@@ -109,23 +109,27 @@ export class InstanceController {
     }
 
     try {
+      let instance: WAStartupService;
+      instance = this.waMonitor.waInstances.get(instanceName);
       if (
-        this.waMonitor.waInstances.get(instanceName)?.connectionStatus?.state === 'open'
+        instance?.connectionStatus?.state === 'open'
       ) {
         throw 'Instance already connected';
       }
 
-      const instance = new WAStartupService(
-        this.configService,
-        this.eventEmitter,
-        this.repository,
-        this.providerFiles,
-      );
-      await instance.setInstanceName(instanceName);
-      this.waMonitor.waInstances.set(instance.instanceName, instance);
-      this.waMonitor.delInstanceTime(instance.instanceName);
+      if (!instance || !instance.connectionStatus || instance?.connectionStatus?.state === 'refused') {
+        instance = new WAStartupService(
+          this.configService,
+          this.eventEmitter,
+          this.repository,
+          this.providerFiles,
+        );
+        await instance.setInstanceName(instanceName);
+        this.waMonitor.waInstances.set(instance.instanceName, instance);
+        this.waMonitor.delInstanceTime(instance.instanceName);
 
-      this.waMonitor.waInstances.set(instanceName, instance);
+        this.waMonitor.waInstances.set(instanceName, instance);
+      }
 
       const state = instance?.connectionStatus?.state;
 
