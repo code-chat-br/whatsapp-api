@@ -70,6 +70,7 @@ export type DBOptions = {
   CONTACTS: boolean;
   CHATS: boolean;
   LOGS: boolean;
+  ACTIVITY_LOGS: boolean;
 };
 
 export type StoreConf = {
@@ -175,6 +176,7 @@ export class ConfigService {
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
           LOGS: process.env?.DATABASE_SAVE_LOGS === 'true',
+          ACTIVITY_LOGS: process.env?.DATABASE_SAVE_ACTIVITY_LOGS ? process.env?.DATABASE_SAVE_ACTIVITY_LOGS === 'true' : true
         },
       },
       PROVIDER: {
