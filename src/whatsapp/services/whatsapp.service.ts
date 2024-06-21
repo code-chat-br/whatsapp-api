@@ -120,7 +120,7 @@ import {
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
 import Long from 'long';
-import NodeCache from 'node-cache';
+import NodeCache, { Data } from 'node-cache';
 import {
   AuthState,
   AuthStateProvider,
@@ -374,11 +374,12 @@ export class WAStartupService {
 
       this.instanceQr.count++;
 
+      const qrCodeOptions: QrCode = this.configService.get<QrCode>('QRCODE');
       const optsQrcode: QRCodeToDataURLOptions = {
         margin: 3,
         scale: 4,
         errorCorrectionLevel: 'H',
-        color: { light: '#ffffff', dark: '#198754' },
+        color: { light: qrCodeOptions.LIGHT_COLOR, dark: qrCodeOptions.DARK_COLOR },
       };
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
@@ -1704,17 +1705,19 @@ export class WAStartupService {
       };
     } catch (error) {
       this.logger.error(error);
-      this.repository.activityLogs
-        .create({
-          data: {
-            type: 'error',
-            context: WAStartupService.name,
-            description: 'Error on get media message',
-            content: [error?.toString(), JSON.stringify(error?.stack)],
-            instanceId: this.instance.id,
-          },
-        })
-        .catch((error) => this.logger.error(error));
+      if (this.configService.get<Database>('DATABASE').DB_OPTIONS.ACTIVITY_LOGS) {
+        this.repository.activityLogs
+          .create({
+            data: {
+              type: 'error',
+              context: WAStartupService.name,
+              description: 'Error on get media message',
+              content: [error?.toString(), JSON.stringify(error?.stack)],
+              instanceId: this.instance.id,
+            },
+          })
+          .catch((error) => this.logger.error(error));
+      }
       if (inner) {
         return;
       }
