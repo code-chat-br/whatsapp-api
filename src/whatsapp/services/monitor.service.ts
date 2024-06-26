@@ -189,34 +189,6 @@ export class WAMonitoringService {
     });
   }
 
-  // private removeInstance() {
-  //   this.eventEmitter.on('remove.instance', async (instance: Instance) => {
-  //     if (!instance || !instance.name) {
-  //       // Handle the case where instance or instance.name is null or undefined
-  //       this.logger.error('Invalid instance or instance name.');
-  //       return;
-  //     }
-  //     try {
-  //       await this.waInstances.get(instance.name)?.client?.logout();
-  //       this.waInstances
-  //         .get(instance.name)
-  //         ?.client?.ev.removeAllListeners('connection.update');
-  //       this.waInstances.get(instance.name)?.client?.ev.flush();
-  //       this.waInstances.delete(instance.name);
-  //     } catch (error) {
-  //       this.logger.subContext('removeInstance');
-  //       this.logger.error(error);
-  //       this.logger.subContext();
-  //     }
-
-  //     try {
-  //       await this.cleaningUp(instance);
-  //     } finally {
-  //       this.logger.warn(`Instance "${instance?.name}" - REMOVED`);
-  //     }
-  //   });
-  // }
-
   private noConnection() {
     this.eventEmitter.on('no.connection', async (instance: Instance) => {
       const del = this.configService.get<InstanceExpirationTime>(
