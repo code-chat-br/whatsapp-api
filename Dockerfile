@@ -29,7 +29,7 @@ FROM base AS production
 
 WORKDIR /codechat
 
-LABEL API_VERSION="1.3.1"
+LABEL API_VERSION="develop"
 LABEL MANTAINER="https://github.com/code-chat-br"
 LABEL REPOSITORY="https://github.com/code-chat-br/whatsapp-api"
 

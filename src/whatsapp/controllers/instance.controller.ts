@@ -54,7 +54,7 @@ import { Repository } from '../../repository/repository.service';
 import { InstanceService, OldToken } from '../services/instance.service';
 import { WAStartupService } from '../services/whatsapp.service';
 import { isString } from 'class-validator';
-import { RedisCache } from '../../cache/redis';
+import { ProviderFiles } from '../../provider/sessions';
 
 export class InstanceController {
   constructor(
@@ -63,7 +63,7 @@ export class InstanceController {
     private readonly repository: Repository,
     private readonly eventEmitter: EventEmitter2,
     private readonly instanceService: InstanceService,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {}
 
   private readonly logger = new Logger(this.configService, InstanceController.name);
@@ -109,29 +109,32 @@ export class InstanceController {
     }
 
     try {
+      let instance: WAStartupService;
+      instance = this.waMonitor.waInstances.get(instanceName);
       if (
-        this.waMonitor.waInstances.get(instanceName)?.connectionStatus?.state === 'open'
+        instance?.connectionStatus?.state === 'open'
       ) {
         throw 'Instance already connected';
       }
 
-      const instance = new WAStartupService(
-        this.configService,
-        this.eventEmitter,
-        this.repository,
-        this.redisCache,
-      );
-      await instance.setInstanceName(instanceName);
-      this.waMonitor.waInstances.set(instance.instanceName, instance);
-      this.waMonitor.delInstanceTime(instance.instanceName);
+      if (!instance || !instance.connectionStatus || instance?.connectionStatus?.state === 'refused') {
+        instance = new WAStartupService(
+          this.configService,
+          this.eventEmitter,
+          this.repository,
+          this.providerFiles,
+        );
+        await instance.setInstanceName(instanceName);
+        this.waMonitor.waInstances.set(instance.instanceName, instance);
+        this.waMonitor.delInstanceTime(instance.instanceName);
 
-      this.waMonitor.waInstances.set(instanceName, instance);
+        this.waMonitor.waInstances.set(instanceName, instance);
+      }
 
       const state = instance?.connectionStatus?.state;
 
       switch (state) {
         case 'close':
-          await instance.loadWebhook();
           await instance.connectToWhatsapp();
           await delay(3000);
           return instance.qrCode;

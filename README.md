@@ -125,6 +125,22 @@ pm2 start 'npm run start:prod' --name CodeChat_API_v1.3.0
 ```
 ---
 
+## Worker
+
+### Worker options for session management
+
+- **[session-manager:files-v0.0.1](https://github.com/code-chat-br/session-manager)**
+- **[session-manager:sqlite-v0.0.1](https://github.com/code-chat-br/session-manager/tree/sqlite)**
+
+To use the worker with the API it is necessary to define the following environment variables in the API:
+
+- `PROVIDER_ENABLED=true`: This variable enables the use of the provider (worker) in the API.
+- `PROVIDER_HOST=127.0.0.1`: Defines the host where the worker is listening for requests.
+- `PROVIDER_PORT=5656`: Defines the port where the worker is listening for requests.
+- `PROVIDER_PREFIX=codechat`: Set prefix for instance grouping on worker
+
+---
+
 ## Swagger - OpenAPI 3.0.0
 
 * Route: `http://localhost:8083/docs`
@@ -143,7 +159,8 @@ Authentications must be inserted in the request header.
 
 ### App in Docker
   - [docker-compose](./docker-compose.yml)
-  - [DockerHub-codechat/api](https://hub.docker.com/r/codechat/api)
+  - [DockerHub-codechat/api:develop](https://hub.docker.com/r/codechat/api/tags)
+  
 
 After building the application, in the same directory as the files above, run the following command:
 ```sh

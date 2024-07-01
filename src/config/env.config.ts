@@ -70,6 +70,7 @@ export type DBOptions = {
   CONTACTS: boolean;
   CHATS: boolean;
   LOGS: boolean;
+  ACTIVITY_LOGS: boolean;
 };
 
 export type StoreConf = {
@@ -87,15 +88,18 @@ export type Database = {
   DB_OPTIONS: DBOptions;
 };
 
-export type Redis = {
+export type ProviderSession = {
   ENABLED: boolean;
-  URI: string;
-  PREFIX_KEY: string;
+  HOST: string;
+  PORT: string;
+  PREFIX: string;
 };
 
 export type QrCode = {
   LIMIT: number;
   EXPIRATION_TIME: number;
+  LIGHT_COLOR: string;
+  DARK_COLOR: string;
 };
 
 export type Jwt = { EXPIRIN_IN: number; SECRET: string };
@@ -111,7 +115,7 @@ export interface Env {
   SERVER: HttpServer;
   STORE: StoreConf;
   DATABASE: Database;
-  REDIS: Redis;
+  PROVIDER: ProviderSession;
   LOG: Log;
   INSTANCE_EXPIRATION_TIME: InstanceExpirationTime;
   GLOBAL_WEBHOOK: GlobalWebhook;
@@ -174,12 +178,14 @@ export class ConfigService {
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
           LOGS: process.env?.DATABASE_SAVE_LOGS === 'true',
+          ACTIVITY_LOGS: process.env?.DATABASE_SAVE_ACTIVITY_LOGS ? process.env?.DATABASE_SAVE_ACTIVITY_LOGS === 'true' : true
         },
       },
-      REDIS: {
-        ENABLED: process.env?.REDIS_ENABLED === 'true',
-        URI: process.env.REDIS_URI,
-        PREFIX_KEY: process.env?.REDIS_PREFIX || 'codechat_v1',
+      PROVIDER: {
+        ENABLED: process.env?.PROVIDER_ENABLED === 'true',
+        HOST: process.env.PROVIDER_HOST,
+        PORT: process.env?.PROVIDER_PORT || '5656',
+        PREFIX: process.env?.PROVIDER_PREFIX,
       },
       LOG: {
         LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],
@@ -199,6 +205,8 @@ export class ConfigService {
       QRCODE: {
         LIMIT: Number.parseInt(process.env?.QRCODE_LIMIT || '10'),
         EXPIRATION_TIME: Number.parseInt(process.env?.QRCODE_EXPIRATION_TIME || '60'),
+        LIGHT_COLOR: process.env?.QRCODE_LIGHT_COLOR ? process.env?.QRCODE_LIGHT_COLOR : '#ffffff',
+        DARK_COLOR: process.env?.QRCODE_DARK_COLOR ? process.env?.QRCODE_DARK_COLOR : '#198754'
       },
       CONNECTION_TIMEOUT: Number.parseInt(process.env?.CONNECTION_TIMEOUT || '300'),
       AUTHENTICATION: {

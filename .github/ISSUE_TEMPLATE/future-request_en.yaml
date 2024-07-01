@@ -1,0 +1,123 @@
+name: Feature Request (CodeChat)
+description: Suggest ideas for the project.
+assignees: jrcleber
+labels:
+  - enhancement
+  - en
+body:
+  - type: markdown
+    attributes:
+      value: '## Welcome!'
+
+  - type: markdown
+    attributes:
+      value: |
+        The issue tracker is only for reporting bugs and feature requests.
+        For end-user support questions, please visit the [Group](https://chat.whatsapp.com/HyO8X8K0bAo0bfaeW8bhY5).
+
+        **DO NOT OPEN AN ISSUE FOR GENERAL SUPPORT QUESTIONS.**
+        
+  - type: markdown
+    attributes:
+      value: |
+        How to write a good feature request?
+
+        - Follow the issue template as much as possible.
+        - The title should be short and descriptive.
+        - Explain the conditions that led you to suggest this feature: the context.
+        - The context should lead to something, an idea or problem you are facing.
+        - Be clear and concise.
+        - Format your messages to help the reader focus on what matters and understand the structure of your message, use [Markdown syntax](https://help.github.com/articles/github-flavored-markdown)
+
+        ---
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: I have searched for similar requests on GitHub and found none.
+      description: Search both [open and closed issues](https://github.com/code-chat-br/whatsapp-api/issues).
+      options:
+        - label: 'Yes'
+          required: true
+
+  - type: markdown
+    attributes:
+      value: '### What type of feature?'
+  - type: dropdown
+    attributes:
+      label: 'Feature type:'
+      options:
+        - Integration
+        - Functionality
+        - Endpoint
+        - Database adjustment
+        - Other
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: '### What is the motivation for the request?'
+  - type: textarea
+    attributes:
+      label: What problem does the feature aim to solve?
+      placeholder: Describe the motivation for the feature
+    validations:
+      required: true
+
+  - type: markdown
+    attributes:
+      value: '### Examples of Use'
+  - type: textarea
+    attributes:
+      label: |
+        Provide specific examples of how this feature could be used.
+        This can include scenarios or use cases where the feature would be particularly beneficial.
+      placeholder: text - image - video - flowcharts
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: '### How should the feature be developed?'
+  - type: textarea
+    attributes:
+      label: Development
+      description: |
+        Should it be integrated directly into the code?
+        Should it be built as a separate application that acts as an extension of the API? 
+        For example: a `worker`?
+        
+        Discuss how this new functionality might impact other parts of the project, if applicable.
+
+        ---
+
+        If you have ideas on how this feature can be implemented, please share them here.
+        This is not mandatory but can be useful for the development team.
+
+      placeholder: Insert ideas for the feature
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: '### Can it be built with n8n?'
+  - type: textarea
+    attributes:
+      label: n8n
+      description: |
+        What nodes can be used?
+        Describe the workflow.
+      placeholder: Describe the workflow
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: '### Additional Notes'
+  - type: textarea
+    attributes:
+      label: Any other information you believe is relevant to your request.
+      placeholder: Insert your notes here.
+    validations:
+      required: false

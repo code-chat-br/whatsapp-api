@@ -43,7 +43,6 @@ import express, {
 import { Logger } from './config/logger.config';
 import { S3Service } from './integrations/minio/s3.service';
 import { Repository } from './repository/repository.service';
-import { RedisCache } from './cache/redis';
 import { ConfigService } from './config/env.config';
 import { TypebotService } from './integrations/typebot/typebot.service';
 import { eventEmitter } from './config/event.config';
@@ -73,6 +72,7 @@ import { JwtGuard } from './guards/auth.guard';
 import { ErrorMiddle } from './middle/error.middle';
 import 'express-async-errors';
 import { docsRouter } from './config/scala.config';
+import { ProviderFiles } from './provider/sessions';
 
 export function describeRoutes(
   rootPath: string,
@@ -95,6 +95,7 @@ export function describeRoutes(
 export enum HttpStatus {
   OK = 200,
   CREATED = 201,
+  NO_CONTENT = 202,
   NOT_FOUND = 404,
   FORBIDDEN = 403,
   BAD_REQUEST = 400,
@@ -109,19 +110,19 @@ export async function AppModule(context: Map<string, any>) {
 
   const logger = new Logger(configService, 'APP MODULE');
 
-  const redisCache = new RedisCache(configService);
-  logger.info('Cache:Redis - ON');
-  await redisCache.onModuleInit();
+  const providerFiles = new ProviderFiles(configService);
+  await providerFiles.onModuleInit();
+  logger.info('Provider:Files - ON');
 
   const repository = new Repository(configService);
-  logger.info('Repository - ON');
   await repository.onModuleInit();
+  logger.info('Repository - ON');
 
   const waMonitor = new WAMonitoringService(
     eventEmitter,
     configService,
     repository,
-    redisCache,
+    providerFiles,
   );
 
   logger.info('WAMonitoringService - ON');
@@ -134,7 +135,7 @@ export async function AppModule(context: Map<string, any>) {
     async (req: Request, res: Response, next: NextFunction) =>
       await new JwtGuard(configService).canActivate(req, res, next),
     async (req: Request, res: Response, next: NextFunction) =>
-      await new InstanceGuard(waMonitor, redisCache).canActivate(req, res, next),
+      await new InstanceGuard(waMonitor, providerFiles).canActivate(req, res, next),
   ];
   logger.info('Middlewares - ON');
 
@@ -149,7 +150,7 @@ export async function AppModule(context: Map<string, any>) {
     repository,
     eventEmitter,
     instanceService,
-    redisCache,
+    providerFiles,
   );
   logger.info('InstanceController - ON');
 
@@ -221,12 +222,12 @@ export async function AppModule(context: Map<string, any>) {
 
   app['close'] = async () => {
     await repository.onModuleDestroy();
-    await redisCache.onModuleDestroy();
+    await providerFiles.onModuleDestroy();
   };
 
   context.set('app', app);
   context.set('module:logger', logger);
   context.set('module:repository', repository);
-  context.set('module:redisCache', redisCache);
+  context.set('module:redisCache', providerFiles);
   context.set('module:config', configService);
 }

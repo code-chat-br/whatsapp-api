@@ -74,7 +74,7 @@ import {
   Database,
   GlobalWebhook,
   QrCode,
-  Redis,
+  ProviderSession,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR } from '../../config/path.config';
@@ -120,19 +120,19 @@ import {
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
 import Long from 'long';
-import NodeCache from 'node-cache';
+import NodeCache, { Data } from 'node-cache';
 import {
   AuthState,
-  AuthStateRedis,
-} from '../../utils/use-multi-file-auth-state-redis-db';
+  AuthStateProvider,
+} from '../../utils/use-multi-file-auth-state-provider-files';
 import mime from 'mime-types';
 import { Instance, Webhook } from '@prisma/client';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
 import { Query, Repository } from '../../repository/repository.service';
 import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
-import { RedisCache } from '../../cache/redis';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
+import { ProviderFiles } from '../../provider/sessions';
 
 type InstanceQrCode = {
   count: number;
@@ -150,9 +150,12 @@ export class WAStartupService {
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     private readonly repository: Repository,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
   ) {
-    this.authStateRedis = new AuthStateRedis(this.configService, this.redisCache);
+    this.authStateProvider = new AuthStateProvider(
+      this.configService,
+      this.providerFiles,
+    );
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -172,7 +175,7 @@ export class WAStartupService {
   private endSession = false;
   public client: WASocket;
   private authState: Partial<AuthState> = {};
-  private authStateRedis: AuthStateRedis;
+  private authStateProvider: AuthStateProvider;
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -208,6 +211,10 @@ export class WAStartupService {
     const data = await this.repository.webhook.findFirst({
       where: { instanceId: this.instance.id },
     });
+    if (!data) {
+      return;
+    }
+
     this.webhook.url = data?.url;
     this.webhook.enabled = data?.enabled;
     this.webhook.events = data?.events;
@@ -367,11 +374,12 @@ export class WAStartupService {
 
       this.instanceQr.count++;
 
+      const qrCodeOptions: QrCode = this.configService.get<QrCode>('QRCODE');
       const optsQrcode: QRCodeToDataURLOptions = {
         margin: 3,
         scale: 4,
         errorCorrectionLevel: 'H',
-        color: { light: '#ffffff', dark: '#198754' },
+        color: { light: qrCodeOptions.LIGHT_COLOR, dark: qrCodeOptions.DARK_COLOR },
       };
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
@@ -477,12 +485,10 @@ export class WAStartupService {
   }
 
   private async defineAuthState() {
-    const redis = this.configService.get<Redis>('REDIS');
+    const provider = this.configService.get<ProviderSession>('PROVIDER');
 
-    if (redis?.ENABLED) {
-      return await this.authStateRedis.authStateRedisDb(
-        `${this.instance.id}:${this.instance.name}`,
-      );
+    if (provider?.ENABLED) {
+      return await this.authStateProvider.authStateProvider(this.instance.name);
     }
 
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
@@ -541,8 +547,7 @@ export class WAStartupService {
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
       this.instanceQr.count = 0;
-
-      this.loadWebhook();
+      await this.loadWebhook();
       this.client = await this.setSocket();
       this.eventHandler();
 
@@ -676,14 +681,6 @@ export class WAStartupService {
         data: message,
       });
     }
-  }
-
-  private getEditedMessage(data: proto.IWebMessageInfo) {
-    if (data.message?.protocolMessage?.editedMessage) {
-      data.message = data.message?.protocolMessage?.editedMessage;
-    }
-
-    return data.message;
   }
 
   private readonly messageHandle = {
@@ -1708,17 +1705,19 @@ export class WAStartupService {
       };
     } catch (error) {
       this.logger.error(error);
-      this.repository.activityLogs
-        .create({
-          data: {
-            type: 'error',
-            context: WAStartupService.name,
-            description: 'Error on get media message',
-            content: [error?.toString(), JSON.stringify(error?.stack)],
-            instanceId: this.instance.id,
-          },
-        })
-        .catch((error) => this.logger.error(error));
+      if (this.configService.get<Database>('DATABASE').DB_OPTIONS.ACTIVITY_LOGS) {
+        this.repository.activityLogs
+          .create({
+            data: {
+              type: 'error',
+              context: WAStartupService.name,
+              description: 'Error on get media message',
+              content: [error?.toString(), JSON.stringify(error?.stack)],
+              instanceId: this.instance.id,
+            },
+          })
+          .catch((error) => this.logger.error(error));
+      }
       if (inner) {
         return;
       }
