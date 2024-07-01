@@ -143,7 +143,7 @@ To use the worker with the API it is necessary to define the following environme
 
 ## Swagger - OpenAPI 3.0.0
 
-* Route: `http://localhost:8083/docs`
+* Route: `http://localhost:8084/docs`
 * YAML file: [swagger.yaml](./src/docs/swagger.yaml)
 
 ## Authentication
