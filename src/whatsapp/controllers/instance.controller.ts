@@ -125,10 +125,7 @@ export class InstanceController {
           this.providerFiles,
         );
         await instance.setInstanceName(instanceName);
-        this.waMonitor.waInstances.set(instance.instanceName, instance);
-        this.waMonitor.delInstanceTime(instance.instanceName);
-
-        this.waMonitor.waInstances.set(instanceName, instance);
+        this.waMonitor.addInstance(instanceName, instance);
       }
 
       const state = instance?.connectionStatus?.state;

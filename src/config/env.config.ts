@@ -191,9 +191,9 @@ export class ConfigService {
         LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],
         COLOR: process.env?.LOG_COLOR === 'true',
       },
-      INSTANCE_EXPIRATION_TIME: isBooleanString(process.env?.DEL_INSTANCE)
-        ? process.env.DEL_INSTANCE === 'true'
-        : Number.parseInt(process.env?.DEL_INSTANCE || '5'),
+      INSTANCE_EXPIRATION_TIME: process.env?.INSTANCE_EXPIRATION_TIME === 'false'
+        ? false
+        : Number.parseInt(process.env?.INSTANCE_EXPIRATION_TIME || '5'),
       GLOBAL_WEBHOOK: {
         URL: process.env?.WEBHOOK_GLOBAL_URL,
         ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',

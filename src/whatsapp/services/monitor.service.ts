@@ -75,17 +75,33 @@ export class WAMonitoringService {
     this.configService.get<ProviderSession>('PROVIDER'),
   );
 
+  private readonly instanceDelTimeout = {};
+
+  public addInstance(instanceName: string, instance: WAStartupService) {
+    const currentInstance = this.waInstances.get(instanceName);
+    if (currentInstance) {
+      this.clearListeners(instanceName);
+    }
+    this.waInstances.set(instanceName, instance);
+    this.delInstanceTime(instanceName);
+  }
+
   public delInstanceTime(instance: string) {
     const time = this.configService.get<InstanceExpirationTime>(
       'INSTANCE_EXPIRATION_TIME',
     );
     if (typeof time === 'number' && time > 0) {
-      setTimeout(
+      if (this.instanceDelTimeout[instance]) {
+        clearTimeout(this.instanceDelTimeout[instance]);
+      }
+
+      this.instanceDelTimeout[instance] = setTimeout(
         () => {
           const ref = this.waInstances.get(instance);
           if (ref?.connectionStatus?.state !== 'open') {
             this.waInstances.delete(instance);
           }
+          delete this.instanceDelTimeout[instance];
         },
         1000 * 60 * time,
       );
@@ -93,9 +109,7 @@ export class WAMonitoringService {
   }
 
   private async cleaningUp({ name }: Instance) {
-    this.waInstances.get(name)?.client?.ev.removeAllListeners('connection.update');
-    this.waInstances.get(name)?.client?.ev.flush();
-    this.waInstances.delete(name);
+    this.clearListeners(name);
     if (this.providerSession?.ENABLED) {
       await this.providerFiles.removeSession(name);
     } else {
@@ -108,6 +122,16 @@ export class WAMonitoringService {
         connectionStatus: 'OFFLINE',
       },
     });
+  }
+
+  private clearListeners(instanceName: string) {
+    try {
+      this.waInstances.get(instanceName)?.client?.ev.removeAllListeners('connection.update');
+      this.waInstances.get(instanceName)?.client?.ev.flush();
+      this.waInstances.delete(instanceName);
+    } catch {
+      this.logger.error(`Error clearing ${instanceName} instance listeners`);
+    }
   }
 
   public async loadInstance() {
@@ -125,8 +149,8 @@ export class WAMonitoringService {
         this.providerFiles,
       );
       await init.setInstanceName(name);
+      this.addInstance(init.instanceName, init);
       await init.connectToWhatsapp();
-      this.waInstances.set(name, init);
     };
 
     try {
@@ -185,21 +209,26 @@ export class WAMonitoringService {
 
   private noConnection() {
     this.eventEmitter.on('no.connection', async (instance: Instance) => {
-      const del = this.configService.get<InstanceExpirationTime>(
-        'INSTANCE_EXPIRATION_TIME',
-      );
-      if (del) {
-        try {
-          this.cleaningUp(instance);
-        } catch (error) {
-          this.logger.error({
-            localError: 'noConnection',
-            warn: 'Error deleting instance from memory.',
-            error,
-          });
-        } finally {
-          this.logger.warn(`Instance "${instance.name}" - NOT CONNECTION`);
+      const waInstance = this.waInstances.get(instance.name);
+      if (waInstance?.connectionStatus?.state !== 'open') {
+        const del = this.configService.get<InstanceExpirationTime>(
+          'INSTANCE_EXPIRATION_TIME',
+        );
+        if (del) {
+          try {
+            this.cleaningUp(instance);
+          } catch (error) {
+            this.logger.error({
+              localError: 'noConnection',
+              warn: 'Error deleting instance from memory.',
+              error,
+            });
+          } finally {
+            this.logger.warn(`Instance "${instance.name}" - NOT CONNECTION`);
+          }
         }
+      } else {
+        this.logger.info(`Instance ${waInstance.instanceName} already connected!`);
       }
     });
   }
