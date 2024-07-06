@@ -228,7 +228,7 @@ export class WAStartupService {
     let update: typeof this.webhook;
 
     if (find) {
-      update = await this.repository.updateWebhook(this.instance.id, data);
+      update = await this.repository.updateWebhook(find.id, data);
     } else {
       update = await this.repository.webhook.create({
         data: {
