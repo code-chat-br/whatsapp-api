@@ -1,9 +1,9 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename webhook.dto.ts                                                     │
+ * │ @filename server.ts                                                          │
  * │ Developed by: Cleber Wilson                                                  │
- * │ Creation date: Nov 27, 2022                                                  │
+ * │ Creation date: Jul 08, 2024                                                  │
  * │ Contact: contato@codechat.dev                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
@@ -23,7 +23,9 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @class WebhookDto                                                            │
+ * │ @class                                                                       │
+ * │ @constructs Websocket                                                        │
+ * │ @param {ConfigService} configService                                         │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -32,83 +34,90 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-export class WebhookDto {
-  enabled?: boolean;
-  url?: string;
-  events?: WebhookEvents;
+import Ws from 'ws';
+import { Logger } from '../config/logger.config';
+import { Auth, ConfigService } from '../config/env.config';
+import { Server } from 'http';
+import { isJWT } from 'class-validator';
+import { verify } from 'jsonwebtoken';
+import { JwtPayload } from '../whatsapp/services/instance.service';
+import { EventsType, ListEvents } from '../whatsapp/dto/webhook.dto';
+
+export class Websocket {
+  constructor(private readonly configService: ConfigService) {}
+
+  private readonly logger = new Logger(this.configService, Websocket.name);
+
+  private readonly hub = new Map<string, Ws>();
+
+  send<T>(instance: string, event: EventsType, data: T): boolean {
+    const key = `${instance}_${event}`;
+    const client = this.hub.get(key);
+
+    if (!client) {
+      return;
+    }
+
+    const json = JSON.stringify(data);
+    client.send(json);
+  }
+
+  server(server: Server) {
+    const wss = new Ws.Server({ noServer: true });
+
+    let key = '';
+    let canActivate = false;
+
+    wss.on('connection', (ws, req) => {
+      if (!canActivate) {
+        ws.close(401, ' HTTP/1.1 401 Unauthorized');
+        return;
+      }
+    });
+
+    server.on('upgrade', (req, socket, head) => {
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const params = url.searchParams;
+
+      const event = params.get('event') as EventsType;
+      const token = params.get('token');
+
+      try {
+        if (
+          url.pathname !== '/ws/events' ||
+          !event ||
+          !token ||
+          !isJWT(token) ||
+          !ListEvents.includes(event)
+        ) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+
+        const jwtOpts = this.configService.get<Auth>('AUTHENTICATION').JWT;
+        const decode = verify(token, jwtOpts.SECRET, {
+          ignoreExpiration: jwtOpts.EXPIRIN_IN === 0,
+        }) as JwtPayload;
+
+        canActivate = true;
+
+        if (!canActivate) {
+          socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+          socket.destroy();
+          return;
+        }
+        key = `${decode.instanceName}_${event}`;
+
+        wss.handleUpgrade(req, socket, head, (socket) => {
+          wss.emit('connection', socket, req);
+        });
+      } catch (error) {
+        this.logger.error(error);
+        socket.write('HTTP/1.1 401 Unauthorized\r\n\r\n');
+        socket.destroy();
+        return;
+      }
+    });
+  }
 }
-
-export class WebhookEvents {
-  qrcodeUpdated?: boolean;
-  messagesSet?: boolean;
-  messagesUpsert?: boolean;
-  messagesUpdated?: boolean;
-  sendMessage?: boolean;
-  contactsSet?: boolean;
-  contactsUpsert?: boolean;
-  contactsUpdated?: boolean;
-  chatsSet?: boolean;
-  chatsUpsert?: boolean;
-  chatsUpdated?: boolean;
-  chatsDeleted?: boolean;
-  presenceUpdated?: boolean;
-  groupsUpsert?: boolean;
-  groupsUpdated?: boolean;
-  groupsParticipantsUpdated?: boolean;
-  connectionUpdated?: boolean;
-  statusInstance?: boolean;
-  refreshToken?: boolean;
-  callUpsert?: boolean;
-}
-
-export type EventsType =
-  | 'qrcode.updated'
-  | 'connection.update'
-  | 'status.instance'
-  | 'messages.set'
-  | 'messages.upsert'
-  | 'messages.update'
-  | 'send.message'
-  | 'contacts.set'
-  | 'contacts.upsert'
-  | 'contacts.update'
-  | 'presence.update'
-  | 'chats.set'
-  | 'chats.update'
-  | 'chats.upsert'
-  | 'chats.delete'
-  | 'groups.upsert'
-  | 'groups.update'
-  | 'group-participants.update'
-  | 'status.instance'
-  | 'refresh.token'
-  | 'call.upsert';
-
-export type WebhookEventsType = keyof WebhookEvents;
-
-export const WebhookEventsEnum: Record<WebhookEventsType, EventsType> = {
-  qrcodeUpdated: 'qrcode.updated',
-  messagesSet: 'messages.set',
-  messagesUpsert: 'messages.upsert',
-  messagesUpdated: 'messages.update',
-  sendMessage: 'send.message',
-  contactsSet: 'contacts.set',
-  contactsUpsert: 'contacts.upsert',
-  contactsUpdated: 'contacts.update',
-  chatsSet: 'chats.set',
-  chatsUpsert: 'chats.upsert',
-  chatsUpdated: 'chats.update',
-  chatsDeleted: 'chats.delete',
-  presenceUpdated: 'presence.update',
-  groupsUpsert: 'groups.upsert',
-  groupsUpdated: 'groups.update',
-  groupsParticipantsUpdated: 'group-participants.update',
-  connectionUpdated: 'connection.update',
-  statusInstance: 'status.instance',
-  refreshToken: 'refresh.token',
-  callUpsert: 'call.upsert',
-};
-
-export const ListEvents: EventsType[] = Object.values(WebhookEventsEnum);
-
-export type WebhookEventsMap = typeof WebhookEventsEnum;

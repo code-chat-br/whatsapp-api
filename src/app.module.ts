@@ -73,6 +73,8 @@ import { ErrorMiddle } from './middle/error.middle';
 import 'express-async-errors';
 import { docsRouter } from './config/scala.config';
 import { ProviderFiles } from './provider/sessions';
+import { Websocket } from './websocket/server';
+import { createServer } from 'http';
 
 export function describeRoutes(
   rootPath: string,
@@ -105,6 +107,7 @@ export enum HttpStatus {
 
 export async function AppModule(context: Map<string, any>) {
   const app = express();
+  const server = createServer(app);
 
   const configService = new ConfigService();
 
@@ -118,11 +121,16 @@ export async function AppModule(context: Map<string, any>) {
   await repository.onModuleInit();
   logger.info('Repository - ON');
 
+  const wss = new Websocket(configService);
+  wss.server(server);
+  logger.info('WebSocket Server - ON');
+
   const waMonitor = new WAMonitoringService(
     eventEmitter,
     configService,
     repository,
     providerFiles,
+    wss,
   );
 
   logger.info('WAMonitoringService - ON');
@@ -151,6 +159,7 @@ export async function AppModule(context: Map<string, any>) {
     eventEmitter,
     instanceService,
     providerFiles,
+    wss,
   );
   logger.info('InstanceController - ON');
 
@@ -225,7 +234,7 @@ export async function AppModule(context: Map<string, any>) {
     await providerFiles.onModuleDestroy();
   };
 
-  context.set('app', app);
+  context.set('app', server);
   context.set('module:logger', logger);
   context.set('module:repository', repository);
   context.set('module:redisCache', providerFiles);

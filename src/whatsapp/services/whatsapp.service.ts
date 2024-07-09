@@ -133,6 +133,7 @@ import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
 import { ProviderFiles } from '../../provider/sessions';
+import { Websocket } from '../../websocket/server';
 
 type InstanceQrCode = {
   count: number;
@@ -151,6 +152,7 @@ export class WAStartupService {
     private readonly eventEmitter: EventEmitter2,
     private readonly repository: Repository,
     private readonly providerFiles: ProviderFiles,
+    private readonly ws: Websocket,
   ) {
     this.authStateProvider = new AuthStateProvider(
       this.configService,
@@ -391,6 +393,8 @@ export class WAStartupService {
         this.instanceQr.base64 = base64;
         this.instanceQr.code = qr;
 
+        this.ws.send(this.instance.name, 'qrcode.updated', { code: qr, base64 });
+
         this.sendDataWebhook('qrcodeUpdated', {
           qrcode: { instance: this.instance.name, code: qr, base64 },
         });
@@ -408,10 +412,13 @@ export class WAStartupService {
       this.stateConnection.state = connection;
       this.stateConnection.statusReason =
         (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200;
-      this.sendDataWebhook('connectionUpdated', {
+
+      const data = {
         instance: this.instance.name,
         ...this.stateConnection,
-      });
+      };
+      this.ws.send(this.instance.name, 'connection.update', data);
+      this.sendDataWebhook('connectionUpdated', data);
     }
 
     if (connection === 'close') {
@@ -578,6 +585,8 @@ export class WAStartupService {
         } as PrismType.Chat);
       }
 
+      this.ws.send(this.instance.name, 'chats.upsert', chatsRaw);
+
       await this.sendDataWebhook('chatsUpsert', chatsRaw);
       await this.repository.chat.createMany({
         data: chatsRaw,
@@ -596,6 +605,7 @@ export class WAStartupService {
       const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
         return { remoteJid: chat.id, instanceId: this.instance.id } as PrismType.Chat;
       });
+      this.ws.send(this.instance.name, 'chats.update', chatsRaw);
       await this.sendDataWebhook('chatsUpdated', chatsRaw);
     },
 
@@ -635,6 +645,9 @@ export class WAStartupService {
           instanceId: this.instance.id,
         } as unknown as PrismType.Contact);
       }
+
+      this.ws.send(this.instance.name, 'contacts.upsert', contactsRaw);
+
       await this.sendDataWebhook('contactsUpsert', contactsRaw);
       await this.repository.contact.createMany({
         data: contactsRaw,
@@ -662,6 +675,8 @@ export class WAStartupService {
 
         contactsRaw.push(data);
       }
+
+      this.ws.send(this.instance.name, 'contacts.update', contactsRaw);
 
       await this.sendDataWebhook('contactsUpdated', contactsRaw);
     },
@@ -810,6 +825,8 @@ export class WAStartupService {
 
         this.logger.log('Type: ' + type);
         console.log(messageRaw);
+
+        this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
 
@@ -964,6 +981,9 @@ export class WAStartupService {
             dateTime: new Date(),
             instanceId: this.instance.id,
           };
+
+          this.ws.send(this.instance.name, 'messages.update', message);
+
           await this.sendDataWebhook('messagesUpdated', message);
           if (this.databaseOptions.DB_OPTIONS.MESSAGE_UPDATE) {
             this.repository.message
@@ -993,10 +1013,12 @@ export class WAStartupService {
 
   private readonly groupHandler = {
     'groups.upsert': (groupMetadata: GroupMetadata[]) => {
+      this.ws.send(this.instance.name, 'groups.upsert', groupMetadata);
       this.sendDataWebhook('groupsUpsert', groupMetadata);
     },
 
     'groups.update': (groupMetadataUpdate: Partial<GroupMetadata>[]) => {
+      this.ws.send(this.instance.name, 'groups.update', groupMetadataUpdate);
       this.sendDataWebhook('groupsUpdated', groupMetadataUpdate);
     },
 
@@ -1005,6 +1027,7 @@ export class WAStartupService {
       participants: string[];
       action: ParticipantAction;
     }) => {
+      this.ws.send(this.instance.name, 'group-participants.update', participantsUpdate);
       this.sendDataWebhook('groupsParticipantsUpdated', participantsUpdate);
     },
   };
@@ -1012,6 +1035,7 @@ export class WAStartupService {
   private readonly callHandler = {
     'call.upsert': (call: WACallEvent[]) => {
       call.forEach((c) => {
+        this.ws.send(this.instance.name, 'call.upsert', c);
         this.sendDataWebhook('callUpsert', c);
       });
     },
@@ -1045,6 +1069,7 @@ export class WAStartupService {
 
         if (events?.['presence.update']) {
           const payload = events['presence.update'];
+          this.ws.send(this.instance.name, 'presence.update', payload);
           this.sendDataWebhook('presenceUpdated', payload);
         }
 
@@ -1299,6 +1324,7 @@ export class WAStartupService {
         messageSent.id = id;
       }
 
+      this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
         this.logger.error(error),
       );
