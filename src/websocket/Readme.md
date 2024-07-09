@@ -67,14 +67,15 @@ ws.onclose = (event) => {
 ### 4. Exemplo completo
 
 ```javascript
-const url = 'ws://localhost:8084/ws/events';
-const reconnectInterval = 5000; // 5 segundos
+const url = "ws://localhost:8084/ws/events";
+const token = ""
+const reconnectInterval = 5000;
 
 function socket(eventName, callback) {
-  const ws = new WebSocket(`${url}?event=${encodeURIComponent(eventName)}&token=${encodeURIComponent("{{auth.token}}")}`);
+  const ws = new WebSocket(`${url}?event=${encodeURIComponent(eventName)}&token=${encodeURIComponent(token)}`);
 
   ws.onopen = () => {
-    console.log('Connected to the server');
+    console.log("Connected to the server");
   };
 
   ws.onmessage = (event) => {
