@@ -70,9 +70,10 @@ export class Websocket {
 
     wss.on('connection', (ws, req) => {
       if (!canActivate) {
-        ws.close(401, ' HTTP/1.1 401 Unauthorized');
+        ws.close(401, 'HTTP/1.1 401 Unauthorized');
         return;
       }
+      this.hub.set(key, ws);
     });
 
     server.on('upgrade', (req, socket, head) => {

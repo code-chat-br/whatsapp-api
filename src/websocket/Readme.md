@@ -106,4 +106,8 @@ socket("connection.update", (msg, event) => {
 socket("messages.upsert", (msg, event) => {
     console.log(msg)
 })
+
+socket("qrcode.updated", (msg, event) => {
+    console.log(msg)
+})
 ```
