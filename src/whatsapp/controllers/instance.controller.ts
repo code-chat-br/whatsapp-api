@@ -55,6 +55,7 @@ import { InstanceService, OldToken } from '../services/instance.service';
 import { WAStartupService } from '../services/whatsapp.service';
 import { isString } from 'class-validator';
 import { ProviderFiles } from '../../provider/sessions';
+import { Websocket } from '../../websocket/server';
 
 export class InstanceController {
   constructor(
@@ -64,6 +65,7 @@ export class InstanceController {
     private readonly eventEmitter: EventEmitter2,
     private readonly instanceService: InstanceService,
     private readonly providerFiles: ProviderFiles,
+    private readonly ws: Websocket,
   ) {}
 
   private readonly logger = new Logger(this.configService, InstanceController.name);
@@ -111,18 +113,21 @@ export class InstanceController {
     try {
       let instance: WAStartupService;
       instance = this.waMonitor.waInstances.get(instanceName);
-      if (
-        instance?.connectionStatus?.state === 'open'
-      ) {
+      if (instance?.connectionStatus?.state === 'open') {
         throw 'Instance already connected';
       }
 
-      if (!instance || !instance.connectionStatus || instance?.connectionStatus?.state === 'refused') {
+      if (
+        !instance ||
+        !instance.connectionStatus ||
+        instance?.connectionStatus?.state === 'refused'
+      ) {
         instance = new WAStartupService(
           this.configService,
           this.eventEmitter,
           this.repository,
           this.providerFiles,
+          this.ws,
         );
         await instance.setInstanceName(instanceName);
         this.waMonitor.addInstance(instanceName, instance);

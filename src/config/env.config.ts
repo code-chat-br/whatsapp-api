@@ -178,7 +178,9 @@ export class ConfigService {
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
           LOGS: process.env?.DATABASE_SAVE_LOGS === 'true',
-          ACTIVITY_LOGS: process.env?.DATABASE_SAVE_ACTIVITY_LOGS ? process.env?.DATABASE_SAVE_ACTIVITY_LOGS === 'true' : true
+          ACTIVITY_LOGS: process.env?.DATABASE_SAVE_ACTIVITY_LOGS
+            ? process.env?.DATABASE_SAVE_ACTIVITY_LOGS === 'true'
+            : true,
         },
       },
       PROVIDER: {
@@ -191,9 +193,10 @@ export class ConfigService {
         LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],
         COLOR: process.env?.LOG_COLOR === 'true',
       },
-      INSTANCE_EXPIRATION_TIME: process.env?.INSTANCE_EXPIRATION_TIME === 'false'
-        ? false
-        : Number.parseInt(process.env?.INSTANCE_EXPIRATION_TIME || '5'),
+      INSTANCE_EXPIRATION_TIME:
+        process.env?.INSTANCE_EXPIRATION_TIME === 'false'
+          ? false
+          : Number.parseInt(process.env?.INSTANCE_EXPIRATION_TIME || '5'),
       GLOBAL_WEBHOOK: {
         URL: process.env?.WEBHOOK_GLOBAL_URL,
         ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',
@@ -205,8 +208,12 @@ export class ConfigService {
       QRCODE: {
         LIMIT: Number.parseInt(process.env?.QRCODE_LIMIT || '10'),
         EXPIRATION_TIME: Number.parseInt(process.env?.QRCODE_EXPIRATION_TIME || '60'),
-        LIGHT_COLOR: process.env?.QRCODE_LIGHT_COLOR ? process.env?.QRCODE_LIGHT_COLOR : '#ffffff',
-        DARK_COLOR: process.env?.QRCODE_DARK_COLOR ? process.env?.QRCODE_DARK_COLOR : '#198754'
+        LIGHT_COLOR: process.env?.QRCODE_LIGHT_COLOR
+          ? process.env?.QRCODE_LIGHT_COLOR
+          : '#ffffff',
+        DARK_COLOR: process.env?.QRCODE_DARK_COLOR
+          ? process.env?.QRCODE_DARK_COLOR
+          : '#198754',
       },
       CONNECTION_TIMEOUT: Number.parseInt(process.env?.CONNECTION_TIMEOUT || '300'),
       AUTHENTICATION: {

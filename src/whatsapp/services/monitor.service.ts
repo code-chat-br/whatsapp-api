@@ -52,6 +52,7 @@ import {
 import { Repository } from '../../repository/repository.service';
 import { Instance } from '@prisma/client';
 import { ProviderFiles } from '../../provider/sessions';
+import { Websocket } from '../../websocket/server';
 
 export class WAMonitoringService {
   constructor(
@@ -59,6 +60,7 @@ export class WAMonitoringService {
     private readonly configService: ConfigService,
     private readonly repository: Repository,
     private readonly providerFiles: ProviderFiles,
+    private readonly ws: Websocket,
   ) {
     this.removeInstance();
     this.noConnection();
@@ -126,7 +128,9 @@ export class WAMonitoringService {
 
   private clearListeners(instanceName: string) {
     try {
-      this.waInstances.get(instanceName)?.client?.ev.removeAllListeners('connection.update');
+      this.waInstances
+        .get(instanceName)
+        ?.client?.ev.removeAllListeners('connection.update');
       this.waInstances.get(instanceName)?.client?.ev.flush();
       this.waInstances.delete(instanceName);
     } catch {
@@ -147,6 +151,7 @@ export class WAMonitoringService {
         this.eventEmitter,
         this.repository,
         this.providerFiles,
+        this.ws,
       );
       await init.setInstanceName(name);
       this.addInstance(init.instanceName, init);
