@@ -71,7 +71,9 @@ export class LoggerMiddleware {
               body: JSON.stringify(req?.body || {}),
             },
             description: 'Request received',
-            instanceId: req?.params?.instanceId ? Number(req.params.instanceId) : undefined,
+            instanceId: req?.params?.instanceId
+              ? Number(req.params.instanceId)
+              : undefined,
           },
         })
         .catch((error) => logger.error(error));

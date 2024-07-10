@@ -41,7 +41,9 @@ import {
   AudioMessageFileDto,
   MediaFileDto,
   SendAudioDto,
+  SendButtonsDto,
   SendContactDto,
+  SendListDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -122,5 +124,13 @@ export class SendMessageController {
       throw new BadRequestException('"reaction" must be an emoji');
     }
     return await this.waMonitor.waInstances.get(instanceName).reactionMessage(data);
+  }
+
+  public async sendButtons({ instanceName }: InstanceDto, data: SendButtonsDto) {
+    return await this.waMonitor.waInstances.get(instanceName).buttonsMessage(data);
+  }
+
+  public async sendList({ instanceName }: InstanceDto, data: SendListDto) {
+    return await this.waMonitor.waInstances.get(instanceName).listButtons(data);
   }
 }

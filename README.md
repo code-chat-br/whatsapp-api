@@ -174,14 +174,13 @@ docker-compose up
 |     |   |
 |-----|---|
 | Send Text | ✔ |
-| Send Buttons | ❌ |
-| Send Template | ❌ |
-| Send Media: audio - video - image - document - gif <br></br>base64: ```true``` | ✔ |
+| Send Buttons | ✔ - only \[ios,android\] |
+| Send Media: audio - video - image - document - gif <br></br>base64: ```false``` | ✔ |
 | Send Media File | ✔ |
 | Send Audio type WhatsApp | ✔ |
 | Send Audio type WhatsApp - File | ✔ |
 | Send Location | ✔ |
-| Send List | ❌ |
+| Send List | ✔ \[ios,android\] |
 | Send Link Preview | ❌ |
 | Send Contact | ✔ |
 | Send Reaction - emoji | ✔ |

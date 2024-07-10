@@ -5,6 +5,10 @@ body {
   color: #e5e5e5;
 }
 
+.swagger-ui {
+  color: #bbbbbb;
+}
+
 .swagger-ui .topbar {
   background-color: #333842;
 }
@@ -172,4 +176,20 @@ body {
 
 .swagger-ui table.headers td {
   color: #b5b9c3;
+}
+
+.swagger-ui .markdown code, .swagger-ui .renderedMarkdown code {
+  color: #ff6f6f;
+}
+
+.swagger-ui .parameter__type {
+  color: #fff;
+}
+
+.swagger-ui .prop-format {
+  color: #ff0000;
+}
+
+.swagger-ui .parameter__name.required:after{
+  color: #ff0000;
 }
