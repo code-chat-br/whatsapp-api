@@ -29,9 +29,10 @@ FROM base AS production
 
 WORKDIR /codechat
 
-LABEL API_VERSION="develop"
-LABEL MANTAINER="https://github.com/code-chat-br"
-LABEL REPOSITORY="https://github.com/code-chat-br/whatsapp-api"
+LABEL com.api.version="1.3.2"
+LABEL com.api.mantainer="https://github.com/code-chat-br"
+LABEL com.api.repository="https://github.com/code-chat-br/whatsapp-api"
+LABEL com.api.issues="https://github.com/code-chat-br/whatsapp-api/issues"
 
 # Copiando arquivos construídos do estágio builder
 COPY --from=builder /codechat/dist ./dist
