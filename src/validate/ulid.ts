@@ -1,9 +1,9 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename scala.config                                                       │
+ * │ @filename ulid.ts                                                            │
  * │ Developed by: Cleber Wilson                                                  │
- * │ Creation date: Aug 13, 2023                                                  │
+ * │ Creation date: Jul 17, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
@@ -31,30 +31,19 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { Router } from 'express';
-import { join } from 'path';
-import YAML from 'yamljs';
-import { readFileSync } from 'fs';
-import { serve, setup } from 'swagger-ui-express';
+import { decodeTime } from 'ulid';
 
-const router = Router();
+export const isValidUlid = (id: string) => {
+  const ulidPattern = /^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/;
 
-const yamlFile = readFileSync(join(process.cwd(), 'docs', 'swagger.yaml'), {
-  encoding: 'utf8',
-});
+  if (!ulidPattern.test(id)) {
+    return false;
+  }
 
-const json = YAML.parse(yamlFile);
-
-if (process.env?.API_BACKEND) {
-  json.servers[0].variables.prod_host.default = process.env?.API_BACKEND;
-}
-
-export const docsRouter = router.use(
-  '/docs',
-  serve,
-  setup(json, {
-    customSiteTitle: 'CodeChat Api V1',
-    customCssUrl: '/css/dark-theme-swagger.css',
-    customfavIcon: '/images/logo.png',
-  }),
-);
+  try {
+    decodeTime(id);
+    return true;
+  } catch (error) {
+    return false;
+  }
+};

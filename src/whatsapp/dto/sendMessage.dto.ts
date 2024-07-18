@@ -39,11 +39,13 @@
  */
 
 import { proto, WAPresence } from '@whiskeysockets/baileys';
+import { ulid } from 'ulid';
 
 export class Options {
   delay?: number;
   presence?: WAPresence;
   quotedMessageId?: number;
+  messageId?: string;
 }
 class OptionsMessage {
   options: Options;
@@ -117,4 +119,155 @@ class ReactionMessage {
 }
 export class SendReactionDto {
   reactionMessage: ReactionMessage;
+}
+
+const toString = (value: any) => JSON.stringify(value);
+
+type TypeButton = 'reply' | 'copy' | 'url' | 'call';
+
+export class Button {
+  type: TypeButton;
+  displayText: string;
+  id?: string;
+  url?: string;
+  copyCode?: string;
+  phoneNumber?: string;
+
+  constructor(props: Partial<Button>) {
+    Object.assign(this, props);
+    if (this.type === 'reply' && !this.id) {
+      this.id = ulid();
+    }
+  }
+
+  private readonly mapType = new Map<TypeButton, string>([
+    ['reply', 'quick_reply'],
+    ['copy', 'cta_copy'],
+    ['url', 'cta_url'],
+    ['call', 'cta_call'],
+  ]);
+
+  get typeButton(): string {
+    return this.mapType.get(this.type);
+  }
+
+  toJSONString(): string {
+    const toString = (obj: any) => JSON.stringify(obj);
+
+    const json = {
+      call: () =>
+        toString({ display_text: this.displayText, phone_number: this.phoneNumber }),
+      reply: () => toString({ display_text: this.displayText, id: this.id }),
+      copy: () => toString({ display_text: this.displayText, copy_code: this.copyCode }),
+      url: () =>
+        toString({
+          display_text: this.displayText,
+          url: this.url,
+          merchant_url: this.url,
+        }),
+    };
+
+    return json[this.type]?.() || '';
+  }
+
+  validate(): Error | null {
+    const errors = {
+      reply: () => (this.id ? null : new Error('ID is required for reply buttons')),
+      call: () =>
+        this.phoneNumber ? null : new Error('Phone number is required for call buttons'),
+      copy: () =>
+        this.copyCode ? null : new Error('Copy code is required for copy buttons'),
+      url: () => (this.url ? null : new Error('URL is required for URL buttons')),
+    };
+
+    return errors[this.type]?.();
+  }
+}
+
+class ButtonsMessage {
+  thumbnailUrl?: string;
+  title: string;
+  description?: string;
+  footer?: string;
+  buttons: Button[];
+
+  constructor(props: ButtonsMessage) {
+    Object.assign(this, props);
+    this.buttons = props.buttons.map((button) => new Button(button));
+  }
+}
+
+export class SendButtonsDto extends Metadata {
+  buttonsMessage: ButtonsMessage;
+
+  constructor(props: Partial<SendButtonsDto>) {
+    super();
+    Object.assign(this, props);
+
+    this.buttonsMessage = new ButtonsMessage(props.buttonsMessage);
+  }
+}
+
+class Row {
+  header?: string;
+  title: string;
+  description?: string;
+  id?: string;
+
+  constructor(props: Row) {
+    Object.assign(this, props);
+    if (!this.id) {
+      this.id = ulid(Date.now());
+    }
+  }
+}
+
+class ListSection {
+  title: string;
+  rows: Row[];
+
+  constructor(props: ListSection) {
+    Object.assign(this, props);
+    this.rows = props.rows.map((row) => new Row(row));
+  }
+}
+
+class Section {
+  buttonText: string;
+  list: ListSection[];
+
+  constructor(props: Section) {
+    Object.assign(this, props);
+    this.list = props.list.map((item) => new ListSection(item));
+  }
+
+  toSectionsString(): string {
+    return toString({
+      title: this.buttonText,
+      sections: this.list,
+    });
+  }
+}
+
+class ListMessage {
+  thumbnailUrl?: string;
+  title: string;
+  description?: string;
+  footer?: string;
+  sections: Section[];
+
+  constructor(props: ListMessage) {
+    Object.assign(this, props);
+    this.sections = props.sections.map((section) => new Section(section));
+  }
+}
+
+export class SendListDto extends Metadata {
+  listMessage: ListMessage;
+
+  constructor(props: SendListDto) {
+    super();
+    Object.assign(this, props);
+    this.listMessage = new ListMessage(props.listMessage);
+  }
 }

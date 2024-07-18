@@ -38,7 +38,6 @@
  */
 
 import makeWASocket, {
-  AnyMessageContent,
   BufferedEventData,
   CacheStore,
   Chat,
@@ -77,11 +76,10 @@ import {
   ProviderSession,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
-import { INSTANCE_DIR } from '../../config/path.config';
+import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
-import { v4 } from 'uuid';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
 import { Boom } from '@hapi/boom';
@@ -95,13 +93,15 @@ import {
   MediaMessage,
   Options,
   SendAudioDto,
+  SendButtonsDto,
   SendContactDto,
+  SendListDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import { isBase64, isNotEmpty, isURL } from 'class-validator';
+import { isArray, isBase64, isNotEmpty, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
   DeleteMessage,
@@ -134,6 +134,8 @@ import * as s3Service from '../../integrations/minio/minio.utils';
 import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
 import { ProviderFiles } from '../../provider/sessions';
 import { Websocket } from '../../websocket/server';
+import { ulid } from 'ulid';
+import { isValidUlid } from '../../validate/ulid';
 
 type InstanceQrCode = {
   count: number;
@@ -799,7 +801,12 @@ export class WAStartupService {
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp as number,
           instanceId: this.instance.id,
-          device: getDevice(received.key.id),
+          device: (() => {
+            if (isValidUlid(received.key.id)) {
+              return 'web';
+            }
+            return getDevice(received.key.id);
+          })(),
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
@@ -1263,7 +1270,6 @@ export class WAStartupService {
       }
 
       const messageSent: PrismType.Message = await (async () => {
-        let m: proto.IWebMessageInfo;
         let q: proto.IWebMessageInfo;
         if (quoted) {
           q = {
@@ -1277,24 +1283,32 @@ export class WAStartupService {
             },
           };
         }
-        if (!message['audio']) {
-          m = await this.client.sendMessage(
-            recipient,
-            {
-              forward: {
-                key: { remoteJid: this.instance.ownerJid, fromMe: true },
-                message,
-              },
-            },
-            { quoted: q },
-          );
-        } else {
-          m = await this.client.sendMessage(
-            recipient,
-            message as unknown as AnyMessageContent,
-            { quoted: q },
-          );
+
+        const messageId = options?.messageId || ulid(Date.now());
+
+        const m = generateWAMessageFromContent(recipient, message, {
+          timestamp: new Date(),
+          userJid: this.instance.ownerJid,
+          messageId,
+          quoted: q,
+        });
+
+        const id = await this.client.relayMessage(recipient, m.message, { messageId });
+
+        m.key = {
+          id: id,
+          remoteJid: jid,
+          participant: isJidUser(jid) ? undefined : jid,
+          fromMe: true,
+        };
+
+        for (const [key, value] of Object.entries(m)) {
+          if (!value || (isArray(value) && value.length) === 0) {
+            delete m[key];
+          }
         }
+
+        this.client.ev.emit('messages.upsert', { messages: [m], type: 'notify' });
 
         return {
           id: undefined,
@@ -1312,7 +1326,7 @@ export class WAStartupService {
             return m.messageTimestamp as number;
           })(),
           instanceId: this.instance.id,
-          device: getDevice(m.key.id),
+          device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
           typebotSessionId: undefined,
         };
@@ -1354,7 +1368,7 @@ export class WAStartupService {
     );
   }
 
-  private async prepareMediaMessage(mediaMessage: MediaMessage) {
+  private async prepareMediaMessage(mediaMessage: MediaMessage & { mimetype?: string }) {
     try {
       const prepareMedia = await prepareWAMessageMedia(
         {
@@ -1386,8 +1400,12 @@ export class WAStartupService {
       }
 
       prepareMedia[mediaType].caption = mediaMessage?.caption;
-      prepareMedia[mediaType].mimetype = mimetype;
+      prepareMedia[mediaType].mimetype = mediaMessage?.mimetype || mimetype;
       prepareMedia[mediaType].fileName = mediaMessage.fileName;
+
+      if (mediaMessage?.mimetype === 'audio/aac') {
+        prepareMedia.audioMessage.ptt = true;
+      }
 
       if (mediaMessage.mediatype === 'video') {
         prepareMedia[mediaType].jpegThumbnail = Uint8Array.from(
@@ -1436,25 +1454,30 @@ export class WAStartupService {
   }
 
   public async audioWhatsapp(data: SendAudioDto) {
-    return this.sendMessageWithTyping<AnyMessageContent>(
+    const generate = await this.prepareMediaMessage({
+      media: data.audioMessage.audio,
+      mimetype: 'audio/aac',
+      mediatype: 'audio',
+    });
+
+    return this.sendMessageWithTyping(
       data.number,
-      {
-        audio: { url: data.audioMessage.audio },
-        ptt: true,
-        mimetype: 'audio/aac',
-      },
+      { ...generate.message },
       { presence: 'recording', delay: data?.options?.delay },
     );
   }
 
   public async audioWhatsAppFile(data: AudioMessageFileDto, file: Express.Multer.File) {
-    return this.sendMessageWithTyping<AnyMessageContent>(
+    const generate = await this.prepareMediaMessage({
+      fileName: file.originalname,
+      media: file.buffer,
+      mediatype: 'audio',
+      mimetype: 'audio/aac',
+    });
+
+    return this.sendMessageWithTyping(
       data.number,
-      {
-        audio: file.buffer,
-        ptt: true,
-        mimetype: 'audio/aac',
-      },
+      { ...generate.message },
       { presence: 'recording', delay: data?.delay },
     );
   }
@@ -1521,6 +1544,229 @@ export class WAStartupService {
         text: data.reactionMessage.reaction,
       },
     });
+  }
+
+  public async buttonsMessage(data: SendButtonsDto) {
+    const generate = await (async () => {
+      if (data.buttonsMessage?.thumbnailUrl) {
+        return await this.prepareMediaMessage({
+          mediatype: 'image',
+          media: data.buttonsMessage.thumbnailUrl,
+        });
+      }
+    })();
+
+    const message: proto.IMessage = {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2,
+          },
+          interactiveMessage: {
+            body: {
+              text: (() => {
+                let t = '*' + data.buttonsMessage.title + '*';
+                if (data.buttonsMessage?.description) {
+                  t += '\n\n';
+                  t += data.buttonsMessage.description;
+                  t += '\n';
+                }
+                return t;
+              })(),
+            },
+            footer: {
+              text: data.buttonsMessage?.footer,
+            },
+            header: (() => {
+              if (generate?.message?.imageMessage) {
+                return {
+                  hasMediaAttachment: !!generate.message.imageMessage,
+                  imageMessage: generate.message.imageMessage,
+                };
+              }
+            })(),
+            nativeFlowMessage: {
+              buttons: data.buttonsMessage.buttons.map((value) => {
+                return {
+                  name: value.typeButton,
+                  buttonParamsJson: value.toJSONString(),
+                };
+              }),
+              messageParamsJson: JSON.stringify({
+                from: 'api',
+                templateId: ulid(Date.now()),
+              }),
+            },
+          },
+        },
+      },
+    };
+
+    return await this.sendMessageWithTyping(data.number, message, data?.options);
+  }
+
+  public async listButtons(data: SendListDto) {
+    const generate = await (async () => {
+      if (data.listMessage?.thumbnailUrl) {
+        return await this.prepareMediaMessage({
+          mediatype: 'image',
+          media: data.listMessage.thumbnailUrl,
+        });
+      }
+    })();
+
+    const message: proto.IMessage = {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2,
+          },
+          interactiveMessage: {
+            body: {
+              text: (() => {
+                let t = '*' + data.listMessage.title + '*';
+                if (data.listMessage?.description) {
+                  t += '\n\n';
+                  t += data.listMessage.description;
+                  t += '\n';
+                }
+                return t;
+              })(),
+            },
+            footer: {
+              text: data.listMessage?.footer,
+            },
+            header: (() => {
+              if (generate?.message?.imageMessage) {
+                return {
+                  hasMediaAttachment: !!generate.message.imageMessage,
+                  imageMessage: generate.message.imageMessage,
+                };
+              }
+            })(),
+            nativeFlowMessage: {
+              buttons: data.listMessage.sections.map((value) => {
+                return {
+                  name: 'single_select',
+                  buttonParamsJson: value.toSectionsString(),
+                };
+              }),
+              messageParamsJson: JSON.stringify({
+                from: 'api',
+                templateId: ulid(Date.now()),
+              }),
+            },
+          },
+        },
+      },
+    };
+
+    return await this.sendMessageWithTyping(data.number, message, data?.options);
+  }
+
+  public async interactiveMessage() {
+    const file = readFileSync(join(ROOT_DIR, 'public', 'images', 'cover.png'));
+    const media = await prepareWAMessageMedia(
+      { image: file },
+      { upload: this.client.waUploadToServer },
+    );
+
+    const content: proto.IMessage = {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2,
+          },
+          interactiveMessage: {
+            body: { text: 'body' },
+            footer: { text: 'footer' },
+            header: {
+              title: 'Title',
+              subtitle: 'Subtitle',
+              hasMediaAttachment: true,
+              imageMessage: media.imageMessage,
+            },
+            nativeFlowMessage: {
+              buttons: [
+                {
+                  name: 'single_select',
+                  buttonParamsJson: JSON.stringify({
+                    title: 'Clique aqui',
+                    sections: [
+                      {
+                        title: 'Sub 1',
+                        rows: [
+                          {
+                            header: 'Header 1',
+                            title: 'Título 1',
+                            description: 'Descrição 1',
+                            id: ulid(),
+                          },
+                          {
+                            header: 'Header 2',
+                            title: 'Título 2',
+                            description: 'Descrição 2',
+                            id: ulid(),
+                          },
+                        ],
+                      },
+                      {
+                        title: 'Sub 2',
+                        rows: [
+                          {
+                            header: 'Header 1',
+                            title: 'Título 1',
+                            description: 'Descrição 1',
+                            id: ulid(),
+                          },
+                          {
+                            header: 'Header 2',
+                            title: 'Título 2',
+                            description: 'Descrição 2',
+                            id: ulid(),
+                          },
+                        ],
+                      },
+                    ],
+                  }),
+                },
+              ],
+              messageParamsJson: 'parameter message',
+            },
+          },
+        },
+      },
+    };
+
+    const jid = this.createJid('5531997853327');
+
+    const msg = generateWAMessageFromContent(jid, content, {
+      userJid: this.instance.ownerJid,
+      // ephemeralExpiration: WA_DEFAULT_EPHEMERAL,
+      messageId: ulid(Date.now()),
+    });
+
+    const id = await this.client.relayMessage(jid, msg.message, {
+      messageId: ulid(Date.now()),
+    });
+
+    msg.key = {
+      id: id,
+      remoteJid: jid,
+      participant: isJidUser(jid) ? undefined : jid,
+      fromMe: false,
+    };
+
+    for (const [key, value] of Object.entries(msg)) {
+      if (!value || (isArray(value) && value.length) === 0) {
+        delete msg[key];
+      }
+    }
+
+    return msg;
   }
 
   // Chat Controller
@@ -1715,7 +1961,7 @@ export class WAStartupService {
       const ext = mime.extension(mediaMessage?.['mimetype']);
 
       const fileName =
-        mediaMessage?.['fileName'] || `${msg.key.id}.${ext}` || `${v4()}.${ext}`;
+        mediaMessage?.['fileName'] || `${msg.key.id}.${ext}` || `${ulid()}.${ext}`;
 
       return {
         mediaType,
