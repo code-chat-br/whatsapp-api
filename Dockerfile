@@ -52,3 +52,5 @@ RUN mkdir instances
 ENV DOCKER_ENV=true
 
 ENTRYPOINT [ "/bin/bash", "-c", ". ./deploy_db.sh && node ./dist/src/main" ]
+
+RUN bash deploy_db.sh
