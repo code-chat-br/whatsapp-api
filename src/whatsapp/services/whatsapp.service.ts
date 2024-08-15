@@ -38,6 +38,7 @@
  */
 
 import makeWASocket, {
+  BaileysEventMap,
   BufferedEventData,
   CacheStore,
   Chat,
@@ -719,12 +720,7 @@ export class WAStartupService {
     'messaging-history.set': async ({
       messages,
       chats,
-    }: {
-      chats: Chat[];
-      contacts: Contact[];
-      messages: proto.IWebMessageInfo[];
-      isLatest: boolean;
-    }) => {
+    }: BaileysEventMap['messaging-history.set']) => {
       if (chats && chats.length > 0) {
         const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
           return {
