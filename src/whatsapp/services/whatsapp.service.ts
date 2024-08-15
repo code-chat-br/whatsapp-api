@@ -569,29 +569,32 @@ export class WAStartupService {
 
   private readonly chatHandle = {
     'chats.upsert': async (chats: Chat[]) => {
-      const chatsRepository = await this.repository.chat.findMany({
-        where: {
-          instanceId: this.instance.id,
-        },
-      });
+      chats.forEach(async (chat) => {
+        try {
+          const list: PrismType.Chat[] = [];
+          const find = await this.repository.chat.findFirst({
+            where: {
+              remoteJid: chat.id,
+              instanceId: this.instance.id,
+            },
+          });
+          if (!find) {
+            const create = await this.repository.chat.create({
+              data: {
+                remoteJid: chat.id,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'chats.upsert', list);
 
-      const chatsRaw: PrismType.Chat[] = [];
-      for await (const chat of chats) {
-        if (chatsRepository.find((cr) => cr.remoteJid === chat.id)) {
-          continue;
+          await this.sendDataWebhook('chatsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
         }
-
-        chatsRaw.push({
-          remoteJid: chat.id,
-          instanceId: this.instance.id,
-        } as PrismType.Chat);
-      }
-
-      this.ws.send(this.instance.name, 'chats.upsert', chatsRaw);
-
-      await this.sendDataWebhook('chatsUpsert', chatsRaw);
-      await this.repository.chat.createMany({
-        data: chatsRaw,
       });
     },
 
@@ -619,68 +622,80 @@ export class WAStartupService {
             remoteJid: chat,
           },
         });
-        await this.repository.chat.delete({
-          where: {
-            id: c.id,
-          },
-        });
+        if (c) {
+          await this.repository.chat.delete({
+            where: {
+              id: c.id,
+            },
+          });
+        }
       }
     },
   };
 
   private readonly contactHandle = {
-    'contacts.upsert': async (contacts: Contact[]) => {
-      const contactsRepository = await this.repository.contact.findMany({
-        where: { instanceId: this.instance.id },
-      });
+    'contacts.upsert': (contacts: Contact[]) => {
+      contacts.forEach(async (contact) => {
+        const list: PrismType.Contact[] = [];
+        try {
+          const find = await this.repository.contact.findFirst({
+            where: {
+              remoteJid: contact.id,
+              instanceId: this.instance.id,
+            },
+          });
+          if (!find) {
+            const create = await this.repository.contact.create({
+              data: {
+                remoteJid: contact.id,
+                pushName: contact?.name || contact.id,
+                profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'contacts.upsert', list);
 
-      const contactsRaw: PrismType.Contact[] = [];
-      for await (const contact of contacts) {
-        if (contactsRepository.find((cr) => cr.remoteJid === contact.id)) {
-          continue;
+          await this.sendDataWebhook('contactsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
         }
-
-        contactsRaw.push({
-          remoteJid: contact.id,
-          pushName: contact?.name || contact.id,
-          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceId: this.instance.id,
-        } as unknown as PrismType.Contact);
-      }
-
-      this.ws.send(this.instance.name, 'contacts.upsert', contactsRaw);
-
-      await this.sendDataWebhook('contactsUpsert', contactsRaw);
-      await this.repository.contact.createMany({
-        data: contactsRaw,
       });
     },
 
     'contacts.update': async (contacts: Partial<Contact>[]) => {
-      const contactsRaw: PrismType.Contact[] = [];
-      for await (const contact of contacts) {
-        const data = {
-          remoteJid: contact.id,
-          pushName: contact?.name ?? contact?.verifiedName,
-          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceId: this.instance.id,
-        } as unknown as PrismType.Contact;
-        this.repository.contact
-          .updateMany({
+      contacts.forEach(async (contact) => {
+        const list: PrismType.Contact[] = [];
+        try {
+          const find = await this.repository.contact.findFirst({
             where: {
-              remoteJid: data.remoteJid,
+              remoteJid: contact.id,
               instanceId: this.instance.id,
             },
-            data,
-          })
-          .catch((error) => this.logger.error(error));
+          });
+          if (!find) {
+            const create = await this.repository.contact.create({
+              data: {
+                remoteJid: contact.id,
+                pushName: contact?.name || contact.id,
+                profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'contacts.upsert', list);
 
-        contactsRaw.push(data);
-      }
-
-      this.ws.send(this.instance.name, 'contacts.update', contactsRaw);
-
-      await this.sendDataWebhook('contactsUpdated', contactsRaw);
+          await this.sendDataWebhook('contactsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
+        }
+      });
     },
   };
 
@@ -704,14 +719,13 @@ export class WAStartupService {
     'messaging-history.set': async ({
       messages,
       chats,
-      isLatest,
     }: {
       chats: Chat[];
       contacts: Contact[];
       messages: proto.IWebMessageInfo[];
       isLatest: boolean;
     }) => {
-      if (isLatest) {
+      if (chats && chats.length > 0) {
         const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
           return {
             remoteJid: chat.id,
@@ -722,47 +736,49 @@ export class WAStartupService {
         await this.repository.chat.createMany({ data: chatsRaw });
       }
 
-      const messagesRaw: PrismType.Message[] = [];
-      for await (const [, m] of Object.entries(messages)) {
-        if (
-          m.message?.protocolMessage ||
-          m.message?.senderKeyDistributionMessage ||
-          !m.message
-        ) {
-          continue;
+      if (messages && messages?.length > 0) {
+        const messagesRaw: PrismType.Message[] = [];
+        for await (const [, m] of Object.entries(messages)) {
+          if (
+            m.message?.protocolMessage ||
+            m.message?.senderKeyDistributionMessage ||
+            !m.message
+          ) {
+            continue;
+          }
+
+          if (Long.isLong(m?.messageTimestamp)) {
+            m.messageTimestamp = m.messageTimestamp?.toNumber();
+          }
+
+          const messageType = getContentType(m.message);
+
+          if (!messageType) {
+            continue;
+          }
+
+          messagesRaw.push({
+            keyId: m.key.id,
+            keyRemoteJid: m.key.remoteJid,
+            keyFromMe: m.key.fromMe,
+            pushName: m?.pushName || m.key.remoteJid.split('@')[0],
+            keyParticipant: m?.participant || m.key?.participant,
+            messageType,
+            content: m.message[messageType] as PrismType.Prisma.JsonValue,
+            messageTimestamp: m.messageTimestamp as number,
+            instanceId: this.instance.id,
+            device: getDevice(m.key.id),
+          } as PrismType.Message);
         }
 
-        if (Long.isLong(m?.messageTimestamp)) {
-          m.messageTimestamp = m.messageTimestamp?.toNumber();
+        this.sendDataWebhook('messagesSet', [...messagesRaw]);
+
+        if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
+          await this.syncMessage(messagesRaw);
         }
 
-        const messageType = getContentType(m.message);
-
-        if (!messageType) {
-          continue;
-        }
-
-        messagesRaw.push({
-          keyId: m.key.id,
-          keyRemoteJid: m.key.remoteJid,
-          keyFromMe: m.key.fromMe,
-          pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-          keyParticipant: m?.participant || m.key?.participant,
-          messageType,
-          content: m.message[messageType] as PrismType.Prisma.JsonValue,
-          messageTimestamp: m.messageTimestamp as number,
-          instanceId: this.instance.id,
-          device: getDevice(m.key.id),
-        } as PrismType.Message);
+        messages = undefined;
       }
-
-      this.sendDataWebhook('messagesSet', [...messagesRaw]);
-
-      if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
-        await this.syncMessage(messagesRaw);
-      }
-
-      messages = undefined;
     },
 
     'messages.upsert': async ({
@@ -1298,7 +1314,7 @@ export class WAStartupService {
         m.key = {
           id: id,
           remoteJid: jid,
-          participant: isJidUser(jid) ? undefined : jid,
+          participant: isJidUser(jid) ? jid : undefined,
           fromMe: true,
         };
 
