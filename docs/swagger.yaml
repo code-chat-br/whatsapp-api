@@ -154,11 +154,11 @@ tags:
     description: Management of chatbot sessions on the Typebot platform.
   
 servers: 
-  - url: https://{{prod_host}} 
+  - url: https://{prod_host}
     variables:
       prod_host:
         default: apiv1.codechat.dev
-  - url: http://{{dev_host}}
+  - url: http://{dev_host}
     variables:
       dev_host:
         default: 127.0.0.1:8084
