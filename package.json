@@ -7,7 +7,7 @@
     "build": "tsc",
     "start": "ts-node --files --transpile-only ./src/main.ts",
     "start:prod": "bash start.sh",
-    "start:dev": "cls && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
+    "start:dev": "tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
     "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
   },
   "repository": {

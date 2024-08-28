@@ -178,6 +178,7 @@ export class WAStartupService {
     this.configService.get<Database>('DATABASE');
 
   private endSession = false;
+  private inReconnection = false;
   public client: WASocket;
   private authState: Partial<AuthState> = {};
   private authStateProvider: AuthStateProvider;
@@ -424,7 +425,7 @@ export class WAStartupService {
     if (connection === 'close') {
       const shouldReconnect =
         (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-      if (shouldReconnect) {
+      if (shouldReconnect && !this.inReconnection) {
         await this.connectToWhatsapp();
       } else {
         this.sendDataWebhook('statusInstance', {
@@ -552,12 +553,22 @@ export class WAStartupService {
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
       this.instanceQr.count = 0;
-      await this.loadWebhook();
-      this.client = await this.setSocket();
-      this.eventHandler();
+      const timeout = this.client ? 3000 : 0;
+
+      if (!this.inReconnection) {
+        this.inReconnection = true;
+        setTimeout(async () => {
+          await this.loadWebhook();
+          this.client = await this.setSocket();
+          this.eventHandler();
+
+          this.inReconnection = false;
+        }, timeout);
+      }
 
       return this.client;
     } catch (error) {
+      this.inReconnection = false;
       this.logger.error(error);
       throw new InternalServerErrorException(error?.toString());
     }
