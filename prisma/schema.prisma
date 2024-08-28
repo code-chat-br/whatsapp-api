@@ -53,8 +53,8 @@ model Instance {
   connectionStatus InstanceConnectionStatus? @default(OFFLINE)
   ownerJid         String?                   @db.VarChar(100)
   profilePicUrl    String?                   @db.VarChar(500)
-  createdAt        DateTime?                 @default(now()) @db.Date
-  updatedAt        DateTime?                 @updatedAt @db.Date
+  createdAt        DateTime?                 @default(now()) @db.Timestamp()
+  updatedAt        DateTime?                 @updatedAt @db.Timestamp()
   Auth             Auth?
   Chat             Chat[]
   Contact          Contact[]
@@ -67,8 +67,8 @@ model Instance {
 model Auth {
   id         Int       @id @default(autoincrement())
   token      String    @unique
-  createdAt  DateTime? @default(now()) @db.Date
-  updatedAt  DateTime? @updatedAt @db.Date
+  createdAt  DateTime? @default(now()) @db.Timestamp()
+  updatedAt  DateTime? @updatedAt @db.Timestamp()
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId Int       @unique @db.Integer
 }
@@ -114,14 +114,14 @@ model Media {
   fileName  String    @unique @db.VarChar(500)
   type      String    @db.VarChar(100)
   mimetype  String    @db.VarChar(100)
-  createdAt DateTime? @default(now()) @db.Date
+  createdAt DateTime? @default(now()) @db.Timestamp()
   Message   Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId Int       @unique
 }
 
 model MessageUpdate {
   id        Int      @id @default(autoincrement())
-  dateTime  DateTime @db.Date
+  dateTime  DateTime @db.Timestamp()
   status    String   @db.VarChar(30)
   Message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId Int
@@ -130,8 +130,8 @@ model MessageUpdate {
 model Chat {
   id         Int       @id @default(autoincrement())
   remoteJid  String    @db.VarChar(100)
-  createdAt  DateTime? @default(now()) @db.Date
-  updatedAt  DateTime? @updatedAt @db.Date
+  createdAt  DateTime? @default(now()) @db.Timestamp()
+  updatedAt  DateTime? @updatedAt @db.Timestamp()
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId Int
 }
@@ -141,8 +141,8 @@ model Contact {
   remoteJid     String    @db.VarChar(100)
   pushName      String?   @db.VarChar(100)
   profilePicUrl String?   @db.VarChar(500)
-  createdAt     DateTime? @default(now()) @db.Date
-  updatedAt     DateTime? @updatedAt @db.Date
+  createdAt     DateTime? @default(now()) @db.Timestamp()
+  updatedAt     DateTime? @updatedAt @db.Timestamp()
   Instance      Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId    Int
 }
@@ -152,8 +152,8 @@ model Webhook {
   url        String    @db.VarChar(500)
   enabled    Boolean?  @default(true) @db.Boolean
   events     Json?     @db.JsonB
-  createdAt  DateTime? @default(now()) @db.Date
-  updatedAt  DateTime  @updatedAt @db.Date
+  createdAt  DateTime? @default(now()) @db.Timestamp()
+  updatedAt  DateTime  @updatedAt @db.Timestamp()
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId Int       @unique
 }
@@ -164,8 +164,8 @@ model Typebot {
   typebotUrl     String           @db.VarChar(500)
   enabled        Boolean?         @default(true) @db.Boolean
   enableGroup    Boolean?         @default(false) @db.Boolean
-  createdAt      DateTime?        @default(now()) @db.Date
-  updatedAt      DateTime?        @updatedAt @db.Date
+  createdAt      DateTime?        @default(now()) @db.Timestamp()
+  updatedAt      DateTime?        @updatedAt @db.Timestamp()
   Instance       Instance         @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId     Int              @unique
   TypebotSession TypebotSession[]
@@ -194,7 +194,7 @@ enum StartConversationAs {
 
 model ActivityLogs {
   id          Int       @id @default(autoincrement())
-  dateTime    DateTime? @default(now()) @db.Date
+  dateTime    DateTime? @default(now()) @db.Timestamp()
   context     String?   @db.VarChar(100)
   type        String?   @db.VarChar(100)
   content     Json?     @db.JsonB
