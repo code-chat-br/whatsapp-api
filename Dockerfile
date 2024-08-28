@@ -1,15 +1,19 @@
 ### BASE IMAGE
-FROM node:20-bullseye-slim AS base
+FROM --platform=$BUILDPLATFORM node:20-bullseye-slim AS base
 
 ### BUILD IMAGE
 FROM base AS builder
 
 WORKDIR /codechat
 
+# Instalar dependências de construção primeiro
+RUN apt-get update && apt-get install -y git
+
+# Copiar arquivos package.json e instalar dependências
 COPY package*.json ./
+RUN npm install
 
-RUN apt-get update && apt-get install -y git && npm install
-
+# Copiar os demais arquivos necessários para o build
 COPY tsconfig.json .
 COPY ./src ./src
 COPY ./public ./public
@@ -18,7 +22,7 @@ COPY ./prisma ./prisma
 COPY ./views ./views
 COPY .env.dev .env
 
-# Definindo a variável de ambiente DATABASE_URL aqui para a construção
+# Definir variável de ambiente para a construção
 ENV DATABASE_URL=postgres://postgres:pass@localhost/db_test
 RUN npx prisma generate
 
@@ -34,7 +38,7 @@ LABEL com.api.mantainer="https://github.com/code-chat-br"
 LABEL com.api.repository="https://github.com/code-chat-br/whatsapp-api"
 LABEL com.api.issues="https://github.com/code-chat-br/whatsapp-api/issues"
 
-# Copiando arquivos construídos do estágio builder
+# Copiar arquivos construídos do estágio builder
 COPY --from=builder /codechat/dist ./dist
 COPY --from=builder /codechat/docs ./docs
 COPY --from=builder /codechat/prisma ./prisma
