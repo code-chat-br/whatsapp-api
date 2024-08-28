@@ -1055,6 +1055,15 @@ export class WAStartupService {
     },
   };
 
+  private readonly onLabel = {
+    'labels.association': async (args: BaileysEventMap['labels.association']) => {
+      this.sendDataWebhook('labelsAssociation', args);
+    },
+    'labels.edit': async (args: BaileysEventMap['labels.edit']) => {
+      this.sendDataWebhook('labelsEdit', args);
+    },
+  };
+
   private eventHandler() {
     this.client.ev.process((events) => {
       if (!this.endSession) {
@@ -1130,6 +1139,16 @@ export class WAStartupService {
         if (events?.['call']) {
           const payload = events['call'];
           this.callHandler['call.upsert'](payload);
+        }
+
+        if (events?.['labels.association']) {
+          const payload = events['labels.association'];
+          this.onLabel['labels.association'](payload);
+        }
+
+        if (events?.['labels.edit']) {
+          const payload = events['labels.edit'];
+          this.onLabel['labels.edit'](payload);
         }
       }
     });

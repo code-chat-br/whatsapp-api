@@ -648,6 +648,8 @@ export const webhookSchema: JSONSchema7 = {
         statusInstance: { type: 'boolean', enum: [true, false] },
         refreshToken: { type: 'boolean', enum: [true, false] },
         callUpsert: { type: 'boolean', enum: [true, false] },
+        labelsAssociation: { type: 'boolean', enum: [true, false] },
+        labelsEdit: { type: 'boolean', enum: [true, false] },
       },
     },
   },
