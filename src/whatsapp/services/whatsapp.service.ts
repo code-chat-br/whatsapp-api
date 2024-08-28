@@ -67,6 +67,7 @@ import makeWASocket, {
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
+  WAVersion,
 } from '@whiskeysockets/baileys/';
 import {
   ConfigService,
@@ -504,7 +505,7 @@ export class WAStartupService {
 
     this.authState = (await this.defineAuthState()) as AuthState;
 
-    const { version } = await fetchLatestBaileysVersion();
+    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 

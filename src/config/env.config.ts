@@ -40,7 +40,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { isBooleanString } from 'class-validator';
+import { isBooleanString, isEmpty } from 'class-validator';
 import { config } from 'dotenv';
 
 config();
@@ -126,6 +126,7 @@ export interface Env {
   PRODUCTION?: boolean;
   SESSION_SECRET: string;
   S3?: Bucket;
+  WA_VERSION: string;
 }
 
 export type Key = keyof Env;
@@ -151,6 +152,12 @@ export class ConfigService {
           'The bucket is disabled or the database is not configured to save new messages',
         );
       }
+    }
+
+    if (isEmpty(this.env.WA_VERSION)) {
+      throw new Error(
+        'The WhatsApp version must be specified in the environment variables.\n\nDefault variable [file: .env]: WA_VERSION=[ 2, 3000, 1015901307 ]\n',
+      );
     }
   }
 
@@ -237,6 +244,7 @@ export class ConfigService {
         PORT: Number.parseInt(process.env?.S3_PORT || '9000'),
         USE_SSL: process.env?.S3_USE_SSL === 'true',
       },
+      WA_VERSION: process.env?.WA_VERSION,
     };
   }
 }
