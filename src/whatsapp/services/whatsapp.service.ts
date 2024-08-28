@@ -1364,6 +1364,8 @@ export class WAStartupService {
         messageSent.id = id;
       }
 
+      messageSent['externalAttributes'] = options?.externalAttributes;
+
       this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
         this.logger.error(error),

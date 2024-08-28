@@ -161,7 +161,7 @@ servers:
   - url: http://{dev_host}
     variables:
       dev_host:
-        default: 127.0.0.1:8084
+        default: localhost:8084
 
 paths:
   /instance/qrcode/{instanceName}:
@@ -486,6 +486,7 @@ paths:
               example:
                 number: 123@broadcast
                 options:
+                  externalAttributes: <any> - optional
                   delay: 1200
                   presence: composing
                 textMessage:
@@ -605,6 +606,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   presence: <'composing' | 'recording' | 'paused'> - optional
                   quotedMessageId: 1
@@ -656,7 +658,7 @@ paths:
                   format: binary
                 mediatype:
                   type: string
-                  description: '-required - image | document | video | audio'
+                  description: '- **required:** image | document | video | audio'
                   example: document
                 presence:
                   type: string
@@ -670,6 +672,21 @@ paths:
                   type: integer
                   description: '- optional'
                   example: '1883'
+                externalAttributes:
+                  type: string
+                  description: |
+                    - optional
+                    
+                    ---
+                    
+                    **Types:**
+
+                    - `[string]`
+                    - `[string[boolean]]`
+                    - `[string[number]]`
+                    - `[string[Json[Object]]]`
+                    - `[string[Json[Array]]]`
+                    
       parameters:
         - name: instanceName
           in: path
@@ -740,6 +757,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   presence: <'composing' | 'recording' | 'paused'> - optional
                   quotedMessageId: 1
@@ -782,6 +800,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   presence: <'composing' | 'recording' | 'paused'> - optional
                   quotedMessageId: 1
@@ -863,6 +882,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   quotedMessageId: 1
                 audioMessage:
@@ -920,6 +940,21 @@ paths:
                   type: string
                   description: Optional ID of the message to be quoted in the conversation.
                   example: "12345"
+                externalAttributes:
+                  type: string
+                  description: |
+                    - optional
+                    
+                    ---
+                    
+                    **Types:**
+
+                    - `[string]`
+                    - `[string[boolean]]`
+                    - `[string[number]]`
+                    - `[string[Json[Object]]]`
+                    - `[string[Json[Array]]]`
+                    
       responses:
         '200':
           description: Audio file sent successfully.
@@ -967,6 +1002,7 @@ paths:
                   description: "The recipient's phone number."
                   example: "5531900000000"
                 options:
+                  externalAttributes: <any> - optional
                   type: object
                   properties:
                     delay:
@@ -1054,6 +1090,7 @@ paths:
                   type: string
                   example: "5531997853327"
                 options:
+                  externalAttributes: <any> - optional
                   type: object
                   properties:
                     delay:

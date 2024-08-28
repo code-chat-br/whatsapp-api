@@ -46,6 +46,7 @@ export class Options {
   presence?: WAPresence;
   quotedMessageId?: number;
   messageId?: string;
+  externalAttributes?: any;
 }
 class OptionsMessage {
   options: Options;
