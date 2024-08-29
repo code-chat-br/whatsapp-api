@@ -33,7 +33,7 @@ FROM base AS production
 
 WORKDIR /codechat
 
-LABEL com.api.version="1.3.2"
+LABEL com.api.version="1.3.3"
 LABEL com.api.mantainer="https://github.com/code-chat-br"
 LABEL com.api.repository="https://github.com/code-chat-br/whatsapp-api"
 LABEL com.api.issues="https://github.com/code-chat-br/whatsapp-api/issues"
