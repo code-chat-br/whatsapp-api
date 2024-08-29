@@ -98,6 +98,7 @@ import {
   SendButtonsDto,
   SendContactDto,
   SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -535,6 +536,25 @@ export class WAStartupService {
       syncFullHistory: true,
       userDevicesCache: this.userDevicesCache,
       transactionOpts: { maxCommitRetries: 5, delayBetweenTriesMs: 50 },
+      patchMessageBeforeSending(message) {
+        if (
+          message.deviceSentMessage?.message?.listMessage?.listType ===
+          proto.Message.ListMessage.ListType.PRODUCT_LIST
+        ) {
+          message = JSON.parse(JSON.stringify(message));
+          message.deviceSentMessage.message.listMessage.listType =
+            proto.Message.ListMessage.ListType.SINGLE_SELECT;
+        }
+
+        if (
+          message.listMessage?.listType == proto.Message.ListMessage.ListType.PRODUCT_LIST
+        ) {
+          message = JSON.parse(JSON.stringify(message));
+          message.listMessage.listType = proto.Message.ListMessage.ListType.SINGLE_SELECT;
+        }
+
+        return message;
+      },
     };
 
     return makeWASocket(socketConfig);
@@ -1695,107 +1715,18 @@ export class WAStartupService {
     return await this.sendMessageWithTyping(data.number, message, data?.options);
   }
 
-  public async interactiveMessage() {
-    const file = readFileSync(join(ROOT_DIR, 'public', 'images', 'cover.png'));
-    const media = await prepareWAMessageMedia(
-      { image: file },
-      { upload: this.client.waUploadToServer },
-    );
-
-    const content: proto.IMessage = {
-      viewOnceMessage: {
-        message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2,
-          },
-          interactiveMessage: {
-            body: { text: 'body' },
-            footer: { text: 'footer' },
-            header: {
-              title: 'Title',
-              subtitle: 'Subtitle',
-              hasMediaAttachment: true,
-              imageMessage: media.imageMessage,
-            },
-            nativeFlowMessage: {
-              buttons: [
-                {
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: 'Clique aqui',
-                    sections: [
-                      {
-                        title: 'Sub 1',
-                        rows: [
-                          {
-                            header: 'Header 1',
-                            title: 'Título 1',
-                            description: 'Descrição 1',
-                            id: ulid(),
-                          },
-                          {
-                            header: 'Header 2',
-                            title: 'Título 2',
-                            description: 'Descrição 2',
-                            id: ulid(),
-                          },
-                        ],
-                      },
-                      {
-                        title: 'Sub 2',
-                        rows: [
-                          {
-                            header: 'Header 1',
-                            title: 'Título 1',
-                            description: 'Descrição 1',
-                            id: ulid(),
-                          },
-                          {
-                            header: 'Header 2',
-                            title: 'Título 2',
-                            description: 'Descrição 2',
-                            id: ulid(),
-                          },
-                        ],
-                      },
-                    ],
-                  }),
-                },
-              ],
-              messageParamsJson: 'parameter message',
-            },
-          },
-        },
+  public async listLegacy(data: SendListLegacyDto) {
+    const msg = data.listMessage;
+    return await this.sendMessageWithTyping(data.number, {
+      listMessage: {
+        title: msg.title,
+        description: msg?.description,
+        footerText: msg?.footer,
+        buttonText: msg.buttonText,
+        sections: msg.sections,
+        listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
       },
-    };
-
-    const jid = this.createJid('5531997853327');
-
-    const msg = generateWAMessageFromContent(jid, content, {
-      userJid: this.instance.ownerJid,
-      // ephemeralExpiration: WA_DEFAULT_EPHEMERAL,
-      messageId: ulid(Date.now()),
     });
-
-    const id = await this.client.relayMessage(jid, msg.message, {
-      messageId: ulid(Date.now()),
-    });
-
-    msg.key = {
-      id: id,
-      remoteJid: jid,
-      participant: isJidUser(jid) ? undefined : jid,
-      fromMe: false,
-    };
-
-    for (const [key, value] of Object.entries(msg)) {
-      if (!value || (isArray(value) && value.length) === 0) {
-        delete msg[key];
-      }
-    }
-
-    return msg;
   }
 
   // Chat Controller
