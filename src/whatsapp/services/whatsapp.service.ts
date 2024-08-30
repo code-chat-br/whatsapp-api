@@ -1400,8 +1400,12 @@ export class WAStartupService {
   }
 
   // Instance Controller
-  public get connectionStatus() {
-    return this.stateConnection;
+  public getInstance() {
+    const i: Partial<Instance> & { status: InstanceStateConnection } = {
+      ...this.instance,
+      status: this.stateConnection,
+    };
+    return i;
   }
 
   // Send Message Controller

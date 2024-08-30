@@ -175,18 +175,12 @@ export class InstanceService {
         profilePicUrl: true,
         createdAt: true,
         updatedAt: true,
-        Auth: {
-          select: { id: true, token: true, createdAt: true, updatedAt: true },
-        },
         Webhook: {
-          select: { id: true, url: true, createdAt: true, updatedAt: true },
-        },
-        Typebot: {
           select: {
             id: true,
-            publicId: true,
-            typebotUrl: true,
             enabled: true,
+            url: true,
+            events: true,
             createdAt: true,
             updatedAt: true,
           },

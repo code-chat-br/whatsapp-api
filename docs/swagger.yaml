@@ -288,6 +288,150 @@ paths:
                       Chatwoot: null
                       Typebot: null
   
+  /instance/fetchInstance/{instance}:
+    get:
+      tags:
+        - Instance Controller
+      summary: Fetch a Single Instance
+      description: |
+        This endpoint is used to fetch details of a specific instance identified by the `{instance}` path parameter.
+      security:
+        - apikeyAuth: []
+      parameters:
+        - name: instance
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name or identifier of the instance to fetch.
+          example: codechat
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: codechat
+                  description:
+                    type: string
+                    example: 'Instance: Test V1'
+                  connectionStatus:
+                    type: string
+                    example: ONLINE
+                  ownerJid:
+                    type: string
+                    example: '123@s.whatsapp.net'
+                  profilePicUrl:
+                    type: string
+                    example: 'https://pps.whatsapp.net/v/t61.24694-24/5321478554_861950235940382_7636733895339640495_n.jpg?ccb=11-4&oh=01_Q5AaICi4Q0EtPAHxaP3EFXErE5FdM6r39KUqEQvGmj5yZeAl&oe=66DEC1FD&_nc_sid=5e03e0&_nc_cat=100'
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: '2024-08-28T00:00:00.000Z'
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    example: '2024-08-30T12:51:55.745Z'
+                  Webhook:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      enabled:
+                        type: boolean
+                        example: false
+                      url:
+                        type: string
+                        example: 'https://webhook.site/1d859ca6-97b9-49c8-9d5a-3f561d6abb4e'
+                      events:
+                        type: object
+                        properties:
+                          chatsSet:
+                            type: boolean
+                            example: false
+                          chatsUpsert:
+                            type: boolean
+                            example: true
+                          contactsSet:
+                            type: boolean
+                            example: true
+                          messagesSet:
+                            type: boolean
+                            example: false
+                          sendMessage:
+                            type: boolean
+                            example: true
+                          chatsDeleted:
+                            type: boolean
+                            example: true
+                          chatsUpdated:
+                            type: boolean
+                            example: true
+                          groupsUpsert:
+                            type: boolean
+                            example: true
+                          refreshToken:
+                            type: boolean
+                            example: true
+                          groupsUpdated:
+                            type: boolean
+                            example: true
+                          qrcodeUpdated:
+                            type: boolean
+                            example: true
+                          contactsUpsert:
+                            type: boolean
+                            example: true
+                          messagesUpsert:
+                            type: boolean
+                            example: true
+                          statusInstance:
+                            type: boolean
+                            example: true
+                          contactsUpdated:
+                            type: boolean
+                            example: true
+                          messagesUpdated:
+                            type: boolean
+                            example: true
+                          presenceUpdated:
+                            type: boolean
+                            example: true
+                          connectionUpdated:
+                            type: boolean
+                            example: true
+                          groupsParticipantsUpdated:
+                            type: boolean
+                            example: true
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2024-08-28T00:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2024-08-29T18:04:21.968Z'
+                  Whatsapp:
+                    type: object
+                    properties:
+                      connection:
+                        type: object
+                        properties:
+                          state:
+                            type: string
+                            example: open
+                          statusReason:
+                            type: integer
+                            example: 200
+  
   /instance/connect/{instanceName}:
     get:
       tags:
@@ -320,39 +464,6 @@ paths:
                   2@WWDFM7QHaSH7i0BQQv12dUluv7PFYo ...
     '404':
       description: Not Found
-      headers:
-        X-Powered-By:
-          schema:
-            type: string
-            example: Express
-        Content-Type:
-          schema:
-            type: string
-            example: application/json; charset=utf-8
-        Content-Length:
-          schema:
-            type: integer
-            example: '89'
-        ETag:
-          schema:
-            type: string
-            example: W/"59-k4cfwuHqwL6LhzKnVo3RcMhJc+U"
-        Vary:
-          schema:
-            type: string
-            example: Accept-Encoding
-        Date:
-          schema:
-            type: string
-            example: Mon, 04 Dec 2023 23:37:29 GMT
-        Connection:
-          schema:
-            type: string
-            example: keep-alive
-        Keep-Alive:
-          schema:
-            type: string
-            example: timeout=5
       content:
         application/json:
           schema:
@@ -368,6 +479,7 @@ paths:
       tags:
         - Instance Controller
       summary: Connection Status
+      deprecated: true
       description: |
         This endpoint returns the connection status of a specific instance.
         The `instanceName` parameter should be provided in the URL to identify the desired instance.
