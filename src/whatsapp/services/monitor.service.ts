@@ -100,7 +100,8 @@ export class WAMonitoringService {
       this.instanceDelTimeout[instance] = setTimeout(
         () => {
           const ref = this.waInstances.get(instance);
-          if (ref?.connectionStatus?.state !== 'open') {
+          const info = ref?.getInstance();
+          if (info?.status.state !== 'open') {
             this.waInstances.delete(instance);
           }
           delete this.instanceDelTimeout[instance];
@@ -215,7 +216,8 @@ export class WAMonitoringService {
   private noConnection() {
     this.eventEmitter.on('no.connection', async (instance: Instance) => {
       const waInstance = this.waInstances.get(instance.name);
-      if (waInstance?.connectionStatus?.state !== 'open') {
+      const info = waInstance?.getInstance();
+      if (info?.status?.state !== 'open') {
         const del = this.configService.get<InstanceExpirationTime>(
           'INSTANCE_EXPIRATION_TIME',
         );
