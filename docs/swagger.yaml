@@ -1403,6 +1403,7 @@ paths:
         description: |
             This endpoint is used to delete a message for everyone in a chat instance.
             It requires the `instanceName` parameter in the path and the `id` parameter in the query.
+        deprecated: true
         parameters:
           - name: instanceName
             in: path
@@ -1417,6 +1418,44 @@ paths:
               type: string
             required: true
             description: 'ID of the message to be deleted'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+
+  /chat/deleteMessage/{instanceName}:
+      delete:
+        tags:
+          - Chat Controller
+        summary: Delete Message
+        description: |
+            This endpoint is used to delete a message for everyone in a chat instance.
+            It requires the `instanceName` parameter in the path and the `id` parameter in the query.
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: 'codechat_v1'
+          - name: id
+            in: query
+            schema:
+              type: string
+            required: true
+            description: 'ID of the message to be deleted'
+          - name: everyOne
+            in: query
+            schema:
+              type: string
+              default: false
+              enum:
+                - true
+                - false
+            required: false
+            description: "Specifies whether the message should be deleted for everyone in the chat."
         responses:
           '200':
             description: Successful response

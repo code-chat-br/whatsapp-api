@@ -121,6 +121,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
 
       return res.status(HttpStatus.CREATED).json(response);
     })
+    .delete(routerPath('deleteMessage'), ...guards, async (req, res) => {
+      const response = await dataValidate<DeleteMessage>({
+        request: req,
+        schema: deleteMessageSchema,
+        execute: (instance, data) => chatController.deleteMessage(instance, data),
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
     .post(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
       const response = await dataValidate<NumberDto>({
         request: req,

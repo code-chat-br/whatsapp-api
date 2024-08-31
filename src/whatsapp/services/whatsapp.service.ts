@@ -1836,10 +1836,32 @@ export class WAStartupService {
   public async deleteMessage(del: DeleteMessage) {
     try {
       const id = Number.parseInt(del.id);
+      const everyOne = del?.everyOne === 'true';
       const message = await this.repository.message.findUnique({
         where: { id },
       });
-      return await this.client.sendMessage(message.keyRemoteJid, {
+
+      if (!everyOne) {
+        await this.client.chatModify(
+          {
+            delete: true,
+            lastMessages: [
+              {
+                key: {
+                  id: message.keyId,
+                  fromMe: message.keyFromMe,
+                  participant: message?.keyParticipant,
+                  remoteJid: message.keyRemoteJid,
+                },
+                messageTimestamp: message.messageTimestamp,
+              },
+            ],
+          },
+          message.keyRemoteJid,
+        );
+      }
+
+      await this.client.sendMessage(message.keyRemoteJid, {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
