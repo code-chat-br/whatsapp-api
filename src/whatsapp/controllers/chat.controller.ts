@@ -71,6 +71,10 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).archiveChat(data);
   }
 
+  public async deleteChat({ instanceName }: InstanceDto, data: string) {
+    return await this.waMonitor.waInstances.get(instanceName).deleteChat(data);
+  }
+
   public async deleteMessage({ instanceName }: InstanceDto, data: DeleteMessage) {
     return await this.waMonitor.waInstances.get(instanceName).deleteMessage(data);
   }

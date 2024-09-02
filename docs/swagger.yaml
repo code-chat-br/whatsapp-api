@@ -295,8 +295,6 @@ paths:
       summary: Fetch a Single Instance
       description: |
         This endpoint is used to fetch details of a specific instance identified by the `{instance}` path parameter.
-      security:
-        - apikeyAuth: []
       parameters:
         - name: instance
           in: path
@@ -1456,6 +1454,34 @@ paths:
                 - false
             required: false
             description: "Specifies whether the message should be deleted for everyone in the chat."
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+
+  /chat/deleteChat/{instanceName}:
+      delete:
+        tags:
+          - Chat Controller
+        summary: Delete Message
+        description:  |
+          This endpoint is used to delete a chat in the WhatsApp API. Deleting a chat removes all messages and chat history associated with it.
+          It requires the `instanceName` parameter in the path and the `chatId` parameter in the query.
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: 'codechat_v1'
+          - name: chatId
+            in: query
+            schema:
+              type: string
+            required: true
+            description: ID of the chat to be deleted
         responses:
           '200':
             description: Successful response

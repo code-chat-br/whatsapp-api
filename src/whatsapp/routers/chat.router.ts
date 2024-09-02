@@ -128,7 +128,17 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.deleteMessage(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .delete(routerPath('deleteChat'), ...guards, async (req, res) => {
+      const instance = req.params as unknown as InstanceDto;
+      const query = req.query as Record<string, string>;
+      if (!query?.chatId) {
+        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'chatId is required' });
+      }
+      const response = await chatController.deleteChat(instance, query?.chatId);
+
+      return res.status(HttpStatus.OK).json(response);
     })
     .post(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
       const response = await dataValidate<NumberDto>({
