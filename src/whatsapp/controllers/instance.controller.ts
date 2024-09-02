@@ -114,9 +114,11 @@ export class InstanceController {
       let instance: WAStartupService;
       instance = this.waMonitor.waInstances.get(instanceName);
       const info = instance?.getInstance();
-      if (info.status.state === 'open') {
-        throw 'Instance already connected';
+      if (info?.status.state === 'open') {
+        throw new Error('Instance already connected');
       }
+
+      const state = info?.status.state || 'close';
 
       if (!instance || !info?.status || info?.status?.state === 'refused') {
         instance = new WAStartupService(
@@ -130,8 +132,6 @@ export class InstanceController {
         this.waMonitor.addInstance(instanceName, instance);
       }
 
-      const state = info.status.state;
-
       switch (state) {
         case 'close':
           await instance.connectToWhatsapp();
@@ -140,7 +140,7 @@ export class InstanceController {
         case 'connecting':
           return instance.qrCode;
         default:
-          return await this.connectionState({ instanceName });
+          return info?.status;
       }
     } catch (error) {
       this.logger.error(error);
