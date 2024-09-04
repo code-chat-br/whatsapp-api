@@ -219,7 +219,7 @@ export class InstanceService {
         ];
       }
 
-      delete this.waMonitor.waInstances[instance.instanceName];
+      this.waMonitor.waInstances.delete(instance.instanceName);
 
       return await this.repository.instance.delete({
         where: { name: instance.instanceName },

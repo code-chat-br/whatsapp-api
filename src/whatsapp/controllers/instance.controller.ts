@@ -207,13 +207,14 @@ export class InstanceController {
   }
 
   public async deleteInstance({ instanceName }: InstanceDto, force?: boolean) {
-    const stateConn = await this.connectionState({ instanceName });
-    if (stateConn?.state === 'open') {
+    const instance = this.waMonitor.waInstances.get(instanceName);
+    if (instance && instance.getInstance()?.status?.state === 'open') {
       throw new BadRequestException([
         'Deletion failed',
         'The instance needs to be disconnected',
       ]);
     }
+
     const del = await this.instanceService.deleteInstance({ instanceName }, force);
     del['deletedAt'] = new Date();
     return del;
