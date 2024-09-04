@@ -229,14 +229,9 @@ export async function AppModule(context: Map<string, any>) {
 
   app.use(ErrorMiddle.appError, ErrorMiddle.pageNotFound);
 
-  app['close'] = async () => {
-    await repository.onModuleDestroy();
-    await providerFiles.onModuleDestroy();
-  };
-
   context.set('app', server);
   context.set('module:logger', logger);
   context.set('module:repository', repository);
-  context.set('module:redisCache', providerFiles);
+  context.set('module:provider', providerFiles);
   context.set('module:config', configService);
 }
