@@ -102,8 +102,8 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).fetchMessages(query);
   }
 
-  public async fetchChats({ instanceName }: InstanceDto) {
-    return await this.waMonitor.waInstances.get(instanceName).fetchChats();
+  public async fetchChats({ instanceName }: InstanceDto, type?: string) {
+    return await this.waMonitor.waInstances.get(instanceName).fetchChats(type);
   }
 
   public async rejectCall({ instanceName }: InstanceDto, data: RejectCallDto) {

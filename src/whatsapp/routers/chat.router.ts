@@ -200,7 +200,8 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       const response = await dataValidate<InstanceDto>({
         request: req,
         schema: null,
-        execute: (instance) => chatController.fetchChats(instance),
+        execute: (instance) =>
+          chatController.fetchChats(instance, req.query?.type as string),
       });
 
       return res.status(HttpStatus.OK).json(response);

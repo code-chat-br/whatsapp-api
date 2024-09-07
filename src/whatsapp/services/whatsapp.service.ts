@@ -2107,10 +2107,14 @@ export class WAStartupService {
     };
   }
 
-  public async fetchChats() {
-    return await this.repository.chat.findMany({
-      where: { instanceId: this.instance.id },
-    });
+  public async fetchChats(type?: string) {
+    const where = { instanceId: this.instance.id };
+    if (['chats', 'group'].includes(type)) {
+      where['remoteJid'] = {
+        contains: '@s.whatsapp.net',
+      };
+    }
+    return await this.repository.chat.findMany({ where });
   }
 
   public async rejectCall(data: RejectCallDto) {
