@@ -535,25 +535,6 @@ export class WAStartupService {
       syncFullHistory: true,
       userDevicesCache: this.userDevicesCache,
       transactionOpts: { maxCommitRetries: 5, delayBetweenTriesMs: 50 },
-      patchMessageBeforeSending(message) {
-        if (
-          message.deviceSentMessage?.message?.listMessage?.listType ===
-          proto.Message.ListMessage.ListType.PRODUCT_LIST
-        ) {
-          message = JSON.parse(JSON.stringify(message));
-          message.deviceSentMessage.message.listMessage.listType =
-            proto.Message.ListMessage.ListType.SINGLE_SELECT;
-        }
-
-        if (
-          message.listMessage?.listType == proto.Message.ListMessage.ListType.PRODUCT_LIST
-        ) {
-          message = JSON.parse(JSON.stringify(message));
-          message.listMessage.listType = proto.Message.ListMessage.ListType.SINGLE_SELECT;
-        }
-
-        return message;
-      },
     };
 
     return makeWASocket(socketConfig);
@@ -1721,13 +1702,17 @@ export class WAStartupService {
   public async listLegacy(data: SendListLegacyDto) {
     const msg = data.listMessage;
     return await this.sendMessageWithTyping(data.number, {
-      listMessage: {
-        title: msg.title,
-        description: msg?.description,
-        footerText: msg?.footer,
-        buttonText: msg.buttonText,
-        sections: msg.sections,
-        listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
+      viewOnceMessageV2: {
+        message: {
+          listMessage: {
+            title: msg.title,
+            description: msg?.description,
+            footerText: msg?.footer,
+            buttonText: msg.buttonText,
+            sections: msg.sections,
+            listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
+          },
+        },
       },
     });
   }
@@ -1876,18 +1861,15 @@ export class WAStartupService {
       if (!everyOne) {
         await this.client.chatModify(
           {
-            delete: false as any,
-            lastMessages: [
-              {
-                key: {
+            clear: {
+              messages: [
+                {
                   id: message.keyId,
                   fromMe: message.keyFromMe,
-                  participant: message?.keyParticipant,
-                  remoteJid: message.keyRemoteJid,
+                  timestamp: message.messageTimestamp,
                 },
-                messageTimestamp: message.messageTimestamp,
-              },
-            ],
+              ],
+            },
           },
           message.keyRemoteJid,
         );
