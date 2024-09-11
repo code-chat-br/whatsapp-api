@@ -162,6 +162,13 @@ export class InstanceController {
    * @deprecated
    */
   public async connectionState({ instanceName }: InstanceDto) {
+    const instance = this.waMonitor.waInstances.get(instanceName);
+    if (!instance) {
+      return {
+        state: 'close',
+        statusReason: 400,
+      };
+    }
     return this.waMonitor.waInstances.get(instanceName).getInstance().status;
   }
 
@@ -169,8 +176,18 @@ export class InstanceController {
     try {
       const instance = (await this.instanceService.fetchInstance(instanceName))[0];
       if (instance) {
+        const i = this.waMonitor.waInstances.get(instanceName);
+        if (i) {
+          instance['Whatsapp'] = {
+            connection: this.waMonitor.waInstances.get(instanceName).getInstance().status,
+          };
+          return instance;
+        }
         instance['Whatsapp'] = {
-          connection: this.waMonitor.waInstances.get(instanceName).getInstance().status,
+          connection: {
+            state: 'close',
+            statusReason: 400,
+          },
         };
         return instance;
       }
