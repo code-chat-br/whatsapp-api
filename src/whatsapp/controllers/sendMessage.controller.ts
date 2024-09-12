@@ -44,6 +44,7 @@ import {
   SendButtonsDto,
   SendContactDto,
   SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -132,5 +133,9 @@ export class SendMessageController {
 
   public async sendList({ instanceName }: InstanceDto, data: SendListDto) {
     return await this.waMonitor.waInstances.get(instanceName).listButtons(data);
+  }
+
+  public async sendListLegacy({ instanceName }: InstanceDto, data: SendListLegacyDto) {
+    return await this.waMonitor.waInstances.get(instanceName).listLegacy(data);
   }
 }

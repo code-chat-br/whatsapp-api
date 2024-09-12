@@ -113,15 +113,14 @@ export class InstanceController {
     try {
       let instance: WAStartupService;
       instance = this.waMonitor.waInstances.get(instanceName);
-      if (instance?.connectionStatus?.state === 'open') {
-        throw 'Instance already connected';
+      const info = instance?.getInstance();
+      if (info?.status.state === 'open') {
+        throw new Error('Instance already connected');
       }
 
-      if (
-        !instance ||
-        !instance.connectionStatus ||
-        instance?.connectionStatus?.state === 'refused'
-      ) {
+      const state = info?.status.state || 'close';
+
+      if (!instance || !info?.status || info?.status?.state === 'refused') {
         instance = new WAStartupService(
           this.configService,
           this.eventEmitter,
@@ -133,8 +132,6 @@ export class InstanceController {
         this.waMonitor.addInstance(instanceName, instance);
       }
 
-      const state = instance?.connectionStatus?.state;
-
       switch (state) {
         case 'close':
           await instance.connectToWhatsapp();
@@ -143,7 +140,7 @@ export class InstanceController {
         case 'connecting':
           return instance.qrCode;
         default:
-          return await this.connectionState({ instanceName });
+          return info?.status;
       }
     } catch (error) {
       this.logger.error(error);
@@ -161,8 +158,43 @@ export class InstanceController {
     }
   }
 
+  /**
+   * @deprecated
+   */
   public async connectionState({ instanceName }: InstanceDto) {
-    return this.waMonitor.waInstances.get(instanceName)?.connectionStatus;
+    const instance = this.waMonitor.waInstances.get(instanceName);
+    if (!instance) {
+      return {
+        state: 'close',
+        statusReason: 400,
+      };
+    }
+    return this.waMonitor.waInstances.get(instanceName).getInstance().status;
+  }
+
+  public async fetchInstance({ instanceName }: InstanceDto) {
+    try {
+      const instance = (await this.instanceService.fetchInstance(instanceName))[0];
+      if (instance) {
+        const i = this.waMonitor.waInstances.get(instanceName);
+        if (i) {
+          instance['Whatsapp'] = {
+            connection: this.waMonitor.waInstances.get(instanceName).getInstance().status,
+          };
+          return instance;
+        }
+        instance['Whatsapp'] = {
+          connection: {
+            state: 'close',
+            statusReason: 400,
+          },
+        };
+        return instance;
+      }
+      throw new Error('Instance not found');
+    } catch (error) {
+      throw new BadRequestException(error?.message);
+    }
   }
 
   public async fetchInstances({ instanceName }: InstanceDto) {
@@ -192,13 +224,14 @@ export class InstanceController {
   }
 
   public async deleteInstance({ instanceName }: InstanceDto, force?: boolean) {
-    const stateConn = await this.connectionState({ instanceName });
-    if (stateConn?.state === 'open') {
+    const instance = this.waMonitor.waInstances.get(instanceName);
+    if (instance && instance.getInstance()?.status?.state === 'open') {
       throw new BadRequestException([
         'Deletion failed',
         'The instance needs to be disconnected',
       ]);
     }
+
     const del = await this.instanceService.deleteInstance({ instanceName }, force);
     del['deletedAt'] = new Date();
     return del;

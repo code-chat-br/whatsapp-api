@@ -46,6 +46,7 @@ export class Options {
   presence?: WAPresence;
   quotedMessageId?: number;
   messageId?: string;
+  externalAttributes?: any;
 }
 class OptionsMessage {
   options: Options;
@@ -269,5 +270,51 @@ export class SendListDto extends Metadata {
     super();
     Object.assign(this, props);
     this.listMessage = new ListMessage(props.listMessage);
+  }
+}
+
+class RowLegacy {
+  title: string;
+  description?: string;
+  rowId?: string;
+
+  constructor(props: Row) {
+    Object.assign(this, props);
+    if (!this?.rowId) {
+      this.rowId = ulid(Date.now());
+    }
+  }
+}
+
+class SectionLegacy {
+  title: string;
+  rows: RowLegacy[];
+
+  constructor(props: SectionLegacy) {
+    Object.assign(this, props);
+    this.rows = props.rows.map((row) => new RowLegacy(row));
+  }
+}
+
+class ListLegacy {
+  title: string;
+  description?: string;
+  buttonText: string;
+  footer?: string;
+  sections: SectionLegacy[];
+
+  constructor(props: ListLegacy) {
+    Object.assign(this, props);
+    this.sections = props.sections.map((section) => new SectionLegacy(section));
+  }
+}
+
+export class SendListLegacyDto extends Metadata {
+  listMessage: ListLegacy;
+
+  constructor(props: SendListLegacyDto) {
+    super();
+    Object.assign(this, props);
+    this.listMessage = new ListLegacy(props.listMessage);
   }
 }

@@ -161,7 +161,7 @@ servers:
   - url: http://{dev_host}
     variables:
       dev_host:
-        default: 127.0.0.1:8084
+        default: localhost:8084
 
 paths:
   /instance/qrcode/{instanceName}:
@@ -288,6 +288,148 @@ paths:
                       Chatwoot: null
                       Typebot: null
   
+  /instance/fetchInstance/{instance}:
+    get:
+      tags:
+        - Instance Controller
+      summary: Fetch a Single Instance
+      description: |
+        This endpoint is used to fetch details of a specific instance identified by the `{instance}` path parameter.
+      parameters:
+        - name: instance
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name or identifier of the instance to fetch.
+          example: codechat
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 1
+                  name:
+                    type: string
+                    example: codechat
+                  description:
+                    type: string
+                    example: 'Instance: Test V1'
+                  connectionStatus:
+                    type: string
+                    example: ONLINE
+                  ownerJid:
+                    type: string
+                    example: '123@s.whatsapp.net'
+                  profilePicUrl:
+                    type: string
+                    example: 'https://pps.whatsapp.net/v/t61.24694-24/5321478554_861950235940382_7636733895339640495_n.jpg?ccb=11-4&oh=01_Q5AaICi4Q0EtPAHxaP3EFXErE5FdM6r39KUqEQvGmj5yZeAl&oe=66DEC1FD&_nc_sid=5e03e0&_nc_cat=100'
+                  createdAt:
+                    type: string
+                    format: date-time
+                    example: '2024-08-28T00:00:00.000Z'
+                  updatedAt:
+                    type: string
+                    format: date-time
+                    example: '2024-08-30T12:51:55.745Z'
+                  Webhook:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      enabled:
+                        type: boolean
+                        example: false
+                      url:
+                        type: string
+                        example: 'https://webhook.site/1d859ca6-97b9-49c8-9d5a-3f561d6abb4e'
+                      events:
+                        type: object
+                        properties:
+                          chatsSet:
+                            type: boolean
+                            example: false
+                          chatsUpsert:
+                            type: boolean
+                            example: true
+                          contactsSet:
+                            type: boolean
+                            example: true
+                          messagesSet:
+                            type: boolean
+                            example: false
+                          sendMessage:
+                            type: boolean
+                            example: true
+                          chatsDeleted:
+                            type: boolean
+                            example: true
+                          chatsUpdated:
+                            type: boolean
+                            example: true
+                          groupsUpsert:
+                            type: boolean
+                            example: true
+                          refreshToken:
+                            type: boolean
+                            example: true
+                          groupsUpdated:
+                            type: boolean
+                            example: true
+                          qrcodeUpdated:
+                            type: boolean
+                            example: true
+                          contactsUpsert:
+                            type: boolean
+                            example: true
+                          messagesUpsert:
+                            type: boolean
+                            example: true
+                          statusInstance:
+                            type: boolean
+                            example: true
+                          contactsUpdated:
+                            type: boolean
+                            example: true
+                          messagesUpdated:
+                            type: boolean
+                            example: true
+                          presenceUpdated:
+                            type: boolean
+                            example: true
+                          connectionUpdated:
+                            type: boolean
+                            example: true
+                          groupsParticipantsUpdated:
+                            type: boolean
+                            example: true
+                      createdAt:
+                        type: string
+                        format: date-time
+                        example: '2024-08-28T00:00:00.000Z'
+                      updatedAt:
+                        type: string
+                        format: date-time
+                        example: '2024-08-29T18:04:21.968Z'
+                  Whatsapp:
+                    type: object
+                    properties:
+                      connection:
+                        type: object
+                        properties:
+                          state:
+                            type: string
+                            example: open
+                          statusReason:
+                            type: integer
+                            example: 200
+  
   /instance/connect/{instanceName}:
     get:
       tags:
@@ -320,39 +462,6 @@ paths:
                   2@WWDFM7QHaSH7i0BQQv12dUluv7PFYo ...
     '404':
       description: Not Found
-      headers:
-        X-Powered-By:
-          schema:
-            type: string
-            example: Express
-        Content-Type:
-          schema:
-            type: string
-            example: application/json; charset=utf-8
-        Content-Length:
-          schema:
-            type: integer
-            example: '89'
-        ETag:
-          schema:
-            type: string
-            example: W/"59-k4cfwuHqwL6LhzKnVo3RcMhJc+U"
-        Vary:
-          schema:
-            type: string
-            example: Accept-Encoding
-        Date:
-          schema:
-            type: string
-            example: Mon, 04 Dec 2023 23:37:29 GMT
-        Connection:
-          schema:
-            type: string
-            example: keep-alive
-        Keep-Alive:
-          schema:
-            type: string
-            example: timeout=5
       content:
         application/json:
           schema:
@@ -368,6 +477,7 @@ paths:
       tags:
         - Instance Controller
       summary: Connection Status
+      deprecated: true
       description: |
         This endpoint returns the connection status of a specific instance.
         The `instanceName` parameter should be provided in the URL to identify the desired instance.
@@ -486,6 +596,7 @@ paths:
               example:
                 number: 123@broadcast
                 options:
+                  externalAttributes: <any> - optional
                   delay: 1200
                   presence: composing
                 textMessage:
@@ -605,6 +716,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   presence: <'composing' | 'recording' | 'paused'> - optional
                   quotedMessageId: 1
@@ -656,7 +768,7 @@ paths:
                   format: binary
                 mediatype:
                   type: string
-                  description: '-required - image | document | video | audio'
+                  description: '- **required:** image | document | video | audio'
                   example: document
                 presence:
                   type: string
@@ -670,6 +782,21 @@ paths:
                   type: integer
                   description: '- optional'
                   example: '1883'
+                externalAttributes:
+                  type: string
+                  description: |
+                    - optional
+                    
+                    ---
+                    
+                    **Types:**
+
+                    - `[string]`
+                    - `[string[boolean]]`
+                    - `[string[number]]`
+                    - `[string[Json[Object]]]`
+                    - `[string[Json[Array]]]`
+                    
       parameters:
         - name: instanceName
           in: path
@@ -740,6 +867,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   presence: <'composing' | 'recording' | 'paused'> - optional
                   quotedMessageId: 1
@@ -782,6 +910,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   presence: <'composing' | 'recording' | 'paused'> - optional
                   quotedMessageId: 1
@@ -863,6 +992,7 @@ paths:
               example:
                 number: <string> - required
                 options:
+                  externalAttributes: <any> - optional
                   delay: <integer> - optional
                   quotedMessageId: 1
                 audioMessage:
@@ -920,6 +1050,21 @@ paths:
                   type: string
                   description: Optional ID of the message to be quoted in the conversation.
                   example: "12345"
+                externalAttributes:
+                  type: string
+                  description: |
+                    - optional
+                    
+                    ---
+                    
+                    **Types:**
+
+                    - `[string]`
+                    - `[string[boolean]]`
+                    - `[string[number]]`
+                    - `[string[Json[Object]]]`
+                    - `[string[Json[Array]]]`
+                    
       responses:
         '200':
           description: Audio file sent successfully.
@@ -967,6 +1112,7 @@ paths:
                   description: "The recipient's phone number."
                   example: "5531900000000"
                 options:
+                  externalAttributes: <any> - optional
                   type: object
                   properties:
                     delay:
@@ -1054,6 +1200,7 @@ paths:
                   type: string
                   example: "5531997853327"
                 options:
+                  externalAttributes: <any> - optional
                   type: object
                   properties:
                     delay:
@@ -1254,6 +1401,7 @@ paths:
         description: |
             This endpoint is used to delete a message for everyone in a chat instance.
             It requires the `instanceName` parameter in the path and the `id` parameter in the query.
+        deprecated: true
         parameters:
           - name: instanceName
             in: path
@@ -1268,6 +1416,72 @@ paths:
               type: string
             required: true
             description: 'ID of the message to be deleted'
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+
+  /chat/deleteMessage/{instanceName}:
+      delete:
+        tags:
+          - Chat Controller
+        summary: Delete Message
+        description: |
+            This endpoint is used to delete a message for everyone in a chat instance.
+            It requires the `instanceName` parameter in the path and the `id` parameter in the query.
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: 'codechat_v1'
+          - name: id
+            in: query
+            schema:
+              type: string
+            required: true
+            description: 'ID of the message to be deleted'
+          - name: everyOne
+            in: query
+            schema:
+              type: string
+              default: false
+              enum:
+                - true
+                - false
+            required: false
+            description: "Specifies whether the message should be deleted for everyone in the chat."
+        responses:
+          '200':
+            description: Successful response
+            content:
+              application/json: {}
+
+  /chat/deleteChat/{instanceName}:
+      delete:
+        tags:
+          - Chat Controller
+        summary: Delete Message
+        description:  |
+          This endpoint is used to delete a chat in the WhatsApp API. Deleting a chat removes all messages and chat history associated with it.
+          It requires the `instanceName` parameter in the path and the `chatId` parameter in the query.
+        parameters:
+          - name: instanceName
+            in: path
+            schema:
+              type: string
+            required: true
+            description: '- required'
+            example: 'codechat_v1'
+          - name: chatId
+            in: query
+            schema:
+              type: string
+            required: true
+            description: ID of the chat to be deleted
         responses:
           '200':
             description: Successful response

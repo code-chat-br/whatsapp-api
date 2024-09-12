@@ -309,6 +309,49 @@ export const listMessageSchema: JSONSchema7 = {
   required: ['number', 'listMessage'],
 };
 
+export const listMessageLegacySchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    listMessage: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        footer: { type: 'string' },
+        buttonText: { type: 'string' },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              rows: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    descriprion: { type: 'string' },
+                    rowId: { type: 'string' },
+                  },
+                  required: ['title'],
+                },
+              },
+            },
+            required: ['title', 'rows'],
+          },
+        },
+      },
+      required: ['title', 'sections'],
+      ...isNotEmpty('footer', 'description', 'buttonText'),
+    },
+  },
+  required: ['number', 'listMessage'],
+};
+
 export const contactMessageSchema: JSONSchema7 = {
   $id: ulid(),
   type: 'object',
@@ -648,6 +691,8 @@ export const webhookSchema: JSONSchema7 = {
         statusInstance: { type: 'boolean', enum: [true, false] },
         refreshToken: { type: 'boolean', enum: [true, false] },
         callUpsert: { type: 'boolean', enum: [true, false] },
+        labelsAssociation: { type: 'boolean', enum: [true, false] },
+        labelsEdit: { type: 'boolean', enum: [true, false] },
       },
     },
   },

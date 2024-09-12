@@ -11,29 +11,39 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    - name: Get package version
-      id: get_version
-      run: echo "::set-output name=version::$(jq -r .version package.json)"
+      - name: Get package version
+        id: get_version
+        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_ENV
 
-    - name: Debug Pre-Build Information
-      run: |
-        docker run --rm node:latest node -v
-        docker run --rm node:latest npm -v
-        docker run --rm node:latest git --version
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-    - name: Build and tag Docker image
-      run: |
-        docker build . --file Dockerfile --tag codechat/api:${{ steps.get_version.outputs.version }}
-        docker tag codechat/api:${{ steps.get_version.outputs.version }} codechat/api:latest
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Login to Docker Hub
-      uses: docker/login-action@v1
-      with:
-        username: ${{ secrets.DOCKER_USERNAME }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
 
-    - name: Push Docker image to Docker Hub
-      run: docker push codechat/api:latest
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            codechat/api:latest
+            codechat/api:v${{ env.version }}
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache

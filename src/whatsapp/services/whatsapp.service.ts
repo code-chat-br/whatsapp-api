@@ -47,7 +47,6 @@ import makeWASocket, {
   delay,
   DisconnectReason,
   downloadMediaMessage,
-  fetchLatestBaileysVersion,
   generateWAMessageFromContent,
   getContentType,
   getDevice,
@@ -67,6 +66,7 @@ import makeWASocket, {
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
+  WAVersion,
 } from '@whiskeysockets/baileys/';
 import {
   ConfigService,
@@ -78,7 +78,7 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { readFileSync } from 'fs';
+import { lstat, readFileSync } from 'fs';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
@@ -97,6 +97,7 @@ import {
   SendButtonsDto,
   SendContactDto,
   SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -505,7 +506,7 @@ export class WAStartupService {
 
     this.authState = (await this.defineAuthState()) as AuthState;
 
-    const { version } = await fetchLatestBaileysVersion();
+    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
@@ -1066,6 +1067,15 @@ export class WAStartupService {
     },
   };
 
+  private readonly onLabel = {
+    'labels.association': async (args: BaileysEventMap['labels.association']) => {
+      this.sendDataWebhook('labelsAssociation', args);
+    },
+    'labels.edit': async (args: BaileysEventMap['labels.edit']) => {
+      this.sendDataWebhook('labelsEdit', args);
+    },
+  };
+
   private eventHandler() {
     this.client.ev.process((events) => {
       if (!this.endSession) {
@@ -1141,6 +1151,16 @@ export class WAStartupService {
         if (events?.['call']) {
           const payload = events['call'];
           this.callHandler['call.upsert'](payload);
+        }
+
+        if (events?.['labels.association']) {
+          const payload = events['labels.association'];
+          this.onLabel['labels.association'](payload);
+        }
+
+        if (events?.['labels.edit']) {
+          const payload = events['labels.edit'];
+          this.onLabel['labels.edit'](payload);
         }
       }
     });
@@ -1356,6 +1376,8 @@ export class WAStartupService {
         messageSent.id = id;
       }
 
+      messageSent['externalAttributes'] = options?.externalAttributes;
+
       this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
         this.logger.error(error),
@@ -1369,8 +1391,12 @@ export class WAStartupService {
   }
 
   // Instance Controller
-  public get connectionStatus() {
-    return this.stateConnection;
+  public getInstance() {
+    const i: Partial<Instance> & { status: InstanceStateConnection } = {
+      ...this.instance,
+      status: this.stateConnection,
+    };
+    return i;
   }
 
   // Send Message Controller
@@ -1684,107 +1710,22 @@ export class WAStartupService {
     return await this.sendMessageWithTyping(data.number, message, data?.options);
   }
 
-  public async interactiveMessage() {
-    const file = readFileSync(join(ROOT_DIR, 'public', 'images', 'cover.png'));
-    const media = await prepareWAMessageMedia(
-      { image: file },
-      { upload: this.client.waUploadToServer },
-    );
-
-    const content: proto.IMessage = {
-      viewOnceMessage: {
+  public async listLegacy(data: SendListLegacyDto) {
+    const msg = data.listMessage;
+    return await this.sendMessageWithTyping(data.number, {
+      viewOnceMessageV2: {
         message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2,
-          },
-          interactiveMessage: {
-            body: { text: 'body' },
-            footer: { text: 'footer' },
-            header: {
-              title: 'Title',
-              subtitle: 'Subtitle',
-              hasMediaAttachment: true,
-              imageMessage: media.imageMessage,
-            },
-            nativeFlowMessage: {
-              buttons: [
-                {
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: 'Clique aqui',
-                    sections: [
-                      {
-                        title: 'Sub 1',
-                        rows: [
-                          {
-                            header: 'Header 1',
-                            title: 'Título 1',
-                            description: 'Descrição 1',
-                            id: ulid(),
-                          },
-                          {
-                            header: 'Header 2',
-                            title: 'Título 2',
-                            description: 'Descrição 2',
-                            id: ulid(),
-                          },
-                        ],
-                      },
-                      {
-                        title: 'Sub 2',
-                        rows: [
-                          {
-                            header: 'Header 1',
-                            title: 'Título 1',
-                            description: 'Descrição 1',
-                            id: ulid(),
-                          },
-                          {
-                            header: 'Header 2',
-                            title: 'Título 2',
-                            description: 'Descrição 2',
-                            id: ulid(),
-                          },
-                        ],
-                      },
-                    ],
-                  }),
-                },
-              ],
-              messageParamsJson: 'parameter message',
-            },
+          listMessage: {
+            title: msg.title,
+            description: msg?.description,
+            footerText: msg?.footer,
+            buttonText: msg.buttonText,
+            sections: msg.sections,
+            listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
           },
         },
       },
-    };
-
-    const jid = this.createJid('5531997853327');
-
-    const msg = generateWAMessageFromContent(jid, content, {
-      userJid: this.instance.ownerJid,
-      // ephemeralExpiration: WA_DEFAULT_EPHEMERAL,
-      messageId: ulid(Date.now()),
     });
-
-    const id = await this.client.relayMessage(jid, msg.message, {
-      messageId: ulid(Date.now()),
-    });
-
-    msg.key = {
-      id: id,
-      remoteJid: jid,
-      participant: isJidUser(jid) ? undefined : jid,
-      fromMe: false,
-    };
-
-    for (const [key, value] of Object.entries(msg)) {
-      if (!value || (isArray(value) && value.length) === 0) {
-        delete msg[key];
-      }
-    }
-
-    return msg;
   }
 
   // Chat Controller
@@ -1829,6 +1770,39 @@ export class WAStartupService {
       return { message: 'Read messages', read: 'success' };
     } catch (error) {
       throw new InternalServerErrorException('Read messages fail', error.toString());
+    }
+  }
+
+  public async deleteChat(chatId: string) {
+    try {
+      const lastMessage = await this.repository.message.findFirst({
+        where: { keyRemoteJid: this.createJid(chatId) },
+        orderBy: { messageTimestamp: 'desc' },
+      });
+      if (!lastMessage) {
+        throw new Error('Chat not found');
+      }
+
+      await this.client.chatModify(
+        {
+          delete: true,
+          lastMessages: [
+            {
+              key: {
+                id: lastMessage.keyId,
+                fromMe: lastMessage.keyFromMe,
+                remoteJid: lastMessage.keyRemoteJid,
+              },
+              messageTimestamp: lastMessage.messageTimestamp,
+            },
+          ],
+        },
+        lastMessage.keyRemoteJid,
+      );
+
+      return { deletedAt: new Date(), chatId: lastMessage.keyRemoteJid };
+    } catch (error) {
+      throw new BadRequestException('Error while deleting chat', error?.message);
     }
   }
 
@@ -1890,10 +1864,29 @@ export class WAStartupService {
   public async deleteMessage(del: DeleteMessage) {
     try {
       const id = Number.parseInt(del.id);
+      const everyOne = del?.everyOne === 'true';
       const message = await this.repository.message.findUnique({
         where: { id },
       });
-      return await this.client.sendMessage(message.keyRemoteJid, {
+
+      if (!everyOne) {
+        await this.client.chatModify(
+          {
+            clear: {
+              messages: [
+                {
+                  id: message.keyId,
+                  fromMe: message.keyFromMe,
+                  timestamp: message.messageTimestamp,
+                },
+              ],
+            },
+          },
+          message.keyRemoteJid,
+        );
+      }
+
+      await this.client.sendMessage(message.keyRemoteJid, {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
@@ -1901,6 +1894,8 @@ export class WAStartupService {
           remoteJid: message.keyRemoteJid,
         },
       });
+
+      return { deletedAt: new Date(), message };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while deleting message for everyone',
@@ -2105,10 +2100,14 @@ export class WAStartupService {
     };
   }
 
-  public async fetchChats() {
-    return await this.repository.chat.findMany({
-      where: { instanceId: this.instance.id },
-    });
+  public async fetchChats(type?: string) {
+    const where = { instanceId: this.instance.id };
+    if (['chats', 'group'].includes(type)) {
+      where['remoteJid'] = {
+        contains: '@s.whatsapp.net',
+      };
+    }
+    return await this.repository.chat.findMany({ where });
   }
 
   public async rejectCall(data: RejectCallDto) {

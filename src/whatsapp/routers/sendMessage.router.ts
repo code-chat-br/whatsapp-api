@@ -40,6 +40,7 @@ import {
   audioMessageSchema,
   buttonsMessageSchema,
   contactMessageSchema,
+  listMessageLegacySchema,
   listMessageSchema,
   locationMessageSchema,
   mediaFileMessageSchema,
@@ -55,6 +56,7 @@ import {
   SendButtonsDto,
   SendContactDto,
   SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -202,6 +204,24 @@ export function MessageRouter(
             return sendMessageController.sendList(instance, new SendListDto(data));
           } catch (error) {
             throw new BadRequestException(error.message, error?.stack);
+          }
+        },
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendList/legacy'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendListLegacyDto>({
+        request: req,
+        schema: listMessageLegacySchema,
+        execute: (instance, data) => {
+          try {
+            return sendMessageController.sendListLegacy(
+              instance,
+              new SendListLegacyDto(data),
+            );
+          } catch (error) {
+            throw new BadRequestException(error?.message, error?.stack);
           }
         },
       });
