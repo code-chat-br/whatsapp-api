@@ -70,7 +70,8 @@ export async function bootstrap() {
 bootstrap();
 
 process.on('SIGINT', async () => {
-  await context.get('app').close();
+  context.get('module:provider').onModuleDestroy();
+  context.get('module:repository').onModuleDestroy();
   context.get('module:logger').warn('APP MODULE - OFF');
   context.get('server:logger').warn('HTTP - OFF');
   process.exit(0);

@@ -84,6 +84,7 @@ export class ArchiveChatDto {
 
 export class DeleteMessage {
   id: string;
+  everyOne?: 'true' | 'false';
 }
 
 export class RejectCallDto {

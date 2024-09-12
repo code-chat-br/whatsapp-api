@@ -186,7 +186,7 @@ docker-compose up
 | Send Reaction - emoji | ✔ |
 
 ## Postman collections
-  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/collection/14064846-61b6a4d5-5a8f-4945-86c1-caf77b549141)
+  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
 
 ## Webhook Events
 

@@ -38,6 +38,7 @@
  */
 
 import makeWASocket, {
+  BaileysEventMap,
   BufferedEventData,
   CacheStore,
   Chat,
@@ -46,7 +47,6 @@ import makeWASocket, {
   delay,
   DisconnectReason,
   downloadMediaMessage,
-  fetchLatestBaileysVersion,
   generateWAMessageFromContent,
   getContentType,
   getDevice,
@@ -66,6 +66,7 @@ import makeWASocket, {
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
+  WAVersion,
 } from '@whiskeysockets/baileys/';
 import {
   ConfigService,
@@ -77,7 +78,7 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { readFileSync } from 'fs';
+import { lstat, readFileSync } from 'fs';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
@@ -96,6 +97,7 @@ import {
   SendButtonsDto,
   SendContactDto,
   SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -265,10 +267,7 @@ export class WAStartupService {
     const eventDesc = WebhookEventsEnum[event];
 
     try {
-      if (
-        this.webhook?.enabled &&
-        isURL(this.webhook?.url, { protocols: ['http', 'https'] })
-      ) {
+      if (this.webhook?.enabled) {
         if (this.webhook?.events && this.webhook?.events[event]) {
           await axios.post(
             this.webhook.url,
@@ -468,11 +467,9 @@ export class WAStartupService {
 
   private async getMessage(key: PrismType.Message, full = false) {
     try {
+      key.instanceId = this.instance.id;
       const message = await this.repository.message.findFirst({
-        where: {
-          instanceId: this.instance.id,
-          keyId: key.keyId,
-        },
+        where: key as any,
       });
       const webMessageInfo: Partial<proto.WebMessageInfo> = {
         key: {
@@ -508,7 +505,7 @@ export class WAStartupService {
 
     this.authState = (await this.defineAuthState()) as AuthState;
 
-    const { version } = await fetchLatestBaileysVersion();
+    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
@@ -569,29 +566,32 @@ export class WAStartupService {
 
   private readonly chatHandle = {
     'chats.upsert': async (chats: Chat[]) => {
-      const chatsRepository = await this.repository.chat.findMany({
-        where: {
-          instanceId: this.instance.id,
-        },
-      });
+      chats.forEach(async (chat) => {
+        try {
+          const list: PrismType.Chat[] = [];
+          const find = await this.repository.chat.findFirst({
+            where: {
+              remoteJid: chat.id,
+              instanceId: this.instance.id,
+            },
+          });
+          if (!find) {
+            const create = await this.repository.chat.create({
+              data: {
+                remoteJid: chat.id,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'chats.upsert', list);
 
-      const chatsRaw: PrismType.Chat[] = [];
-      for await (const chat of chats) {
-        if (chatsRepository.find((cr) => cr.remoteJid === chat.id)) {
-          continue;
+          await this.sendDataWebhook('chatsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
         }
-
-        chatsRaw.push({
-          remoteJid: chat.id,
-          instanceId: this.instance.id,
-        } as PrismType.Chat);
-      }
-
-      this.ws.send(this.instance.name, 'chats.upsert', chatsRaw);
-
-      await this.sendDataWebhook('chatsUpsert', chatsRaw);
-      await this.repository.chat.createMany({
-        data: chatsRaw,
       });
     },
 
@@ -619,68 +619,80 @@ export class WAStartupService {
             remoteJid: chat,
           },
         });
-        await this.repository.chat.delete({
-          where: {
-            id: c.id,
-          },
-        });
+        if (c) {
+          await this.repository.chat.delete({
+            where: {
+              id: c.id,
+            },
+          });
+        }
       }
     },
   };
 
   private readonly contactHandle = {
-    'contacts.upsert': async (contacts: Contact[]) => {
-      const contactsRepository = await this.repository.contact.findMany({
-        where: { instanceId: this.instance.id },
-      });
+    'contacts.upsert': (contacts: Contact[]) => {
+      contacts.forEach(async (contact) => {
+        const list: PrismType.Contact[] = [];
+        try {
+          const find = await this.repository.contact.findFirst({
+            where: {
+              remoteJid: contact.id,
+              instanceId: this.instance.id,
+            },
+          });
+          if (!find) {
+            const create = await this.repository.contact.create({
+              data: {
+                remoteJid: contact.id,
+                pushName: contact?.name || contact.id,
+                profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'contacts.upsert', list);
 
-      const contactsRaw: PrismType.Contact[] = [];
-      for await (const contact of contacts) {
-        if (contactsRepository.find((cr) => cr.remoteJid === contact.id)) {
-          continue;
+          await this.sendDataWebhook('contactsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
         }
-
-        contactsRaw.push({
-          remoteJid: contact.id,
-          pushName: contact?.name || contact.id,
-          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceId: this.instance.id,
-        } as unknown as PrismType.Contact);
-      }
-
-      this.ws.send(this.instance.name, 'contacts.upsert', contactsRaw);
-
-      await this.sendDataWebhook('contactsUpsert', contactsRaw);
-      await this.repository.contact.createMany({
-        data: contactsRaw,
       });
     },
 
     'contacts.update': async (contacts: Partial<Contact>[]) => {
-      const contactsRaw: PrismType.Contact[] = [];
-      for await (const contact of contacts) {
-        const data = {
-          remoteJid: contact.id,
-          pushName: contact?.name ?? contact?.verifiedName,
-          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceId: this.instance.id,
-        } as unknown as PrismType.Contact;
-        this.repository.contact
-          .updateMany({
+      contacts.forEach(async (contact) => {
+        const list: PrismType.Contact[] = [];
+        try {
+          const find = await this.repository.contact.findFirst({
             where: {
-              remoteJid: data.remoteJid,
+              remoteJid: contact.id,
               instanceId: this.instance.id,
             },
-            data,
-          })
-          .catch((error) => this.logger.error(error));
+          });
+          if (!find) {
+            const create = await this.repository.contact.create({
+              data: {
+                remoteJid: contact.id,
+                pushName: contact?.name || contact.id,
+                profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'contacts.upsert', list);
 
-        contactsRaw.push(data);
-      }
-
-      this.ws.send(this.instance.name, 'contacts.update', contactsRaw);
-
-      await this.sendDataWebhook('contactsUpdated', contactsRaw);
+          await this.sendDataWebhook('contactsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
+        }
+      });
     },
   };
 
@@ -704,14 +716,8 @@ export class WAStartupService {
     'messaging-history.set': async ({
       messages,
       chats,
-      isLatest,
-    }: {
-      chats: Chat[];
-      contacts: Contact[];
-      messages: proto.IWebMessageInfo[];
-      isLatest: boolean;
-    }) => {
-      if (isLatest) {
+    }: BaileysEventMap['messaging-history.set']) => {
+      if (chats && chats.length > 0) {
         const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
           return {
             remoteJid: chat.id,
@@ -722,47 +728,49 @@ export class WAStartupService {
         await this.repository.chat.createMany({ data: chatsRaw });
       }
 
-      const messagesRaw: PrismType.Message[] = [];
-      for await (const [, m] of Object.entries(messages)) {
-        if (
-          m.message?.protocolMessage ||
-          m.message?.senderKeyDistributionMessage ||
-          !m.message
-        ) {
-          continue;
+      if (messages && messages?.length > 0) {
+        const messagesRaw: PrismType.Message[] = [];
+        for await (const [, m] of Object.entries(messages)) {
+          if (
+            m.message?.protocolMessage ||
+            m.message?.senderKeyDistributionMessage ||
+            !m.message
+          ) {
+            continue;
+          }
+
+          if (Long.isLong(m?.messageTimestamp)) {
+            m.messageTimestamp = m.messageTimestamp?.toNumber();
+          }
+
+          const messageType = getContentType(m.message);
+
+          if (!messageType) {
+            continue;
+          }
+
+          messagesRaw.push({
+            keyId: m.key.id,
+            keyRemoteJid: m.key.remoteJid,
+            keyFromMe: m.key.fromMe,
+            pushName: m?.pushName || m.key.remoteJid.split('@')[0],
+            keyParticipant: m?.participant || m.key?.participant,
+            messageType,
+            content: m.message[messageType] as PrismType.Prisma.JsonValue,
+            messageTimestamp: m.messageTimestamp as number,
+            instanceId: this.instance.id,
+            device: getDevice(m.key.id),
+          } as PrismType.Message);
         }
 
-        if (Long.isLong(m?.messageTimestamp)) {
-          m.messageTimestamp = m.messageTimestamp?.toNumber();
+        this.sendDataWebhook('messagesSet', [...messagesRaw]);
+
+        if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
+          await this.syncMessage(messagesRaw);
         }
 
-        const messageType = getContentType(m.message);
-
-        if (!messageType) {
-          continue;
-        }
-
-        messagesRaw.push({
-          keyId: m.key.id,
-          keyRemoteJid: m.key.remoteJid,
-          keyFromMe: m.key.fromMe,
-          pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-          keyParticipant: m?.participant || m.key?.participant,
-          messageType,
-          content: m.message[messageType] as PrismType.Prisma.JsonValue,
-          messageTimestamp: m.messageTimestamp as number,
-          instanceId: this.instance.id,
-          device: getDevice(m.key.id),
-        } as PrismType.Message);
+        messages = undefined;
       }
-
-      this.sendDataWebhook('messagesSet', [...messagesRaw]);
-
-      if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
-        await this.syncMessage(messagesRaw);
-      }
-
-      messages = undefined;
     },
 
     'messages.upsert': async ({
@@ -1048,6 +1056,15 @@ export class WAStartupService {
     },
   };
 
+  private readonly onLabel = {
+    'labels.association': async (args: BaileysEventMap['labels.association']) => {
+      this.sendDataWebhook('labelsAssociation', args);
+    },
+    'labels.edit': async (args: BaileysEventMap['labels.edit']) => {
+      this.sendDataWebhook('labelsEdit', args);
+    },
+  };
+
   private eventHandler() {
     this.client.ev.process((events) => {
       if (!this.endSession) {
@@ -1123,6 +1140,16 @@ export class WAStartupService {
         if (events?.['call']) {
           const payload = events['call'];
           this.callHandler['call.upsert'](payload);
+        }
+
+        if (events?.['labels.association']) {
+          const payload = events['labels.association'];
+          this.onLabel['labels.association'](payload);
+        }
+
+        if (events?.['labels.edit']) {
+          const payload = events['labels.edit'];
+          this.onLabel['labels.edit'](payload);
         }
       }
     });
@@ -1298,7 +1325,7 @@ export class WAStartupService {
         m.key = {
           id: id,
           remoteJid: jid,
-          participant: isJidUser(jid) ? undefined : jid,
+          participant: isJidUser(jid) ? jid : undefined,
           fromMe: true,
         };
 
@@ -1338,6 +1365,8 @@ export class WAStartupService {
         messageSent.id = id;
       }
 
+      messageSent['externalAttributes'] = options?.externalAttributes;
+
       this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
         this.logger.error(error),
@@ -1351,8 +1380,12 @@ export class WAStartupService {
   }
 
   // Instance Controller
-  public get connectionStatus() {
-    return this.stateConnection;
+  public getInstance() {
+    const i: Partial<Instance> & { status: InstanceStateConnection } = {
+      ...this.instance,
+      status: this.stateConnection,
+    };
+    return i;
   }
 
   // Send Message Controller
@@ -1666,107 +1699,22 @@ export class WAStartupService {
     return await this.sendMessageWithTyping(data.number, message, data?.options);
   }
 
-  public async interactiveMessage() {
-    const file = readFileSync(join(ROOT_DIR, 'public', 'images', 'cover.png'));
-    const media = await prepareWAMessageMedia(
-      { image: file },
-      { upload: this.client.waUploadToServer },
-    );
-
-    const content: proto.IMessage = {
-      viewOnceMessage: {
+  public async listLegacy(data: SendListLegacyDto) {
+    const msg = data.listMessage;
+    return await this.sendMessageWithTyping(data.number, {
+      viewOnceMessageV2: {
         message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2,
-          },
-          interactiveMessage: {
-            body: { text: 'body' },
-            footer: { text: 'footer' },
-            header: {
-              title: 'Title',
-              subtitle: 'Subtitle',
-              hasMediaAttachment: true,
-              imageMessage: media.imageMessage,
-            },
-            nativeFlowMessage: {
-              buttons: [
-                {
-                  name: 'single_select',
-                  buttonParamsJson: JSON.stringify({
-                    title: 'Clique aqui',
-                    sections: [
-                      {
-                        title: 'Sub 1',
-                        rows: [
-                          {
-                            header: 'Header 1',
-                            title: 'Título 1',
-                            description: 'Descrição 1',
-                            id: ulid(),
-                          },
-                          {
-                            header: 'Header 2',
-                            title: 'Título 2',
-                            description: 'Descrição 2',
-                            id: ulid(),
-                          },
-                        ],
-                      },
-                      {
-                        title: 'Sub 2',
-                        rows: [
-                          {
-                            header: 'Header 1',
-                            title: 'Título 1',
-                            description: 'Descrição 1',
-                            id: ulid(),
-                          },
-                          {
-                            header: 'Header 2',
-                            title: 'Título 2',
-                            description: 'Descrição 2',
-                            id: ulid(),
-                          },
-                        ],
-                      },
-                    ],
-                  }),
-                },
-              ],
-              messageParamsJson: 'parameter message',
-            },
+          listMessage: {
+            title: msg.title,
+            description: msg?.description,
+            footerText: msg?.footer,
+            buttonText: msg.buttonText,
+            sections: msg.sections,
+            listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
           },
         },
       },
-    };
-
-    const jid = this.createJid('5531997853327');
-
-    const msg = generateWAMessageFromContent(jid, content, {
-      userJid: this.instance.ownerJid,
-      // ephemeralExpiration: WA_DEFAULT_EPHEMERAL,
-      messageId: ulid(Date.now()),
     });
-
-    const id = await this.client.relayMessage(jid, msg.message, {
-      messageId: ulid(Date.now()),
-    });
-
-    msg.key = {
-      id: id,
-      remoteJid: jid,
-      participant: isJidUser(jid) ? undefined : jid,
-      fromMe: false,
-    };
-
-    for (const [key, value] of Object.entries(msg)) {
-      if (!value || (isArray(value) && value.length) === 0) {
-        delete msg[key];
-      }
-    }
-
-    return msg;
   }
 
   // Chat Controller
@@ -1811,6 +1759,39 @@ export class WAStartupService {
       return { message: 'Read messages', read: 'success' };
     } catch (error) {
       throw new InternalServerErrorException('Read messages fail', error.toString());
+    }
+  }
+
+  public async deleteChat(chatId: string) {
+    try {
+      const lastMessage = await this.repository.message.findFirst({
+        where: { keyRemoteJid: this.createJid(chatId) },
+        orderBy: { messageTimestamp: 'desc' },
+      });
+      if (!lastMessage) {
+        throw new Error('Chat not found');
+      }
+
+      await this.client.chatModify(
+        {
+          delete: true,
+          lastMessages: [
+            {
+              key: {
+                id: lastMessage.keyId,
+                fromMe: lastMessage.keyFromMe,
+                remoteJid: lastMessage.keyRemoteJid,
+              },
+              messageTimestamp: lastMessage.messageTimestamp,
+            },
+          ],
+        },
+        lastMessage.keyRemoteJid,
+      );
+
+      return { deletedAt: new Date(), chatId: lastMessage.keyRemoteJid };
+    } catch (error) {
+      throw new BadRequestException('Error while deleting chat', error?.message);
     }
   }
 
@@ -1872,10 +1853,29 @@ export class WAStartupService {
   public async deleteMessage(del: DeleteMessage) {
     try {
       const id = Number.parseInt(del.id);
+      const everyOne = del?.everyOne === 'true';
       const message = await this.repository.message.findUnique({
         where: { id },
       });
-      return await this.client.sendMessage(message.keyRemoteJid, {
+
+      if (!everyOne) {
+        await this.client.chatModify(
+          {
+            clear: {
+              messages: [
+                {
+                  id: message.keyId,
+                  fromMe: message.keyFromMe,
+                  timestamp: message.messageTimestamp,
+                },
+              ],
+            },
+          },
+          message.keyRemoteJid,
+        );
+      }
+
+      await this.client.sendMessage(message.keyRemoteJid, {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
@@ -1883,6 +1883,8 @@ export class WAStartupService {
           remoteJid: message.keyRemoteJid,
         },
       });
+
+      return { deletedAt: new Date(), message };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while deleting message for everyone',
@@ -1921,7 +1923,7 @@ export class WAStartupService {
         : ((await this.getMessage(m, true)) as proto.IWebMessageInfo);
 
       for (const subtype of MessageSubtype) {
-        if (msg.message[subtype]) {
+        if (msg?.message?.[subtype]) {
           msg.message = msg.message[subtype].message;
         }
       }
@@ -2087,10 +2089,14 @@ export class WAStartupService {
     };
   }
 
-  public async fetchChats() {
-    return await this.repository.chat.findMany({
-      where: { instanceId: this.instance.id },
-    });
+  public async fetchChats(type?: string) {
+    const where = { instanceId: this.instance.id };
+    if (['chats', 'group'].includes(type)) {
+      where['remoteJid'] = {
+        contains: '@s.whatsapp.net',
+      };
+    }
+    return await this.repository.chat.findMany({ where });
   }
 
   public async rejectCall(data: RejectCallDto) {

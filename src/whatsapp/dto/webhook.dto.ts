@@ -59,6 +59,8 @@ export class WebhookEvents {
   statusInstance?: boolean;
   refreshToken?: boolean;
   callUpsert?: boolean;
+  labelsAssociation?: boolean;
+  labelsEdit?: boolean;
 }
 
 export type EventsType =
@@ -82,7 +84,9 @@ export type EventsType =
   | 'group-participants.update'
   | 'status.instance'
   | 'refresh.token'
-  | 'call.upsert';
+  | 'call.upsert'
+  | 'labels.association'
+  | 'labels.edit';
 
 export type WebhookEventsType = keyof WebhookEvents;
 
@@ -107,6 +111,8 @@ export const WebhookEventsEnum: Record<WebhookEventsType, EventsType> = {
   statusInstance: 'status.instance',
   refreshToken: 'refresh.token',
   callUpsert: 'call.upsert',
+  labelsAssociation: 'labels.association',
+  labelsEdit: 'labels.edit',
 };
 
 export const ListEvents: EventsType[] = Object.values(WebhookEventsEnum);
