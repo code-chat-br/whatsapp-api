@@ -34,7 +34,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { RequestHandler, Router } from 'express';
+import { query, RequestHandler, Router } from 'express';
 import {
   archiveChatSchema,
   contactValidateSchema,
@@ -168,6 +168,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
 
       return res.status(HttpStatus.OK).json(response);
     })
+    // @deprecated
     .post(routerPath('retrieverMediaMessage'), ...guards, async (req, res) => {
       const response = await dataValidate<Message>({
         request: req,
@@ -176,28 +177,20 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
           chatController.getBinaryMediaFromMessage(instance, data),
       });
 
-      const form = new FormData();
+      res
+        .setHeader('Content-type', response.mimetype)
+        .setHeader('Content-Disposition', 'inline; filename="' + response.fileName + '"');
 
-      form.append('mediaType', response.mediaType);
-      form.append('fileName', response.fileName);
-      form.append('size', JSON.stringify(response.size));
-      form.append('mimetype', response.mimetype);
+      const transform: Transform = response.stream;
 
-      if (response?.caption) {
-        form.append('caption', response.caption);
-      }
-
-      form.append('file', response.stream, {
-        filename: response.filename,
-        contentType: response.mimetype,
+      transform.pipe(res);
+      transform.on('error', (err) => {
+        if (err) {
+          console.error(err);
+          res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
+        }
       });
-
-      form.pipe(res);
-
-      form.on('error', (err) => {
-        console.error(err);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
-      });
+      return;
     })
     .post(routerPath('findMessages'), ...guards, async (req, res) => {
       const response = await dataValidate<Query<Message>>({
