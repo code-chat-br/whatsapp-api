@@ -1597,6 +1597,7 @@ paths:
       tags:
         - Chat Controller
       summary: Retrieve Media Message
+      deprecated: true
       description: |
         Retrieve a specific media message from a given chat instance. This endpoint requires the `instanceName` as a path parameter and `keyId` of the media message in the request body.
       parameters:
@@ -1606,6 +1607,64 @@ paths:
           schema:
             type: string
           description: The name of the chat instance from which the media message will be retrieved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyId:
+                  type: string
+                  description: The unique identifier of the media message to be retrieved.
+              required:
+                - keyId
+              example:
+                keyId: "3A778B978B5D9995F574"
+      responses:
+        '200':
+          description: Media message retrieved successfully. The response is a binary file of the media.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Media message not found or instance not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message detailing why the media message or instance was not found.
+                example:
+                  error: "Media message or instance not found"
+
+  /chat/mediaData/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: Retrieve Media Message
+      description: |
+        Retrieve a specific media message from a given chat instance. This endpoint requires the `instanceName` as a path parameter and `keyId` of the media message in the request body.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the chat instance from which the media message will be retrieved.
+        - name: binary
+          in: query
+          schema:
+            type: string
+            default: false
+            enum:
+              - true
+              - false
+          required: false
       requestBody:
         required: true
         content:
