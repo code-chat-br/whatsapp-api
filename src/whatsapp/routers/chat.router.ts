@@ -192,6 +192,58 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       });
       return;
     })
+    .post(routerPath('mediaData'), ...guards, async (req, res) => {
+      const response = await dataValidate<Message>({
+        request: req,
+        schema: null,
+        execute: (instance, data) =>
+          chatController.getBinaryMediaFromMessage(instance, data),
+      });
+
+      const query = req.query as Record<string, string>;
+      if (query?.binary === 'true') {
+        res
+          .setHeader('Content-type', response.mimetype)
+          .setHeader(
+            'Content-Disposition',
+            'inline; filename="' + response.fileName + '"',
+          );
+
+        const transform: Transform = response.stream;
+
+        transform.pipe(res);
+        transform.on('error', (err) => {
+          if (err) {
+            console.error(err);
+            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
+          }
+        });
+        return;
+      }
+
+      const form = new FormData();
+
+      form.append('mediaType', response.mediaType);
+      form.append('fileName', response.fileName);
+      form.append('size', JSON.stringify(response.size));
+      form.append('mimetype', response.mimetype);
+
+      if (response?.caption) {
+        form.append('caption', response.caption);
+      }
+
+      form.append('file', response.stream, {
+        filename: response.filename,
+        contentType: response.mimetype,
+      });
+
+      form.pipe(res);
+
+      form.on('error', (err) => {
+        console.error(err);
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
+      });
+    })
     .post(routerPath('findMessages'), ...guards, async (req, res) => {
       const response = await dataValidate<Query<Message>>({
         request: req,
