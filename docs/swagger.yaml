@@ -54,8 +54,8 @@ info:
     direct marketing, and real-time interactions. By combining WhatsApp's popularity with the functionality of the CodeChat API, businesses 
     can build stronger and more authentic relationships with their customers, generating lasting satisfaction and loyalty.
 
-    [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/api/fbe06c7b-7647-4c71-81ee-841f5b2e90d8?action=share&creator=14064846)
-  version: 1.3.2
+    [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
+  version: 1.3.3
   contact:
     name: jrCleber
     email: cleber@codechat.dev
