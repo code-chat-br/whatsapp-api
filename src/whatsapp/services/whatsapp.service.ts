@@ -989,6 +989,10 @@ export class WAStartupService {
         5: 'PLAYED',
       };
       for await (const { key, update } of args) {
+        if (update.status === 4 && key?.remoteJid) {
+          key.remoteJid = key.remoteJid.replace(/:\d+(?=@)/, '');
+        }
+
         if (key.remoteJid !== 'status@broadcast' && !key?.remoteJid?.match(/(:\d+)/)) {
           const message = {
             ...key,
