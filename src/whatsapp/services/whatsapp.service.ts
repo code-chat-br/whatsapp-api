@@ -67,7 +67,7 @@ import makeWASocket, {
   WAMessageUpdate,
   WASocket,
   WAVersion,
-} from '@whiskeysockets/baileys/';
+} from 'baileys';
 import {
   ConfigService,
   ConfigSessionPhone,
@@ -133,7 +133,6 @@ import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webh
 import { Query, Repository } from '../../repository/repository.service';
 import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
-import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
 import { ProviderFiles } from '../../provider/sessions';
 import { Websocket } from '../../websocket/server';
 import { ulid } from 'ulid';
@@ -171,10 +170,6 @@ export class WAStartupService {
   private readonly userDevicesCache: CacheStore = new NodeCache();
   private readonly instanceQr: InstanceQrCode = { count: 0 };
   private readonly stateConnection: InstanceStateConnection = { state: 'close' };
-  private readonly typebotSession = new TypebotSessionService(
-    this.repository,
-    this.configService,
-  );
   private readonly databaseOptions: Database =
     this.configService.get<Database>('DATABASE');
 
@@ -890,92 +885,6 @@ export class WAStartupService {
             });
           }
         }
-
-        this.typebotSession.onMessage(messageRaw, async (items) => {
-          for await (const item of items) {
-            if (item?.text) {
-              await this.textMessage({
-                number: messageRaw.keyRemoteJid,
-                textMessage: { text: item.text },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-
-            if (item?.video || item?.embed) {
-              const url = item?.video || item?.embed;
-              const head = await (async () => {
-                try {
-                  return await axios.head(url);
-                } catch (error) {
-                  return {
-                    headers: {
-                      'content-type': 'text/html; charset=utf-8',
-                    },
-                  };
-                }
-              })();
-
-              const ext = mime.extension(head.headers['content-type']);
-              if (ext && ext.includes('html')) {
-                await this.textMessage({
-                  number: messageRaw.keyRemoteJid,
-                  textMessage: { text: url },
-                  options: { delay: 1200, presence: 'composing' },
-                });
-                continue;
-              }
-
-              await this.mediaMessage({
-                number: messageRaw.keyRemoteJid,
-                mediaMessage: {
-                  mediatype: 'document',
-                  media: url,
-                },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-
-            if (item?.image) {
-              await this.mediaMessage({
-                number: messageRaw.keyRemoteJid,
-                mediaMessage: {
-                  mediatype: 'image',
-                  fileName: 'image.jpg',
-                  media: item.image,
-                },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-
-            if (item?.audio) {
-              const head = await axios.head(item.audio);
-
-              if (head.headers['content-type'].includes('audio/ogg')) {
-                await this.audioWhatsapp({
-                  number: messageRaw.keyRemoteJid,
-                  audioMessage: {
-                    audio: item.audio,
-                  },
-                  options: { delay: 1200, presence: 'recording' },
-                });
-                continue;
-              }
-
-              await this.mediaMessage({
-                number: messageRaw.keyRemoteJid,
-                mediaMessage: {
-                  mediatype: 'audio',
-                  media: item.audio,
-                },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-          }
-        });
       }
     },
 

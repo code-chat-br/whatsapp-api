@@ -37,7 +37,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { WAPresence } from '@whiskeysockets/baileys';
+import { WAPresence } from 'baileys';
 
 export class OnWhatsAppDto {
   constructor(

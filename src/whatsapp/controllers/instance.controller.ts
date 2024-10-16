@@ -38,7 +38,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { delay } from '@whiskeysockets/baileys';
+import { delay } from 'baileys';
 import EventEmitter2 from 'eventemitter2';
 import { ConfigService } from '../../config/env.config';
 import {

@@ -38,7 +38,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { proto, WAPresence } from '@whiskeysockets/baileys';
+import { proto, WAPresence } from 'baileys';
 import { ulid } from 'ulid';
 
 export class Options {
