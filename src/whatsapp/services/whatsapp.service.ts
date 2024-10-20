@@ -67,7 +67,7 @@ import makeWASocket, {
   WAMessageUpdate,
   WASocket,
   WAVersion,
-} from 'baileys';
+} from '@whiskeysockets/baileys';
 import {
   ConfigService,
   ConfigSessionPhone,
@@ -96,6 +96,7 @@ import {
   SendAudioDto,
   SendButtonsDto,
   SendContactDto,
+  SendLinkDto,
   SendListDto,
   SendListLegacyDto,
   SendLocationDto,
@@ -1626,6 +1627,36 @@ export class WAStartupService {
             listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
           },
         },
+      },
+    });
+  }
+
+  public async linkMessage(data: SendLinkDto) {
+    return await this.sendMessageWithTyping(data.number, {
+      extendedTextMessage: {
+        text: (() => {
+          if (data.linkMessage?.text) {
+            let t = data.linkMessage.link;
+            t += '\n\n';
+            t += data.linkMessage.text;
+            return t;
+          }
+        })(),
+        canonicalUrl: data.linkMessage.link,
+        matchedText: data.linkMessage?.text,
+        previewType: 0,
+        title: data.linkMessage?.title,
+        description: data.linkMessage?.description,
+        jpegThumbnail: await (async () => {
+          if (data.linkMessage?.thumbnailUrl) {
+            try {
+              const response = await axios.get(data.linkMessage.thumbnailUrl, {
+                responseType: 'arraybuffer',
+              });
+              return new Uint8Array(response.data);
+            } catch {}
+          }
+        })(),
       },
     });
   }

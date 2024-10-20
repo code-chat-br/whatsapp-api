@@ -38,7 +38,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { proto, WAPresence } from 'baileys';
+import { proto, WAPresence } from '@whiskeysockets/baileys';
 import { ulid } from 'ulid';
 
 export class Options {
@@ -317,4 +317,16 @@ export class SendListLegacyDto extends Metadata {
     Object.assign(this, props);
     this.listMessage = new ListLegacy(props.listMessage);
   }
+}
+
+export class LinkMessage {
+  link: string;
+  thumbnailUrl?: string;
+  text?: string;
+  title?: string;
+  description?: string;
+}
+
+export class SendLinkDto extends Metadata {
+  linkMessage: LinkMessage;
 }

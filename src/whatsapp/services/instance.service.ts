@@ -175,6 +175,14 @@ export class InstanceService {
         profilePicUrl: true,
         createdAt: true,
         updatedAt: true,
+        Auth: {
+          select: {
+            id: true,
+            token: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         Webhook: {
           select: {
             id: true,

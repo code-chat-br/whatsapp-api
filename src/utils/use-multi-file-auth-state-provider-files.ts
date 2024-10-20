@@ -43,7 +43,7 @@ import {
   initAuthCreds,
   proto,
   SignalDataTypeMap,
-} from 'baileys';
+} from '@whiskeysockets/baileys';
 import { Logger } from '../config/logger.config';
 import { ConfigService } from '../config/env.config';
 import { ProviderFiles } from '../provider/sessions';

@@ -46,15 +46,16 @@ import {
   mediaFileMessageSchema,
   mediaMessageSchema,
   reactionMessageSchema,
+  sendLinkSchema,
   textMessageSchema,
 } from '../../validate/validate.schema';
 import {
   AudioMessageFileDto,
-  Button,
   MediaFileDto,
   SendAudioDto,
   SendButtonsDto,
   SendContactDto,
+  SendLinkDto,
   SendListDto,
   SendListLegacyDto,
   SendLocationDto,
@@ -224,6 +225,16 @@ export function MessageRouter(
             throw new BadRequestException(error?.message, error?.stack);
           }
         },
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendLink'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendLinkDto>({
+        request: req,
+        schema: sendLinkSchema,
+        execute: (instance, data) =>
+          sendMessageController.sendLinkPreview(instance, data),
       });
 
       return res.status(HttpStatus.CREATED).json(response);

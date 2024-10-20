@@ -43,6 +43,7 @@ import {
   SendAudioDto,
   SendButtonsDto,
   SendContactDto,
+  SendLinkDto,
   SendListDto,
   SendListLegacyDto,
   SendLocationDto,
@@ -137,5 +138,9 @@ export class SendMessageController {
 
   public async sendListLegacy({ instanceName }: InstanceDto, data: SendListLegacyDto) {
     return await this.waMonitor.waInstances.get(instanceName).listLegacy(data);
+  }
+
+  public async sendLinkPreview({ instanceName }: InstanceDto, data: SendLinkDto) {
+    return await this.waMonitor.waInstances.get(instanceName).linkMessage(data);
   }
 }

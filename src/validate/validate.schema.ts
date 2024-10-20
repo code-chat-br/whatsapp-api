@@ -45,6 +45,7 @@
  */
 
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
+import { title } from 'process';
 import { ulid } from 'ulid';
 
 const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
@@ -406,6 +407,28 @@ export const reactionMessageSchema: JSONSchema7 = {
     },
   },
   required: ['reactionMessage'],
+};
+
+export const sendLinkSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    linkMessage: {
+      type: 'object',
+      properties: {
+        text: { type: 'string' },
+        link: { type: 'string' },
+        description: { type: 'string' },
+        title: { type: 'string' },
+        thumbnailUrl: { type: 'string' },
+      },
+      required: ['link'],
+      ...isNotEmpty('text', 'link', 'description', 'title', 'thumbnailUrl'),
+    },
+  },
+  required: ['linkMessage', 'number'],
 };
 
 // Chat Schema
