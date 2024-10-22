@@ -271,6 +271,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       });
 
       return res.status(HttpStatus.OK).json(response);
+    })
+    .post(routerPath('assertSessions'), ...guards, async (req, res) => {
+      const response = await dataValidate<WhatsAppNumberDto>({
+        request: req,
+        schema: whatsappNumberSchema,
+        execute: (instance, data) => chatController.assertSessions(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
     });
 
   return router;

@@ -1635,17 +1635,17 @@ export class WAStartupService {
     return await this.sendMessageWithTyping(data.number, {
       extendedTextMessage: {
         text: (() => {
+          let t = data.linkMessage.link;
           if (data.linkMessage?.text) {
-            let t = data.linkMessage.link;
             t += '\n\n';
             t += data.linkMessage.text;
-            return t;
           }
+          return t;
         })(),
         canonicalUrl: data.linkMessage.link,
-        matchedText: data.linkMessage?.text,
-        previewType: 0,
-        title: data.linkMessage?.title,
+        matchedText: data.linkMessage?.link,
+        previewType: proto.Message.ExtendedTextMessage.PreviewType.IMAGE,
+        title: data.linkMessage?.title || data.linkMessage?.link,
         description: data.linkMessage?.description,
         jpegThumbnail: await (async () => {
           if (data.linkMessage?.thumbnailUrl) {
@@ -2056,6 +2056,21 @@ export class WAStartupService {
         'Failed to reject a call',
         error?.toString(),
       );
+    }
+  }
+
+  public async assertSessions(chats: string[]) {
+    if (!Array.isArray(chats) || chats.length === 0) {
+      throw new BadRequestException('Empty or invalid array');
+    }
+    try {
+      await this.client.assertSessions(
+        chats.map((c) => this.createJid(c)),
+        true,
+      );
+      return { message: 'Session asserted' };
+    } catch (error) {
+      throw new InternalServerErrorException('Error asserting session', error.toString());
     }
   }
 
