@@ -38,18 +38,26 @@ import { NextFunction, Request, RequestHandler, Response, Router } from 'express
 import {
   audioFileMessageSchema,
   audioMessageSchema,
+  buttonsMessageSchema,
   contactMessageSchema,
+  listMessageLegacySchema,
+  listMessageSchema,
   locationMessageSchema,
   mediaFileMessageSchema,
   mediaMessageSchema,
   reactionMessageSchema,
+  sendLinkSchema,
   textMessageSchema,
 } from '../../validate/validate.schema';
 import {
   AudioMessageFileDto,
   MediaFileDto,
   SendAudioDto,
+  SendButtonsDto,
   SendContactDto,
+  SendLinkDto,
+  SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -162,6 +170,71 @@ export function MessageRouter(
         request: req,
         schema: reactionMessageSchema,
         execute: (instance, data) => sendMessageController.sendReaction(instance, data),
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendButtons'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendButtonsDto>({
+        request: req,
+        schema: buttonsMessageSchema,
+        execute: (instance, data) => {
+          try {
+            const props = new SendButtonsDto(data);
+            for (let i = 0; i < props.buttonsMessage.buttons.length; i++) {
+              const err = props.buttonsMessage.buttons[i].validate();
+              if (err) {
+                throw new BadRequestException(err.message);
+              }
+            }
+            return sendMessageController.sendButtons(instance, props);
+          } catch (error) {
+            throw new BadRequestException(error.message, error?.stack);
+          }
+        },
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendList'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendListDto>({
+        request: req,
+        schema: listMessageSchema,
+        execute: (instance, data) => {
+          try {
+            return sendMessageController.sendList(instance, new SendListDto(data));
+          } catch (error) {
+            throw new BadRequestException(error.message, error?.stack);
+          }
+        },
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendList/legacy'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendListLegacyDto>({
+        request: req,
+        schema: listMessageLegacySchema,
+        execute: (instance, data) => {
+          try {
+            return sendMessageController.sendListLegacy(
+              instance,
+              new SendListLegacyDto(data),
+            );
+          } catch (error) {
+            throw new BadRequestException(error?.message, error?.stack);
+          }
+        },
+      });
+
+      return res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendLink'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendLinkDto>({
+        request: req,
+        schema: sendLinkSchema,
+        execute: (instance, data) =>
+          sendMessageController.sendLinkPreview(instance, data),
       });
 
       return res.status(HttpStatus.CREATED).json(response);

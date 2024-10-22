@@ -125,9 +125,29 @@ pm2 start 'npm run start:prod' --name CodeChat_API_v1.3.0
 ```
 ---
 
+## Worker
+
+### Worker options for session management
+
+- **[session-manager:files-v0.0.1](https://github.com/code-chat-br/session-manager)**
+- **[session-manager:sqlite-v0.0.1](https://github.com/code-chat-br/session-manager/tree/sqlite)**
+
+To use the worker with the API it is necessary to define the following environment variables in the API:
+
+- `PROVIDER_ENABLED=true`: This variable enables the use of the provider (worker) in the API.
+- `PROVIDER_HOST=127.0.0.1`: Defines the host where the worker is listening for requests.
+- `PROVIDER_PORT=5656`: Defines the port where the worker is listening for requests.
+- `PROVIDER_PREFIX=codechat`: Set prefix for instance grouping on worker
+
+---
+
+## WebSocket
+websocket compatibility added.
+[Read here.](./src/websocket/Readme.md)
+
 ## Swagger - OpenAPI 3.0.0
 
-* Route: `http://localhost:8083/docs`
+* Route: `http://localhost:8084/docs`
 * YAML file: [swagger.yaml](./src/docs/swagger.yaml)
 
 ## Authentication
@@ -143,7 +163,8 @@ Authentications must be inserted in the request header.
 
 ### App in Docker
   - [docker-compose](./docker-compose.yml)
-  - [DockerHub-codechat/api](https://hub.docker.com/r/codechat/api)
+  - [DockerHub-codechat/api:develop](https://hub.docker.com/r/codechat/api/tags)
+  
 
 After building the application, in the same directory as the files above, run the following command:
 ```sh
@@ -153,20 +174,19 @@ docker-compose up
 |     |   |
 |-----|---|
 | Send Text | ✔ |
-| Send Buttons | ❌ |
-| Send Template | ❌ |
-| Send Media: audio - video - image - document - gif <br></br>base64: ```true``` | ✔ |
+| Send Buttons | ✔ only \[ios,android\] |
+| Send Media: audio - video - image - document - gif <br></br>base64: ```false``` | ✔ |
 | Send Media File | ✔ |
 | Send Audio type WhatsApp | ✔ |
 | Send Audio type WhatsApp - File | ✔ |
 | Send Location | ✔ |
-| Send List | ❌ |
+| Send List | ✔ only \[ios,android\] |
 | Send Link Preview | ❌ |
 | Send Contact | ✔ |
 | Send Reaction - emoji | ✔ |
 
 ## Postman collections
-  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://elements.getpostman.com/redirect?entityId=14064846-194eec6c-c3d6-48d1-9660-93d8085fd83a&entityType=collection)
+  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
 
 ## Webhook Events
 

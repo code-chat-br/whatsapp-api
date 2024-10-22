@@ -38,7 +38,7 @@
  */
 
 import makeWASocket, {
-  AnyMessageContent,
+  BaileysEventMap,
   BufferedEventData,
   CacheStore,
   Chat,
@@ -47,7 +47,6 @@ import makeWASocket, {
   delay,
   DisconnectReason,
   downloadMediaMessage,
-  fetchLatestBaileysVersion,
   generateWAMessageFromContent,
   getContentType,
   getDevice,
@@ -67,21 +66,21 @@ import makeWASocket, {
   WAMediaUpload,
   WAMessageUpdate,
   WASocket,
-} from '@whiskeysockets/baileys/';
+  WAVersion,
+} from '@whiskeysockets/baileys';
 import {
   ConfigService,
   ConfigSessionPhone,
   Database,
   GlobalWebhook,
   QrCode,
-  Redis,
+  ProviderSession,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
-import { INSTANCE_DIR } from '../../config/path.config';
-import { readFileSync } from 'fs';
+import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
+import { lstat, readFileSync } from 'fs';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
-import { v4 } from 'uuid';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
 import { Boom } from '@hapi/boom';
@@ -95,13 +94,17 @@ import {
   MediaMessage,
   Options,
   SendAudioDto,
+  SendButtonsDto,
   SendContactDto,
+  SendLinkDto,
+  SendListDto,
+  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import { isBase64, isNotEmpty, isURL } from 'class-validator';
+import { isArray, isBase64, isNotEmpty, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
   DeleteMessage,
@@ -120,19 +123,21 @@ import {
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
 import Long from 'long';
-import NodeCache from 'node-cache';
+import NodeCache, { Data } from 'node-cache';
 import {
   AuthState,
-  AuthStateRedis,
-} from '../../utils/use-multi-file-auth-state-redis-db';
+  AuthStateProvider,
+} from '../../utils/use-multi-file-auth-state-provider-files';
 import mime from 'mime-types';
 import { Instance, Webhook } from '@prisma/client';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
 import { Query, Repository } from '../../repository/repository.service';
 import PrismType from '@prisma/client';
 import * as s3Service from '../../integrations/minio/minio.utils';
-import { RedisCache } from '../../cache/redis';
-import { TypebotSessionService } from '../../integrations/typebot/typebot.service';
+import { ProviderFiles } from '../../provider/sessions';
+import { Websocket } from '../../websocket/server';
+import { ulid } from 'ulid';
+import { isValidUlid } from '../../validate/ulid';
 
 type InstanceQrCode = {
   count: number;
@@ -150,9 +155,13 @@ export class WAStartupService {
     private readonly configService: ConfigService,
     private readonly eventEmitter: EventEmitter2,
     private readonly repository: Repository,
-    private readonly redisCache: RedisCache,
+    private readonly providerFiles: ProviderFiles,
+    private readonly ws: Websocket,
   ) {
-    this.authStateRedis = new AuthStateRedis(this.configService, this.redisCache);
+    this.authStateProvider = new AuthStateProvider(
+      this.configService,
+      this.providerFiles,
+    );
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -162,17 +171,13 @@ export class WAStartupService {
   private readonly userDevicesCache: CacheStore = new NodeCache();
   private readonly instanceQr: InstanceQrCode = { count: 0 };
   private readonly stateConnection: InstanceStateConnection = { state: 'close' };
-  private readonly typebotSession = new TypebotSessionService(
-    this.repository,
-    this.configService,
-  );
   private readonly databaseOptions: Database =
     this.configService.get<Database>('DATABASE');
 
   private endSession = false;
   public client: WASocket;
   private authState: Partial<AuthState> = {};
-  private authStateRedis: AuthStateRedis;
+  private authStateProvider: AuthStateProvider;
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -208,6 +213,10 @@ export class WAStartupService {
     const data = await this.repository.webhook.findFirst({
       where: { instanceId: this.instance.id },
     });
+    if (!data) {
+      return;
+    }
+
     this.webhook.url = data?.url;
     this.webhook.enabled = data?.enabled;
     this.webhook.events = data?.events;
@@ -221,7 +230,7 @@ export class WAStartupService {
     let update: typeof this.webhook;
 
     if (find) {
-      update = await this.repository.updateWebhook(this.instance.id, data);
+      update = await this.repository.updateWebhook(find.id, data);
     } else {
       update = await this.repository.webhook.create({
         data: {
@@ -254,10 +263,7 @@ export class WAStartupService {
     const eventDesc = WebhookEventsEnum[event];
 
     try {
-      if (
-        this.webhook?.enabled &&
-        isURL(this.webhook?.url, { protocols: ['http', 'https'] })
-      ) {
+      if (this.webhook?.enabled) {
         if (this.webhook?.events && this.webhook?.events[event]) {
           await axios.post(
             this.webhook.url,
@@ -367,11 +373,12 @@ export class WAStartupService {
 
       this.instanceQr.count++;
 
+      const qrCodeOptions: QrCode = this.configService.get<QrCode>('QRCODE');
       const optsQrcode: QRCodeToDataURLOptions = {
         margin: 3,
         scale: 4,
         errorCorrectionLevel: 'H',
-        color: { light: '#ffffff', dark: '#198754' },
+        color: { light: qrCodeOptions.LIGHT_COLOR, dark: qrCodeOptions.DARK_COLOR },
       };
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
@@ -382,6 +389,8 @@ export class WAStartupService {
 
         this.instanceQr.base64 = base64;
         this.instanceQr.code = qr;
+
+        this.ws.send(this.instance.name, 'qrcode.updated', { code: qr, base64 });
 
         this.sendDataWebhook('qrcodeUpdated', {
           qrcode: { instance: this.instance.name, code: qr, base64 },
@@ -400,10 +409,13 @@ export class WAStartupService {
       this.stateConnection.state = connection;
       this.stateConnection.statusReason =
         (lastDisconnect?.error as Boom)?.output?.statusCode ?? 200;
-      this.sendDataWebhook('connectionUpdated', {
+
+      const data = {
         instance: this.instance.name,
         ...this.stateConnection,
-      });
+      };
+      this.ws.send(this.instance.name, 'connection.update', data);
+      this.sendDataWebhook('connectionUpdated', data);
     }
 
     if (connection === 'close') {
@@ -451,11 +463,9 @@ export class WAStartupService {
 
   private async getMessage(key: PrismType.Message, full = false) {
     try {
+      key.instanceId = this.instance.id;
       const message = await this.repository.message.findFirst({
-        where: {
-          instanceId: this.instance.id,
-          keyId: key.keyId,
-        },
+        where: key as any,
       });
       const webMessageInfo: Partial<proto.WebMessageInfo> = {
         key: {
@@ -477,12 +487,10 @@ export class WAStartupService {
   }
 
   private async defineAuthState() {
-    const redis = this.configService.get<Redis>('REDIS');
+    const provider = this.configService.get<ProviderSession>('PROVIDER');
 
-    if (redis?.ENABLED) {
-      return await this.authStateRedis.authStateRedisDb(
-        `${this.instance.id}:${this.instance.name}`,
-      );
+    if (provider?.ENABLED) {
+      return await this.authStateProvider.authStateProvider(this.instance.name);
     }
 
     return await useMultiFileAuthState(join(INSTANCE_DIR, this.instance.name));
@@ -493,7 +501,7 @@ export class WAStartupService {
 
     this.authState = (await this.defineAuthState()) as AuthState;
 
-    const { version } = await fetchLatestBaileysVersion();
+    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
@@ -541,8 +549,7 @@ export class WAStartupService {
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
       this.instanceQr.count = 0;
-
-      this.loadWebhook();
+      await this.loadWebhook();
       this.client = await this.setSocket();
       this.eventHandler();
 
@@ -555,27 +562,32 @@ export class WAStartupService {
 
   private readonly chatHandle = {
     'chats.upsert': async (chats: Chat[]) => {
-      const chatsRepository = await this.repository.chat.findMany({
-        where: {
-          instanceId: this.instance.id,
-        },
-      });
+      chats.forEach(async (chat) => {
+        try {
+          const list: PrismType.Chat[] = [];
+          const find = await this.repository.chat.findFirst({
+            where: {
+              remoteJid: chat.id,
+              instanceId: this.instance.id,
+            },
+          });
+          if (!find) {
+            const create = await this.repository.chat.create({
+              data: {
+                remoteJid: chat.id,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'chats.upsert', list);
 
-      const chatsRaw: PrismType.Chat[] = [];
-      for await (const chat of chats) {
-        if (chatsRepository.find((cr) => cr.remoteJid === chat.id)) {
-          continue;
+          await this.sendDataWebhook('chatsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
         }
-
-        chatsRaw.push({
-          remoteJid: chat.id,
-          instanceId: this.instance.id,
-        } as PrismType.Chat);
-      }
-
-      await this.sendDataWebhook('chatsUpsert', chatsRaw);
-      await this.repository.chat.createMany({
-        data: chatsRaw,
       });
     },
 
@@ -591,6 +603,7 @@ export class WAStartupService {
       const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
         return { remoteJid: chat.id, instanceId: this.instance.id } as PrismType.Chat;
       });
+      this.ws.send(this.instance.name, 'chats.update', chatsRaw);
       await this.sendDataWebhook('chatsUpdated', chatsRaw);
     },
 
@@ -602,63 +615,80 @@ export class WAStartupService {
             remoteJid: chat,
           },
         });
-        await this.repository.chat.delete({
-          where: {
-            id: c.id,
-          },
-        });
+        if (c) {
+          await this.repository.chat.delete({
+            where: {
+              id: c.id,
+            },
+          });
+        }
       }
     },
   };
 
   private readonly contactHandle = {
-    'contacts.upsert': async (contacts: Contact[]) => {
-      const contactsRepository = await this.repository.contact.findMany({
-        where: { instanceId: this.instance.id },
-      });
+    'contacts.upsert': (contacts: Contact[]) => {
+      contacts.forEach(async (contact) => {
+        const list: PrismType.Contact[] = [];
+        try {
+          const find = await this.repository.contact.findFirst({
+            where: {
+              remoteJid: contact.id,
+              instanceId: this.instance.id,
+            },
+          });
+          if (!find) {
+            const create = await this.repository.contact.create({
+              data: {
+                remoteJid: contact.id,
+                pushName: contact?.name || contact.id,
+                profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'contacts.upsert', list);
 
-      const contactsRaw: PrismType.Contact[] = [];
-      for await (const contact of contacts) {
-        if (contactsRepository.find((cr) => cr.remoteJid === contact.id)) {
-          continue;
+          await this.sendDataWebhook('contactsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
         }
-
-        contactsRaw.push({
-          remoteJid: contact.id,
-          pushName: contact?.name || contact.id,
-          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceId: this.instance.id,
-        } as unknown as PrismType.Contact);
-      }
-      await this.sendDataWebhook('contactsUpsert', contactsRaw);
-      await this.repository.contact.createMany({
-        data: contactsRaw,
       });
     },
 
     'contacts.update': async (contacts: Partial<Contact>[]) => {
-      const contactsRaw: PrismType.Contact[] = [];
-      for await (const contact of contacts) {
-        const data = {
-          remoteJid: contact.id,
-          pushName: contact?.name ?? contact?.verifiedName,
-          profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
-          instanceId: this.instance.id,
-        } as unknown as PrismType.Contact;
-        this.repository.contact
-          .updateMany({
+      contacts.forEach(async (contact) => {
+        const list: PrismType.Contact[] = [];
+        try {
+          const find = await this.repository.contact.findFirst({
             where: {
-              remoteJid: data.remoteJid,
+              remoteJid: contact.id,
               instanceId: this.instance.id,
             },
-            data,
-          })
-          .catch((error) => this.logger.error(error));
+          });
+          if (!find) {
+            const create = await this.repository.contact.create({
+              data: {
+                remoteJid: contact.id,
+                pushName: contact?.name || contact.id,
+                profilePicUrl: (await this.profilePicture(contact.id)).profilePictureUrl,
+                instanceId: this.instance.id,
+              },
+            });
+            list.push(create);
+          } else {
+            list.push(find);
+          }
+          this.ws.send(this.instance.name, 'contacts.upsert', list);
 
-        contactsRaw.push(data);
-      }
-
-      await this.sendDataWebhook('contactsUpdated', contactsRaw);
+          await this.sendDataWebhook('contactsUpsert', list);
+        } catch (error) {
+          this.logger.error(error);
+        }
+      });
     },
   };
 
@@ -678,26 +708,12 @@ export class WAStartupService {
     }
   }
 
-  private getEditedMessage(data: proto.IWebMessageInfo) {
-    if (data.message?.protocolMessage?.editedMessage) {
-      data.message = data.message?.protocolMessage?.editedMessage;
-    }
-
-    return data.message;
-  }
-
   private readonly messageHandle = {
     'messaging-history.set': async ({
       messages,
       chats,
-      isLatest,
-    }: {
-      chats: Chat[];
-      contacts: Contact[];
-      messages: proto.IWebMessageInfo[];
-      isLatest: boolean;
-    }) => {
-      if (isLatest) {
+    }: BaileysEventMap['messaging-history.set']) => {
+      if (chats && chats.length > 0) {
         const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
           return {
             remoteJid: chat.id,
@@ -708,47 +724,49 @@ export class WAStartupService {
         await this.repository.chat.createMany({ data: chatsRaw });
       }
 
-      const messagesRaw: PrismType.Message[] = [];
-      for await (const [, m] of Object.entries(messages)) {
-        if (
-          m.message?.protocolMessage ||
-          m.message?.senderKeyDistributionMessage ||
-          !m.message
-        ) {
-          continue;
+      if (messages && messages?.length > 0) {
+        const messagesRaw: PrismType.Message[] = [];
+        for await (const [, m] of Object.entries(messages)) {
+          if (
+            m.message?.protocolMessage ||
+            m.message?.senderKeyDistributionMessage ||
+            !m.message
+          ) {
+            continue;
+          }
+
+          if (Long.isLong(m?.messageTimestamp)) {
+            m.messageTimestamp = m.messageTimestamp?.toNumber();
+          }
+
+          const messageType = getContentType(m.message);
+
+          if (!messageType) {
+            continue;
+          }
+
+          messagesRaw.push({
+            keyId: m.key.id,
+            keyRemoteJid: m.key.remoteJid,
+            keyFromMe: m.key.fromMe,
+            pushName: m?.pushName || m.key.remoteJid.split('@')[0],
+            keyParticipant: m?.participant || m.key?.participant,
+            messageType,
+            content: m.message[messageType] as PrismType.Prisma.JsonValue,
+            messageTimestamp: m.messageTimestamp as number,
+            instanceId: this.instance.id,
+            device: getDevice(m.key.id),
+          } as PrismType.Message);
         }
 
-        if (Long.isLong(m?.messageTimestamp)) {
-          m.messageTimestamp = m.messageTimestamp?.toNumber();
+        this.sendDataWebhook('messagesSet', [...messagesRaw]);
+
+        if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
+          await this.syncMessage(messagesRaw);
         }
 
-        const messageType = getContentType(m.message);
-
-        if (!messageType) {
-          continue;
-        }
-
-        messagesRaw.push({
-          keyId: m.key.id,
-          keyRemoteJid: m.key.remoteJid,
-          keyFromMe: m.key.fromMe,
-          pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-          keyParticipant: m?.participant || m.key?.participant,
-          messageType,
-          content: m.message[messageType] as PrismType.Prisma.JsonValue,
-          messageTimestamp: m.messageTimestamp as number,
-          instanceId: this.instance.id,
-          device: getDevice(m.key.id),
-        } as PrismType.Message);
+        messages = undefined;
       }
-
-      this.sendDataWebhook('messagesSet', [...messagesRaw]);
-
-      if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
-        await this.syncMessage(messagesRaw);
-      }
-
-      messages = undefined;
     },
 
     'messages.upsert': async ({
@@ -787,7 +805,12 @@ export class WAStartupService {
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp as number,
           instanceId: this.instance.id,
-          device: getDevice(received.key.id),
+          device: (() => {
+            if (isValidUlid(received.key.id)) {
+              return 'web';
+            }
+            return getDevice(received.key.id);
+          })(),
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
@@ -813,6 +836,8 @@ export class WAStartupService {
 
         this.logger.log('Type: ' + type);
         console.log(messageRaw);
+
+        this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
 
@@ -861,92 +886,6 @@ export class WAStartupService {
             });
           }
         }
-
-        this.typebotSession.onMessage(messageRaw, async (items) => {
-          for await (const item of items) {
-            if (item?.text) {
-              await this.textMessage({
-                number: messageRaw.keyRemoteJid,
-                textMessage: { text: item.text },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-
-            if (item?.video || item?.embed) {
-              const url = item?.video || item?.embed;
-              const head = await (async () => {
-                try {
-                  return await axios.head(url);
-                } catch (error) {
-                  return {
-                    headers: {
-                      'content-type': 'text/html; charset=utf-8',
-                    },
-                  };
-                }
-              })();
-
-              const ext = mime.extension(head.headers['content-type']);
-              if (ext && ext.includes('html')) {
-                await this.textMessage({
-                  number: messageRaw.keyRemoteJid,
-                  textMessage: { text: url },
-                  options: { delay: 1200, presence: 'composing' },
-                });
-                continue;
-              }
-
-              await this.mediaMessage({
-                number: messageRaw.keyRemoteJid,
-                mediaMessage: {
-                  mediatype: 'document',
-                  media: url,
-                },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-
-            if (item?.image) {
-              await this.mediaMessage({
-                number: messageRaw.keyRemoteJid,
-                mediaMessage: {
-                  mediatype: 'image',
-                  fileName: 'image.jpg',
-                  media: item.image,
-                },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-
-            if (item?.audio) {
-              const head = await axios.head(item.audio);
-
-              if (head.headers['content-type'].includes('audio/ogg')) {
-                await this.audioWhatsapp({
-                  number: messageRaw.keyRemoteJid,
-                  audioMessage: {
-                    audio: item.audio,
-                  },
-                  options: { delay: 1200, presence: 'recording' },
-                });
-                continue;
-              }
-
-              await this.mediaMessage({
-                number: messageRaw.keyRemoteJid,
-                mediaMessage: {
-                  mediatype: 'audio',
-                  media: item.audio,
-                },
-                options: { delay: 1200, presence: 'composing' },
-              });
-              continue;
-            }
-          }
-        });
       }
     },
 
@@ -960,6 +899,10 @@ export class WAStartupService {
         5: 'PLAYED',
       };
       for await (const { key, update } of args) {
+        if (update.status === 4 && key?.remoteJid) {
+          key.remoteJid = key.remoteJid.replace(/:\d+(?=@)/, '');
+        }
+
         if (key.remoteJid !== 'status@broadcast' && !key?.remoteJid?.match(/(:\d+)/)) {
           const message = {
             ...key,
@@ -967,6 +910,9 @@ export class WAStartupService {
             dateTime: new Date(),
             instanceId: this.instance.id,
           };
+
+          this.ws.send(this.instance.name, 'messages.update', message);
+
           await this.sendDataWebhook('messagesUpdated', message);
           if (this.databaseOptions.DB_OPTIONS.MESSAGE_UPDATE) {
             this.repository.message
@@ -996,10 +942,12 @@ export class WAStartupService {
 
   private readonly groupHandler = {
     'groups.upsert': (groupMetadata: GroupMetadata[]) => {
+      this.ws.send(this.instance.name, 'groups.upsert', groupMetadata);
       this.sendDataWebhook('groupsUpsert', groupMetadata);
     },
 
     'groups.update': (groupMetadataUpdate: Partial<GroupMetadata>[]) => {
+      this.ws.send(this.instance.name, 'groups.update', groupMetadataUpdate);
       this.sendDataWebhook('groupsUpdated', groupMetadataUpdate);
     },
 
@@ -1008,6 +956,7 @@ export class WAStartupService {
       participants: string[];
       action: ParticipantAction;
     }) => {
+      this.ws.send(this.instance.name, 'group-participants.update', participantsUpdate);
       this.sendDataWebhook('groupsParticipantsUpdated', participantsUpdate);
     },
   };
@@ -1015,8 +964,18 @@ export class WAStartupService {
   private readonly callHandler = {
     'call.upsert': (call: WACallEvent[]) => {
       call.forEach((c) => {
+        this.ws.send(this.instance.name, 'call.upsert', c);
         this.sendDataWebhook('callUpsert', c);
       });
+    },
+  };
+
+  private readonly onLabel = {
+    'labels.association': async (args: BaileysEventMap['labels.association']) => {
+      this.sendDataWebhook('labelsAssociation', args);
+    },
+    'labels.edit': async (args: BaileysEventMap['labels.edit']) => {
+      this.sendDataWebhook('labelsEdit', args);
     },
   };
 
@@ -1048,6 +1007,7 @@ export class WAStartupService {
 
         if (events?.['presence.update']) {
           const payload = events['presence.update'];
+          this.ws.send(this.instance.name, 'presence.update', payload);
           this.sendDataWebhook('presenceUpdated', payload);
         }
 
@@ -1094,6 +1054,16 @@ export class WAStartupService {
         if (events?.['call']) {
           const payload = events['call'];
           this.callHandler['call.upsert'](payload);
+        }
+
+        if (events?.['labels.association']) {
+          const payload = events['labels.association'];
+          this.onLabel['labels.association'](payload);
+        }
+
+        if (events?.['labels.edit']) {
+          const payload = events['labels.edit'];
+          this.onLabel['labels.edit'](payload);
         }
       }
     });
@@ -1241,7 +1211,6 @@ export class WAStartupService {
       }
 
       const messageSent: PrismType.Message = await (async () => {
-        let m: proto.IWebMessageInfo;
         let q: proto.IWebMessageInfo;
         if (quoted) {
           q = {
@@ -1255,24 +1224,32 @@ export class WAStartupService {
             },
           };
         }
-        if (!message['audio']) {
-          m = await this.client.sendMessage(
-            recipient,
-            {
-              forward: {
-                key: { remoteJid: this.instance.ownerJid, fromMe: true },
-                message,
-              },
-            },
-            { quoted: q },
-          );
-        } else {
-          m = await this.client.sendMessage(
-            recipient,
-            message as unknown as AnyMessageContent,
-            { quoted: q },
-          );
+
+        const messageId = options?.messageId || ulid(Date.now());
+
+        const m = generateWAMessageFromContent(recipient, message, {
+          timestamp: new Date(),
+          userJid: this.instance.ownerJid,
+          messageId,
+          quoted: q,
+        });
+
+        const id = await this.client.relayMessage(recipient, m.message, { messageId });
+
+        m.key = {
+          id: id,
+          remoteJid: jid,
+          participant: isJidUser(jid) ? jid : undefined,
+          fromMe: true,
+        };
+
+        for (const [key, value] of Object.entries(m)) {
+          if (!value || (isArray(value) && value.length) === 0) {
+            delete m[key];
+          }
         }
+
+        this.client.ev.emit('messages.upsert', { messages: [m], type: 'notify' });
 
         return {
           id: undefined,
@@ -1290,7 +1267,7 @@ export class WAStartupService {
             return m.messageTimestamp as number;
           })(),
           instanceId: this.instance.id,
-          device: getDevice(m.key.id),
+          device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
           typebotSessionId: undefined,
         };
@@ -1302,6 +1279,9 @@ export class WAStartupService {
         messageSent.id = id;
       }
 
+      messageSent['externalAttributes'] = options?.externalAttributes;
+
+      this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
         this.logger.error(error),
       );
@@ -1314,8 +1294,12 @@ export class WAStartupService {
   }
 
   // Instance Controller
-  public get connectionStatus() {
-    return this.stateConnection;
+  public getInstance() {
+    const i: Partial<Instance> & { status: InstanceStateConnection } = {
+      ...this.instance,
+      status: this.stateConnection,
+    };
+    return i;
   }
 
   // Send Message Controller
@@ -1331,7 +1315,7 @@ export class WAStartupService {
     );
   }
 
-  private async prepareMediaMessage(mediaMessage: MediaMessage) {
+  private async prepareMediaMessage(mediaMessage: MediaMessage & { mimetype?: string }) {
     try {
       const prepareMedia = await prepareWAMessageMedia(
         {
@@ -1363,8 +1347,12 @@ export class WAStartupService {
       }
 
       prepareMedia[mediaType].caption = mediaMessage?.caption;
-      prepareMedia[mediaType].mimetype = mimetype;
+      prepareMedia[mediaType].mimetype = mediaMessage?.mimetype || mimetype;
       prepareMedia[mediaType].fileName = mediaMessage.fileName;
+
+      if (mediaMessage?.mimetype === 'audio/aac') {
+        prepareMedia.audioMessage.ptt = true;
+      }
 
       if (mediaMessage.mediatype === 'video') {
         prepareMedia[mediaType].jpegThumbnail = Uint8Array.from(
@@ -1413,25 +1401,30 @@ export class WAStartupService {
   }
 
   public async audioWhatsapp(data: SendAudioDto) {
-    return this.sendMessageWithTyping<AnyMessageContent>(
+    const generate = await this.prepareMediaMessage({
+      media: data.audioMessage.audio,
+      mimetype: 'audio/aac',
+      mediatype: 'audio',
+    });
+
+    return this.sendMessageWithTyping(
       data.number,
-      {
-        audio: { url: data.audioMessage.audio },
-        ptt: true,
-        mimetype: 'audio/aac',
-      },
+      { ...generate.message },
       { presence: 'recording', delay: data?.options?.delay },
     );
   }
 
   public async audioWhatsAppFile(data: AudioMessageFileDto, file: Express.Multer.File) {
-    return this.sendMessageWithTyping<AnyMessageContent>(
+    const generate = await this.prepareMediaMessage({
+      fileName: file.originalname,
+      media: file.buffer,
+      mediatype: 'audio',
+      mimetype: 'audio/aac',
+    });
+
+    return this.sendMessageWithTyping(
       data.number,
-      {
-        audio: file.buffer,
-        ptt: true,
-        mimetype: 'audio/aac',
-      },
+      { ...generate.message },
       { presence: 'recording', delay: data?.delay },
     );
   }
@@ -1500,6 +1493,174 @@ export class WAStartupService {
     });
   }
 
+  public async buttonsMessage(data: SendButtonsDto) {
+    const generate = await (async () => {
+      if (data.buttonsMessage?.thumbnailUrl) {
+        return await this.prepareMediaMessage({
+          mediatype: 'image',
+          media: data.buttonsMessage.thumbnailUrl,
+        });
+      }
+    })();
+
+    const message: proto.IMessage = {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2,
+          },
+          interactiveMessage: {
+            body: {
+              text: (() => {
+                let t = '*' + data.buttonsMessage.title + '*';
+                if (data.buttonsMessage?.description) {
+                  t += '\n\n';
+                  t += data.buttonsMessage.description;
+                  t += '\n';
+                }
+                return t;
+              })(),
+            },
+            footer: {
+              text: data.buttonsMessage?.footer,
+            },
+            header: (() => {
+              if (generate?.message?.imageMessage) {
+                return {
+                  hasMediaAttachment: !!generate.message.imageMessage,
+                  imageMessage: generate.message.imageMessage,
+                };
+              }
+            })(),
+            nativeFlowMessage: {
+              buttons: data.buttonsMessage.buttons.map((value) => {
+                return {
+                  name: value.typeButton,
+                  buttonParamsJson: value.toJSONString(),
+                };
+              }),
+              messageParamsJson: JSON.stringify({
+                from: 'api',
+                templateId: ulid(Date.now()),
+              }),
+            },
+          },
+        },
+      },
+    };
+
+    return await this.sendMessageWithTyping(data.number, message, data?.options);
+  }
+
+  public async listButtons(data: SendListDto) {
+    const generate = await (async () => {
+      if (data.listMessage?.thumbnailUrl) {
+        return await this.prepareMediaMessage({
+          mediatype: 'image',
+          media: data.listMessage.thumbnailUrl,
+        });
+      }
+    })();
+
+    const message: proto.IMessage = {
+      viewOnceMessage: {
+        message: {
+          messageContextInfo: {
+            deviceListMetadata: {},
+            deviceListMetadataVersion: 2,
+          },
+          interactiveMessage: {
+            body: {
+              text: (() => {
+                let t = '*' + data.listMessage.title + '*';
+                if (data.listMessage?.description) {
+                  t += '\n\n';
+                  t += data.listMessage.description;
+                  t += '\n';
+                }
+                return t;
+              })(),
+            },
+            footer: {
+              text: data.listMessage?.footer,
+            },
+            header: (() => {
+              if (generate?.message?.imageMessage) {
+                return {
+                  hasMediaAttachment: !!generate.message.imageMessage,
+                  imageMessage: generate.message.imageMessage,
+                };
+              }
+            })(),
+            nativeFlowMessage: {
+              buttons: data.listMessage.sections.map((value) => {
+                return {
+                  name: 'single_select',
+                  buttonParamsJson: value.toSectionsString(),
+                };
+              }),
+              messageParamsJson: JSON.stringify({
+                from: 'api',
+                templateId: ulid(Date.now()),
+              }),
+            },
+          },
+        },
+      },
+    };
+
+    return await this.sendMessageWithTyping(data.number, message, data?.options);
+  }
+
+  public async listLegacy(data: SendListLegacyDto) {
+    const msg = data.listMessage;
+    return await this.sendMessageWithTyping(data.number, {
+      viewOnceMessageV2: {
+        message: {
+          listMessage: {
+            title: msg.title,
+            description: msg?.description,
+            footerText: msg?.footer,
+            buttonText: msg.buttonText,
+            sections: msg.sections,
+            listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
+          },
+        },
+      },
+    });
+  }
+
+  public async linkMessage(data: SendLinkDto) {
+    return await this.sendMessageWithTyping(data.number, {
+      extendedTextMessage: {
+        text: (() => {
+          if (data.linkMessage?.text) {
+            let t = data.linkMessage.link;
+            t += '\n\n';
+            t += data.linkMessage.text;
+            return t;
+          }
+        })(),
+        canonicalUrl: data.linkMessage.link,
+        matchedText: data.linkMessage?.text,
+        previewType: 0,
+        title: data.linkMessage?.title,
+        description: data.linkMessage?.description,
+        jpegThumbnail: await (async () => {
+          if (data.linkMessage?.thumbnailUrl) {
+            try {
+              const response = await axios.get(data.linkMessage.thumbnailUrl, {
+                responseType: 'arraybuffer',
+              });
+              return new Uint8Array(response.data);
+            } catch {}
+          }
+        })(),
+      },
+    });
+  }
+
   // Chat Controller
   public async whatsappNumber(data: WhatsAppNumberDto) {
     const onWhatsapp: OnWhatsAppDto[] = [];
@@ -1542,6 +1703,39 @@ export class WAStartupService {
       return { message: 'Read messages', read: 'success' };
     } catch (error) {
       throw new InternalServerErrorException('Read messages fail', error.toString());
+    }
+  }
+
+  public async deleteChat(chatId: string) {
+    try {
+      const lastMessage = await this.repository.message.findFirst({
+        where: { keyRemoteJid: this.createJid(chatId) },
+        orderBy: { messageTimestamp: 'desc' },
+      });
+      if (!lastMessage) {
+        throw new Error('Chat not found');
+      }
+
+      await this.client.chatModify(
+        {
+          delete: true,
+          lastMessages: [
+            {
+              key: {
+                id: lastMessage.keyId,
+                fromMe: lastMessage.keyFromMe,
+                remoteJid: lastMessage.keyRemoteJid,
+              },
+              messageTimestamp: lastMessage.messageTimestamp,
+            },
+          ],
+        },
+        lastMessage.keyRemoteJid,
+      );
+
+      return { deletedAt: new Date(), chatId: lastMessage.keyRemoteJid };
+    } catch (error) {
+      throw new BadRequestException('Error while deleting chat', error?.message);
     }
   }
 
@@ -1603,10 +1797,29 @@ export class WAStartupService {
   public async deleteMessage(del: DeleteMessage) {
     try {
       const id = Number.parseInt(del.id);
+      const everyOne = del?.everyOne === 'true';
       const message = await this.repository.message.findUnique({
         where: { id },
       });
-      return await this.client.sendMessage(message.keyRemoteJid, {
+
+      if (!everyOne) {
+        await this.client.chatModify(
+          {
+            clear: {
+              messages: [
+                {
+                  id: message.keyId,
+                  fromMe: message.keyFromMe,
+                  timestamp: message.messageTimestamp,
+                },
+              ],
+            },
+          },
+          message.keyRemoteJid,
+        );
+      }
+
+      await this.client.sendMessage(message.keyRemoteJid, {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
@@ -1614,6 +1827,8 @@ export class WAStartupService {
           remoteJid: message.keyRemoteJid,
         },
       });
+
+      return { deletedAt: new Date(), message };
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while deleting message for everyone',
@@ -1652,7 +1867,7 @@ export class WAStartupService {
         : ((await this.getMessage(m, true)) as proto.IWebMessageInfo);
 
       for (const subtype of MessageSubtype) {
-        if (msg.message[subtype]) {
+        if (msg?.message?.[subtype]) {
           msg.message = msg.message[subtype].message;
         }
       }
@@ -1692,7 +1907,7 @@ export class WAStartupService {
       const ext = mime.extension(mediaMessage?.['mimetype']);
 
       const fileName =
-        mediaMessage?.['fileName'] || `${msg.key.id}.${ext}` || `${v4()}.${ext}`;
+        mediaMessage?.['fileName'] || `${msg.key.id}.${ext}` || `${ulid()}.${ext}`;
 
       return {
         mediaType,
@@ -1708,17 +1923,19 @@ export class WAStartupService {
       };
     } catch (error) {
       this.logger.error(error);
-      this.repository.activityLogs
-        .create({
-          data: {
-            type: 'error',
-            context: WAStartupService.name,
-            description: 'Error on get media message',
-            content: [error?.toString(), JSON.stringify(error?.stack)],
-            instanceId: this.instance.id,
-          },
-        })
-        .catch((error) => this.logger.error(error));
+      if (this.configService.get<Database>('DATABASE').DB_OPTIONS.ACTIVITY_LOGS) {
+        this.repository.activityLogs
+          .create({
+            data: {
+              type: 'error',
+              context: WAStartupService.name,
+              description: 'Error on get media message',
+              content: [error?.toString(), JSON.stringify(error?.stack)],
+              instanceId: this.instance.id,
+            },
+          })
+          .catch((error) => this.logger.error(error));
+      }
       if (inner) {
         return;
       }
@@ -1816,10 +2033,14 @@ export class WAStartupService {
     };
   }
 
-  public async fetchChats() {
-    return await this.repository.chat.findMany({
-      where: { instanceId: this.instance.id },
-    });
+  public async fetchChats(type?: string) {
+    const where = { instanceId: this.instance.id };
+    if (['chats', 'group'].includes(type)) {
+      where['remoteJid'] = {
+        contains: '@s.whatsapp.net',
+      };
+    }
+    return await this.repository.chat.findMany({ where });
   }
 
   public async rejectCall(data: RejectCallDto) {

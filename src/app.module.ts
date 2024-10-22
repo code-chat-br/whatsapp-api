@@ -43,9 +43,7 @@ import express, {
 import { Logger } from './config/logger.config';
 import { S3Service } from './integrations/minio/s3.service';
 import { Repository } from './repository/repository.service';
-import { RedisCache } from './cache/redis';
 import { ConfigService } from './config/env.config';
-import { TypebotService } from './integrations/typebot/typebot.service';
 import { eventEmitter } from './config/event.config';
 import { ChatController } from './whatsapp/controllers/chat.controller';
 import { GroupController } from './whatsapp/controllers/group.controller';
@@ -57,7 +55,6 @@ import { InstanceService } from './whatsapp/services/instance.service';
 import { WAMonitoringService } from './whatsapp/services/monitor.service';
 import { WebhookService } from './whatsapp/services/webhook.service';
 import { S3Router } from './integrations/minio/s3.router';
-import { TypebotRouter } from './integrations/typebot/typebot.router';
 import { ChatRouter } from './whatsapp/routers/chat.router';
 import { InstanceRouter } from './whatsapp/routers/instance.router';
 import { ViewsRouter } from './whatsapp/routers/view.router';
@@ -73,6 +70,9 @@ import { JwtGuard } from './guards/auth.guard';
 import { ErrorMiddle } from './middle/error.middle';
 import 'express-async-errors';
 import { docsRouter } from './config/scala.config';
+import { ProviderFiles } from './provider/sessions';
+import { Websocket } from './websocket/server';
+import { createServer } from 'http';
 
 export function describeRoutes(
   rootPath: string,
@@ -95,6 +95,7 @@ export function describeRoutes(
 export enum HttpStatus {
   OK = 200,
   CREATED = 201,
+  NO_CONTENT = 202,
   NOT_FOUND = 404,
   FORBIDDEN = 403,
   BAD_REQUEST = 400,
@@ -104,24 +105,30 @@ export enum HttpStatus {
 
 export async function AppModule(context: Map<string, any>) {
   const app = express();
+  const server = createServer(app);
 
   const configService = new ConfigService();
 
   const logger = new Logger(configService, 'APP MODULE');
 
-  const redisCache = new RedisCache(configService);
-  logger.info('Cache:Redis - ON');
-  await redisCache.onModuleInit();
+  const providerFiles = new ProviderFiles(configService);
+  await providerFiles.onModuleInit();
+  logger.info('Provider:Files - ON');
 
   const repository = new Repository(configService);
-  logger.info('Repository - ON');
   await repository.onModuleInit();
+  logger.info('Repository - ON');
+
+  const wss = new Websocket(configService);
+  wss.server(server);
+  logger.info('WebSocket Server - ON');
 
   const waMonitor = new WAMonitoringService(
     eventEmitter,
     configService,
     repository,
-    redisCache,
+    providerFiles,
+    wss,
   );
 
   logger.info('WAMonitoringService - ON');
@@ -134,7 +141,7 @@ export async function AppModule(context: Map<string, any>) {
     async (req: Request, res: Response, next: NextFunction) =>
       await new JwtGuard(configService).canActivate(req, res, next),
     async (req: Request, res: Response, next: NextFunction) =>
-      await new InstanceGuard(waMonitor, redisCache).canActivate(req, res, next),
+      await new InstanceGuard(waMonitor, providerFiles).canActivate(req, res, next),
   ];
   logger.info('Middlewares - ON');
 
@@ -149,7 +156,8 @@ export async function AppModule(context: Map<string, any>) {
     repository,
     eventEmitter,
     instanceService,
-    redisCache,
+    providerFiles,
+    wss,
   );
   logger.info('InstanceController - ON');
 
@@ -183,11 +191,6 @@ export async function AppModule(context: Map<string, any>) {
   const s3Router = S3Router(s3Service, ...middlewares);
   logger.info('Integration:S3Service - ON');
 
-  const typebotService = new TypebotService(repository, configService);
-  typebotService.load();
-  const typebotRouter = TypebotRouter(typebotService, ...middlewares);
-  logger.info('Integration:TypebotService - ON');
-
   const router = Router();
   router.use(...describeRoutes('/instance', instanceRouter, logger));
   router.use(...describeRoutes('/instance', viewsRouter, logger));
@@ -196,7 +199,6 @@ export async function AppModule(context: Map<string, any>) {
   router.use(...describeRoutes('/group', groupRouter, logger));
   router.use(...describeRoutes('/webhook', webhookRouter, logger));
   router.use(...describeRoutes('/s3', s3Router, logger));
-  router.use(...describeRoutes('/typebot', typebotRouter, logger));
 
   app.use(urlencoded({ extended: true, limit: '100mb' }), json({ limit: '100mb' }));
 
@@ -219,14 +221,9 @@ export async function AppModule(context: Map<string, any>) {
 
   app.use(ErrorMiddle.appError, ErrorMiddle.pageNotFound);
 
-  app['close'] = async () => {
-    await repository.onModuleDestroy();
-    await redisCache.onModuleDestroy();
-  };
-
-  context.set('app', app);
+  context.set('app', server);
   context.set('module:logger', logger);
   context.set('module:repository', repository);
-  context.set('module:redisCache', redisCache);
+  context.set('module:provider', providerFiles);
   context.set('module:config', configService);
 }

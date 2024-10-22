@@ -74,6 +74,15 @@ export function InstanceRouter(
 
       return res.status(HttpStatus.OK).json(response);
     })
+    .get(routerPath('fetchInstance'), ...guards, async (req, res) => {
+      const response = await dataValidate<InstanceDto>({
+        request: req,
+        schema: null,
+        execute: (instance) => instanceController.fetchInstance(instance),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
     .get(routerPath('fetchInstances', false), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
         request: req,

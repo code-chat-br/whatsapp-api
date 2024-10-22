@@ -71,6 +71,10 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).archiveChat(data);
   }
 
+  public async deleteChat({ instanceName }: InstanceDto, data: string) {
+    return await this.waMonitor.waInstances.get(instanceName).deleteChat(data);
+  }
+
   public async deleteMessage({ instanceName }: InstanceDto, data: DeleteMessage) {
     return await this.waMonitor.waInstances.get(instanceName).deleteMessage(data);
   }
@@ -98,8 +102,8 @@ export class ChatController {
     return await this.waMonitor.waInstances.get(instanceName).fetchMessages(query);
   }
 
-  public async fetchChats({ instanceName }: InstanceDto) {
-    return await this.waMonitor.waInstances.get(instanceName).fetchChats();
+  public async fetchChats({ instanceName }: InstanceDto, type?: string) {
+    return await this.waMonitor.waInstances.get(instanceName).fetchChats(type);
   }
 
   public async rejectCall({ instanceName }: InstanceDto, data: RejectCallDto) {

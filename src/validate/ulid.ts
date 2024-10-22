@@ -1,9 +1,9 @@
 /**
  * ┌──────────────────────────────────────────────────────────────────────────────┐
  * │ @author jrCleber                                                             │
- * │ @filename message.model.ts                                                   │
+ * │ @filename ulid.ts                                                            │
  * │ Developed by: Cleber Wilson                                                  │
- * │ Creation date: Dez 07, 2023                                                  │
+ * │ Creation date: Jul 17, 2022                                                  │
  * │ Contact: contato@codechat.dev                                                │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @copyright © Cleber Wilson 2022. All rights reserved.                        │
@@ -22,7 +22,7 @@
  * │                                                                              │
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
- * │                                                                              │                                                        │
+ * │                                                                              │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -31,62 +31,19 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-export type RichText = {
-  type: string;
-  text: string;
-  bold: boolean;
-  italic: boolean;
-  children: {
-    bold: boolean;
-    italic: boolean;
-    text: string;
-    type: string;
-    children: RichText[];
-  }[];
-};
+import { decodeTime } from 'ulid';
 
-export type Content = {
-  richText: RichText[];
-  url?: string;
-  id?: string;
-  type?: string;
-  height?: number;
-  aspectRatio?: string;
-  maxWidth?: string;
-};
+export const isValidUlid = (id: string) => {
+  const ulidPattern = /^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{26}$/;
 
-export type ResponseMessage = {
-  id: string;
-  type: string;
-  content: Content;
-};
+  if (!ulidPattern.test(id)) {
+    return false;
+  }
 
-export type Input = {
-  id: string;
-  type: string;
-  options: {
-    labels: {
-      placeholder: string;
-    };
-  };
-};
-
-export type Typebot = {
-  id: string;
-  theme: object;
-  settings: object;
-};
-
-export type Response = {
-  messages: ResponseMessage[];
-  input: Input;
-  sessionId: string;
-  typebot: Typebot;
-  resultId: string;
-  code: string;
-} & SessionNotFound;
-
-export type SessionNotFound = {
-  message: string;
-  code: string;
+  try {
+    decodeTime(id);
+    return true;
+  } catch (error) {
+    return false;
+  }
 };

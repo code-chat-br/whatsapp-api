@@ -23,7 +23,6 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @function initWA @param undefined                                            │
  * | @function bootstrap @param undefined                                         │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
@@ -57,10 +56,11 @@ export async function bootstrap() {
     logger.log('HTTP' + ' - ON: ' + httpServer.PORT);
     new Logger(configService, 'Swagger Docs').warn(
       `
-      ┌──────────────────────────────┐
-      │         Swagger Docs         │
-      │  http://localhost:${httpServer.PORT}/docs  │
-      └──────────────────────────────┘`.replace(/^ +/gm, '  '),
+        ..
+        .       Swagger Docs
+        . http://localhost:${httpServer.PORT}/docs
+        . https://${process.env?.API_BACKEND || 'no-value'}/docs
+        .. `.replace(/^ +/gm, '  '),
     );
   });
 
@@ -70,7 +70,8 @@ export async function bootstrap() {
 bootstrap();
 
 process.on('SIGINT', async () => {
-  await context.get('app').close();
+  context.get('module:provider').onModuleDestroy();
+  context.get('module:repository').onModuleDestroy();
   context.get('module:logger').warn('APP MODULE - OFF');
   context.get('server:logger').warn('HTTP - OFF');
   process.exit(0);

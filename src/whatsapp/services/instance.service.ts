@@ -43,13 +43,13 @@ import { InstanceDto } from '../dto/instance.dto';
 import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
 import { Logger } from '../../config/logger.config';
-import { v4 } from 'uuid';
 import { isArray, isJWT } from 'class-validator';
 import { BadRequestException } from '../../exceptions';
 import axios from 'axios';
 import { Repository } from '../../repository/repository.service';
 import { WebhookEvents } from '../dto/webhook.dto';
 import { WAMonitoringService } from './monitor.service';
+import { ulid } from 'ulid';
 
 export type JwtPayload = {
   instanceName: string;
@@ -78,7 +78,7 @@ export class InstanceService {
       {
         instanceName,
         apiName,
-        tokenId: v4(),
+        tokenId: ulid(Date.now()),
       },
       jwtOpts.SECRET,
       { expiresIn: jwtOpts.EXPIRIN_IN, encoding: 'utf8', subject: 'g-t' },
@@ -94,7 +94,7 @@ export class InstanceService {
     }
 
     try {
-      const instanceName = instance?.instanceName || v4();
+      const instanceName = instance?.instanceName || ulid(Date.now());
 
       const create = this.repository.instance.create({
         data: {
@@ -176,17 +176,19 @@ export class InstanceService {
         createdAt: true,
         updatedAt: true,
         Auth: {
-          select: { id: true, token: true, createdAt: true, updatedAt: true },
-        },
-        Webhook: {
-          select: { id: true, url: true, createdAt: true, updatedAt: true },
-        },
-        Typebot: {
           select: {
             id: true,
-            publicId: true,
-            typebotUrl: true,
+            token: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
+        Webhook: {
+          select: {
+            id: true,
             enabled: true,
+            url: true,
+            events: true,
             createdAt: true,
             updatedAt: true,
           },
@@ -225,7 +227,7 @@ export class InstanceService {
         ];
       }
 
-      delete this.waMonitor.waInstances[instance.instanceName];
+      this.waMonitor.waInstances.delete(instance.instanceName);
 
       return await this.repository.instance.delete({
         where: { name: instance.instanceName },

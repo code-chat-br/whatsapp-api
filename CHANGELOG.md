@@ -1,54 +1,49 @@
-# Changelog
+# CHANGELOG
 
-<a name="1.3.0"></a>
+- version 1.3.3
 
-For full details, visit the official API documentation: [Official Documentation 1.3.0](https://docs.codechat.dev/api/v1.3.0), [Tags](https://docs.codechat.dev/change-log/tags/v-1)
+## Deprecated
 
-## Version 1.3.0 (2023-12-20)
+- Endpoint: `/instance/connectionState/{instanceName}`
 
-### Added
-- 🚀🔧📈 Addition of Prisma Migrations. [[15b94f4](https://github.com/code-chat-br/whatsapp-api/commit/15b94f4)]
+## Added
 
-### Changed
-- 📚✍️🔍 Improved README Instructions. [[9f5a987](https://github.com/code-chat-br/whatsapp-api/commit/9f5a987)]
-- 🖋️🔗💾 Text Formatting and Session ID Linking. [[3a58e9c](https://github.com/code-chat-br/whatsapp-api/commit/3a58e9c)]
+* [externalAttributes](https://github.com/code-chat-br/whatsapp-api/commit/148d308931a134579c0902cd089a49c47afd5f00)
 
-## Version 1.3.0 (2023-12-09)
-This version features significant improvements, including migration to the PostgreSQL database, integration with Prisma ORM, and new storage and interaction features.
+  The `externalAttributes` attribute is an optional field that can be used to add custom information or metadata to the message being sent. This field is useful for attaching additional data that you want to track or associate with the message throughout the sending and receiving process without affecting the main content of the message.
 
-### Added
-- 🆕💾 **Migration to PostgreSQL:** Replacement of MongoDB with PostgreSQL for more robust and efficient data management. Check out the detailed instructions and benefits of this change in commits [[9b574ec](https://github.com/code-chat-br/whatsapp-api/commit/9b574ec)], [[7b2389f](https://github. com/code-chat-br/whatsapp-api/commit/7b2389f)].
-- 🆕🔷 **Prisma ORM:** Introduction of Prisma ORM, offering an additional layer of abstraction and security for database operations. More details at [[a2474ed](https://github.com/code-chat-br/whatsapp-api/commit/a2474ed)].
-- 🆕🔗 **Integration with MinIO:** Implementation of media storage with MinIO, providing a scalable and efficient solution. See [[e71a9f9](https://github.com/code-chat-br/whatsapp-api/commit/e71a9f9)].
-- 🆕🔗 **Integration with Typebot:** New endpoints and services for interaction with Typebot, expanding the API's capabilities. Details at [[88f2d1b](https://github.com/code-chat-br/whatsapp-api/commit/88f2d1b)].
+  ### Details of the `externalAttributes` Attribute
 
-### Changed
-- 🐛💥 **Redis Reconfiguration:** Improvement in the code that saves instances in Redis, increasing reliability and efficiency. See [[0b16a32](https://github.com/code-chat-br/whatsapp-api/commit/0b16a32)].
-- 🔄💻🛠️ **General Code Refactoring:** Optimizations and code improvements to increase performance and maintainability. Details at [[ba667a9](https://github.com/code-chat-br/whatsapp-api/commit/ba667a9)].
+  - **Type:** `string`
+  - **Description:** This field can accept various types of values, including simple strings, booleans, numbers, JSON objects, or JSON arrays. Below are the specifications for the accepted data types:
+    - `[string]` - A simple text string.
+    - `[string[boolean]]` - A string representing a boolean value.
+    - `[string[number]]` - A string representing a numeric value.
+    - `[string[Json[Object]]]` - A string containing a JSON object.
+    - `[string[Json[Array]]]` - A string containing a JSON array.
 
-### Migrating from 1.2 to 1.3
-#### Migration Steps:
-1. **Test Environment:** It is recommended to create a test environment to validate new features. Compare versions [1.2.8](https://github.com/code-chat-br/whatsapp-api/tree/v-1.2.8) and [1.3.0](https://github.com/ code-chat-br/whatsapp-api).
-2. **PostgreSQL Database:** Required for the new version. Configuration and migration instructions available in the documentation.
-3. **Saving Logs to the Database:** All logs are now saved to the database for better analysis and traceability.
-4. **.env file:** Replacement of the YAML environment variables file with a `.env` file to simplify configuration.
-5. **Redis Save Refactoring:** The code was restructured to avoid bugs and improve performance.
-6. **Improved Request Responses:** Responses now provide more detailed information from the bank.
-7. **Webhook Sending Detailed Data:** The data sent by the webhook is more complete and informative.
+  ### Usage
 
-#### Detailed Integrations:
-- [MinIO](https://docs.codechat.dev/s3-bucket): Detailed settings and usage in the [.env.dev](./.env.dev) file.
-- [Typebot](https://www.typebot.io/): Environment variables and application-specific interactions for the scope of the bot:
+  When you create a message and include the `externalAttributes` field, the specified values are transmitted along with the message. These values are then forwarded to the associated webhook, providing a way to "stamp" the message with additional information that can be used for tracking, auditing, or other analytical or processing purposes.
+
+  For example, you could use `externalAttributes` to store a user ID, process status, or any other relevant information you want to associate with the message. When the message is processed by the target system or responded to via webhook, these external attributes are included in the payload of the response, allowing you to use them as needed in your workflow.
+
+  ### Example:
+
   ```json
   {
-    "messageId": 1325, // unique message id in the database
-    "keyRemoteJid": "123@s.whatsapp.net", // WhatsApp phone number
-    "keyId": "KDFKJRGLGR51VR5", // WhatsApp message id
-    "messageType": "conversation", // message source type
-    "pushName": "Name", // WhatsApp account name
-    "instanceId": 12 // id of the WhatsApp instance linked to the API
+    "number": "123@broadcast",
+    "options": {
+      "externalAttributes": "<any> - optional",
+      "delay": 1200,
+      "presence": "composing"
+    },
+    "textMessage": {
+      "text": "text"
+    }
   }
   ```
 
-### Feedback and Support
-We encourage feedback on this release. For support or suggestions, contact us through our official channels.
+* Endpoint: 
+  1. [`/instance/fetchInstance/:instanceName`](https://codechat.postman.co/workspace/CodeChat---WhatsApp-API~711de4ae-a523-49de-be87-14db61ee9b68/request/14064846-e46d52a1-d194-4786-8026-890b6e12b531?action=share&source=copy-link&creator=14064846&ctx=documentation)
+  2. [`/message/sendList/legacy/:instanceName`](https://codechat.postman.co/workspace/CodeChat---WhatsApp-API~711de4ae-a523-49de-be87-14db61ee9b68/request/14064846-8b1ce807-e83c-4073-92b2-666f96e375f6?action=share&source=copy-link&creator=14064846&ctx=documentation)

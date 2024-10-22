@@ -45,7 +45,8 @@
  */
 
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
-import { v4 } from 'uuid';
+import { title } from 'process';
+import { ulid } from 'ulid';
 
 const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
   const properties = {};
@@ -68,7 +69,7 @@ const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
 
 // Instance Schema
 export const instanceNameSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     instanceName: { type: 'string', minLength: 1 },
@@ -78,7 +79,7 @@ export const instanceNameSchema: JSONSchema7 = {
 };
 
 export const oldTokenSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     oldToken: { type: 'string' },
@@ -99,6 +100,7 @@ const optionsSchema: JSONSchema7 = {
       enum: ['unavailable', 'available', 'composing', 'recording', 'paused'],
     },
     quotedMessageId: { type: 'integer', description: 'Enter the message id' },
+    messageId: { type: 'string', description: 'Set your own id for the message.' },
   },
 };
 
@@ -109,7 +111,7 @@ const numberDefinition: JSONSchema7Definition = {
 };
 
 export const textMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
@@ -127,7 +129,7 @@ export const textMessageSchema: JSONSchema7 = {
 };
 
 export const mediaMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
@@ -135,7 +137,10 @@ export const mediaMessageSchema: JSONSchema7 = {
     mediaMessage: {
       type: 'object',
       properties: {
-        mediatype: { type: 'string', enum: ['image', 'document', 'video', 'audio'] },
+        mediatype: {
+          type: 'string',
+          enum: ['image', 'document', 'video', 'audio', 'sticker'],
+        },
         media: { type: 'string' },
         fileName: { type: 'string' },
         caption: { type: 'string' },
@@ -148,12 +153,15 @@ export const mediaMessageSchema: JSONSchema7 = {
 };
 
 export const mediaFileMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
     caption: { type: 'string' },
-    mediatype: { type: 'string', enum: ['image', 'document', 'video', 'audio'] },
+    mediatype: {
+      type: 'string',
+      enum: ['image', 'document', 'video', 'audio', 'sticker'],
+    },
     presence: { type: 'string', enum: ['composing', 'recording'] },
     delay: { type: 'string' },
   },
@@ -162,7 +170,7 @@ export const mediaFileMessageSchema: JSONSchema7 = {
 };
 
 export const audioMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
@@ -180,7 +188,7 @@ export const audioMessageSchema: JSONSchema7 = {
 };
 
 export const audioFileMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
@@ -191,7 +199,7 @@ export const audioFileMessageSchema: JSONSchema7 = {
 };
 
 export const locationMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
@@ -211,8 +219,142 @@ export const locationMessageSchema: JSONSchema7 = {
   required: ['number', 'locationMessage'],
 };
 
+export const buttonsMessageSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    buttonsMessage: {
+      type: 'object',
+      properties: {
+        thumbnailUrl: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        footer: { type: 'string' },
+        buttons: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              type: {
+                type: 'string',
+                enum: ['reply', 'copy', 'url', 'call'],
+              },
+              displayText: { type: 'string' },
+              id: { type: 'string' },
+              url: { type: 'string' },
+              phoneNumber: { type: 'string' },
+            },
+            required: ['type', 'displayText'],
+            ...isNotEmpty('id', 'url', 'phoneNumber'),
+          },
+        },
+      },
+      required: ['title', 'buttons'],
+      ...isNotEmpty('thumbnailUrl', 'footer', 'description'),
+    },
+  },
+  required: ['number', 'buttonsMessage'],
+};
+
+export const listMessageSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    listMessage: {
+      type: 'object',
+      properties: {
+        thumbnailUrl: { type: 'string' },
+        title: { type: 'string' },
+        description: { type: 'string' },
+        footer: { type: 'string' },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              buttonText: { type: 'string' },
+              list: {
+                type: 'array',
+                properties: {
+                  title: { type: 'string' },
+                  rows: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        header: { type: 'string' },
+                        title: { type: 'string' },
+                        description: { type: 'string' },
+                        id: { type: 'string' },
+                      },
+                      required: ['title'],
+                      ...isNotEmpty('header', 'description', 'id'),
+                    },
+                  },
+                },
+                required: ['title', 'rows'],
+              },
+            },
+            required: ['buttonText', 'list'],
+          },
+        },
+      },
+      required: ['title', 'sections'],
+      ...isNotEmpty('thumbnailUrl', 'footer', 'description'),
+    },
+  },
+  required: ['number', 'listMessage'],
+};
+
+export const listMessageLegacySchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    listMessage: {
+      type: 'object',
+      properties: {
+        title: { type: 'string' },
+        description: { type: 'string' },
+        footer: { type: 'string' },
+        buttonText: { type: 'string' },
+        sections: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              title: { type: 'string' },
+              rows: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' },
+                    descriprion: { type: 'string' },
+                    rowId: { type: 'string' },
+                  },
+                  required: ['title'],
+                },
+              },
+            },
+            required: ['title', 'rows'],
+          },
+        },
+      },
+      required: ['title', 'sections'],
+      ...isNotEmpty('footer', 'description', 'buttonText'),
+    },
+  },
+  required: ['number', 'listMessage'],
+};
+
 export const contactMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { ...numberDefinition },
@@ -242,7 +384,7 @@ export const contactMessageSchema: JSONSchema7 = {
 };
 
 export const reactionMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     reactionMessage: {
@@ -267,9 +409,31 @@ export const reactionMessageSchema: JSONSchema7 = {
   required: ['reactionMessage'],
 };
 
+export const sendLinkSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    linkMessage: {
+      type: 'object',
+      properties: {
+        text: { type: 'string' },
+        link: { type: 'string' },
+        description: { type: 'string' },
+        title: { type: 'string' },
+        thumbnailUrl: { type: 'string' },
+      },
+      required: ['link'],
+      ...isNotEmpty('text', 'link', 'description', 'title', 'thumbnailUrl'),
+    },
+  },
+  required: ['linkMessage', 'number'],
+};
+
 // Chat Schema
 export const whatsappNumberSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     numbers: {
@@ -286,7 +450,7 @@ export const whatsappNumberSchema: JSONSchema7 = {
 };
 
 export const readMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     readMessages: {
@@ -308,7 +472,7 @@ export const readMessageSchema: JSONSchema7 = {
 };
 
 export const readMessageForIdSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     ids: {
@@ -324,7 +488,7 @@ export const readMessageForIdSchema: JSONSchema7 = {
 };
 
 export const updatePresenceSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     presence: {
@@ -337,7 +501,7 @@ export const updatePresenceSchema: JSONSchema7 = {
 };
 
 export const archiveChatSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     lastMessage: {
@@ -364,7 +528,7 @@ export const archiveChatSchema: JSONSchema7 = {
 };
 
 export const deleteMessageSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     id: { type: 'string', pattern: '\\d+', minLength: 1 },
@@ -374,7 +538,7 @@ export const deleteMessageSchema: JSONSchema7 = {
 };
 
 export const contactValidateSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     where: {
@@ -388,7 +552,7 @@ export const contactValidateSchema: JSONSchema7 = {
 };
 
 export const profilePictureSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     number: { type: 'string' },
@@ -397,7 +561,7 @@ export const profilePictureSchema: JSONSchema7 = {
 };
 
 export const rejectCallSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     callId: { type: 'string' },
@@ -408,7 +572,7 @@ export const rejectCallSchema: JSONSchema7 = {
 };
 
 export const messageValidateSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     where: {
@@ -441,7 +605,7 @@ export const messageValidateSchema: JSONSchema7 = {
 };
 
 export const mediaUrlSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     id: { type: 'string', pattern: '\\d+', minLength: 1 },
@@ -452,7 +616,7 @@ export const mediaUrlSchema: JSONSchema7 = {
 
 // Group Schema
 export const createGroupSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     subject: { type: 'string' },
@@ -475,7 +639,7 @@ export const createGroupSchema: JSONSchema7 = {
 };
 
 export const groupJidSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     groupJid: { type: 'string', pattern: '^[\\d-]+@g.us$' },
@@ -485,7 +649,7 @@ export const groupJidSchema: JSONSchema7 = {
 };
 
 export const updateParticipantsSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     groupJid: { type: 'string' },
@@ -510,7 +674,7 @@ export const updateParticipantsSchema: JSONSchema7 = {
 };
 
 export const updateGroupPicture: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     groupJid: { type: 'string' },
@@ -522,7 +686,7 @@ export const updateGroupPicture: JSONSchema7 = {
 
 // Webhook Schema
 export const webhookSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     url: { type: 'string' },
@@ -550,6 +714,8 @@ export const webhookSchema: JSONSchema7 = {
         statusInstance: { type: 'boolean', enum: [true, false] },
         refreshToken: { type: 'boolean', enum: [true, false] },
         callUpsert: { type: 'boolean', enum: [true, false] },
+        labelsAssociation: { type: 'boolean', enum: [true, false] },
+        labelsEdit: { type: 'boolean', enum: [true, false] },
       },
     },
   },
@@ -559,7 +725,7 @@ export const webhookSchema: JSONSchema7 = {
 
 // MinIO Schema
 export const s3MediaSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     id: { type: 'integer' },
@@ -570,7 +736,7 @@ export const s3MediaSchema: JSONSchema7 = {
 };
 
 export const s3MediaUrlSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     id: { type: 'string', pattern: '\\d+', minLength: 1 },
@@ -582,7 +748,7 @@ export const s3MediaUrlSchema: JSONSchema7 = {
 
 // Typebot Schema
 export const typebotSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     publicId: { type: 'string' },
@@ -594,7 +760,7 @@ export const typebotSchema: JSONSchema7 = {
 };
 
 export const typebotUpdateSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     publicId: { type: 'string' },
@@ -605,7 +771,7 @@ export const typebotUpdateSchema: JSONSchema7 = {
 };
 
 export const typebotUpdateSessionSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     sessionId: { type: 'string' },
@@ -616,7 +782,7 @@ export const typebotUpdateSessionSchema: JSONSchema7 = {
 };
 
 export const typebotFindSessionSchema: JSONSchema7 = {
-  $id: v4(),
+  $id: ulid(),
   type: 'object',
   properties: {
     sessionId: { type: 'string' },

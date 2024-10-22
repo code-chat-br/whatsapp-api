@@ -40,7 +40,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { isBooleanString } from 'class-validator';
+import { isBooleanString, isEmpty } from 'class-validator';
 import { config } from 'dotenv';
 
 config();
@@ -70,6 +70,7 @@ export type DBOptions = {
   CONTACTS: boolean;
   CHATS: boolean;
   LOGS: boolean;
+  ACTIVITY_LOGS: boolean;
 };
 
 export type StoreConf = {
@@ -87,15 +88,18 @@ export type Database = {
   DB_OPTIONS: DBOptions;
 };
 
-export type Redis = {
+export type ProviderSession = {
   ENABLED: boolean;
-  URI: string;
-  PREFIX_KEY: string;
+  HOST: string;
+  PORT: string;
+  PREFIX: string;
 };
 
 export type QrCode = {
   LIMIT: number;
   EXPIRATION_TIME: number;
+  LIGHT_COLOR: string;
+  DARK_COLOR: string;
 };
 
 export type Jwt = { EXPIRIN_IN: number; SECRET: string };
@@ -111,7 +115,7 @@ export interface Env {
   SERVER: HttpServer;
   STORE: StoreConf;
   DATABASE: Database;
-  REDIS: Redis;
+  PROVIDER: ProviderSession;
   LOG: Log;
   INSTANCE_EXPIRATION_TIME: InstanceExpirationTime;
   GLOBAL_WEBHOOK: GlobalWebhook;
@@ -122,6 +126,7 @@ export interface Env {
   PRODUCTION?: boolean;
   SESSION_SECRET: string;
   S3?: Bucket;
+  WA_VERSION: string;
 }
 
 export type Key = keyof Env;
@@ -147,6 +152,12 @@ export class ConfigService {
           'The bucket is disabled or the database is not configured to save new messages',
         );
       }
+    }
+
+    if (isEmpty(this.env.WA_VERSION)) {
+      throw new Error(
+        'The WhatsApp version must be specified in the environment variables.\n\nDefault variable [file: .env]: WA_VERSION=[ 2, 3000, 1015901307 ]\n',
+      );
     }
   }
 
@@ -174,20 +185,25 @@ export class ConfigService {
           CONTACTS: process.env?.DATABASE_SAVE_DATA_CONTACTS === 'true',
           CHATS: process.env?.DATABASE_SAVE_DATA_CHATS === 'true',
           LOGS: process.env?.DATABASE_SAVE_LOGS === 'true',
+          ACTIVITY_LOGS: process.env?.DATABASE_SAVE_ACTIVITY_LOGS
+            ? process.env?.DATABASE_SAVE_ACTIVITY_LOGS === 'true'
+            : true,
         },
       },
-      REDIS: {
-        ENABLED: process.env?.REDIS_ENABLED === 'true',
-        URI: process.env.REDIS_URI,
-        PREFIX_KEY: process.env?.REDIS_PREFIX || 'codechat_v1',
+      PROVIDER: {
+        ENABLED: process.env?.PROVIDER_ENABLED === 'true',
+        HOST: process.env.PROVIDER_HOST,
+        PORT: process.env?.PROVIDER_PORT || '5656',
+        PREFIX: process.env?.PROVIDER_PREFIX,
       },
       LOG: {
         LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],
         COLOR: process.env?.LOG_COLOR === 'true',
       },
-      INSTANCE_EXPIRATION_TIME: isBooleanString(process.env?.DEL_INSTANCE)
-        ? process.env.DEL_INSTANCE === 'true'
-        : Number.parseInt(process.env?.DEL_INSTANCE || '5'),
+      INSTANCE_EXPIRATION_TIME:
+        process.env?.INSTANCE_EXPIRATION_TIME === 'false'
+          ? false
+          : Number.parseInt(process.env?.INSTANCE_EXPIRATION_TIME || '5'),
       GLOBAL_WEBHOOK: {
         URL: process.env?.WEBHOOK_GLOBAL_URL,
         ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',
@@ -199,6 +215,12 @@ export class ConfigService {
       QRCODE: {
         LIMIT: Number.parseInt(process.env?.QRCODE_LIMIT || '10'),
         EXPIRATION_TIME: Number.parseInt(process.env?.QRCODE_EXPIRATION_TIME || '60'),
+        LIGHT_COLOR: process.env?.QRCODE_LIGHT_COLOR
+          ? process.env?.QRCODE_LIGHT_COLOR
+          : '#ffffff',
+        DARK_COLOR: process.env?.QRCODE_DARK_COLOR
+          ? process.env?.QRCODE_DARK_COLOR
+          : '#198754',
       },
       CONNECTION_TIMEOUT: Number.parseInt(process.env?.CONNECTION_TIMEOUT || '300'),
       AUTHENTICATION: {
@@ -222,6 +244,7 @@ export class ConfigService {
         PORT: Number.parseInt(process.env?.S3_PORT || '9000'),
         USE_SSL: process.env?.S3_USE_SSL === 'true',
       },
+      WA_VERSION: process.env?.WA_VERSION,
     };
   }
 }
