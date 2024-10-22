@@ -1814,7 +1814,7 @@ export class WAStartupService {
                 },
               ],
             },
-          },
+          } as any,
           message.keyRemoteJid,
         );
       }
