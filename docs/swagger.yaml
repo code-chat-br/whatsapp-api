@@ -101,7 +101,7 @@ servers:
   - url: https://{{prod_host}} 
     variables:
       prod_host:
-        default: apiv1.codechat.dev
+        default: wp.yonlead.com.br
   - url: http://{{dev_host}}
     variables:
       dev_host:
