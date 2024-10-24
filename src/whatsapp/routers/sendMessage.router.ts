@@ -96,7 +96,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendText(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendMedia'), ...guards, async (req, res) => {
       const response = await dataValidate<SendMediaDto>({
@@ -105,7 +105,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendMedia(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(
       routerPath('sendMediaFile'),
@@ -119,7 +119,7 @@ export function MessageRouter(
           execute: (instance, data, file) =>
             sendMessageController.sendMediaFile(instance, data, file),
         });
-        return res.status(HttpStatus.CREATED).json(response);
+        res.status(HttpStatus.CREATED).json(response);
       },
     )
     .post(routerPath('sendWhatsAppAudio'), ...guards, async (req, res) => {
@@ -130,7 +130,7 @@ export function MessageRouter(
           sendMessageController.sendWhatsAppAudio(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(
       routerPath('sendWhatsAppAudioFile'),
@@ -144,7 +144,7 @@ export function MessageRouter(
           execute: (instance, data, file) =>
             sendMessageController.sendWhatsAppAudioFile(instance, data, file),
         });
-        return res.status(HttpStatus.CREATED).json(response);
+        res.status(HttpStatus.CREATED).json(response);
       },
     )
     .post(routerPath('sendLocation'), ...guards, async (req, res) => {
@@ -154,7 +154,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendLocation(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendContact'), ...guards, async (req, res) => {
       const response = await dataValidate<SendContactDto>({
@@ -163,7 +163,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendContact(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendReaction'), ...guards, async (req, res) => {
       const response = await dataValidate<SendReactionDto>({
@@ -172,7 +172,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendReaction(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendButtons'), ...guards, async (req, res) => {
       const response = await dataValidate<SendButtonsDto>({
@@ -194,7 +194,7 @@ export function MessageRouter(
         },
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendList'), ...guards, async (req, res) => {
       const response = await dataValidate<SendListDto>({
@@ -209,7 +209,7 @@ export function MessageRouter(
         },
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendList/legacy'), ...guards, async (req, res) => {
       const response = await dataValidate<SendListLegacyDto>({
@@ -227,7 +227,7 @@ export function MessageRouter(
         },
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendLink'), ...guards, async (req, res) => {
       const response = await dataValidate<SendLinkDto>({
@@ -237,7 +237,7 @@ export function MessageRouter(
           sendMessageController.sendLinkPreview(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     });
 
   return router;

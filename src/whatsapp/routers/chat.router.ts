@@ -75,7 +75,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.whatsappNumber(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .put(routerPath('markMessageAsRead'), ...guards, async (req, res) => {
       const response = await dataValidate<ReadMessageDto>({
@@ -84,7 +84,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.readMessage(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .patch(routerPath('readMessages'), ...guards, async (req, res) => {
       const response = await dataValidate<ReadMessageIdDto>({
@@ -93,7 +93,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.readMessagesForId(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .patch(routerPath('updatePresence'), ...guards, async (req, res) => {
       const response = await dataValidate<UpdatePresenceDto>({
@@ -102,7 +102,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.updatePresence(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .put(routerPath('archiveChat'), ...guards, async (req, res) => {
       const response = await dataValidate<ArchiveChatDto>({
@@ -111,7 +111,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.archiveChat(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .delete(routerPath('deleteMessageForEveryone'), ...guards, async (req, res) => {
       const response = await dataValidate<DeleteMessage>({
@@ -120,7 +120,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.deleteMessage(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .delete(routerPath('deleteMessage'), ...guards, async (req, res) => {
       const response = await dataValidate<DeleteMessage>({
@@ -129,17 +129,17 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.deleteMessage(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .delete(routerPath('deleteChat'), ...guards, async (req, res) => {
       const instance = req.params as unknown as InstanceDto;
       const query = req.query as Record<string, string>;
       if (!query?.chatId) {
-        return res.status(HttpStatus.BAD_REQUEST).json({ message: 'chatId is required' });
+        res.status(HttpStatus.BAD_REQUEST).json({ message: 'chatId is required' });
       }
       const response = await chatController.deleteChat(instance, query?.chatId);
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .post(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
       const response = await dataValidate<NumberDto>({
@@ -148,7 +148,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.fetchProfilePicture(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('fetchProfilePictureUrl'), ...guards, async (req, res) => {
       const response = await dataValidate<NumberDto>({
@@ -157,7 +157,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.fetchProfilePicture(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .post(routerPath('findContacts'), ...guards, async (req, res) => {
       const response = await dataValidate<Query<Contact>>({
@@ -166,7 +166,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.fetchContacts(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     // @deprecated
     .post(routerPath('retrieverMediaMessage'), ...guards, async (req, res) => {
@@ -251,7 +251,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.fetchMessages(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('findChats'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -261,7 +261,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
           chatController.fetchChats(instance, req.query?.type as string),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .post(routerPath('rejectCall'), ...guards, async (req, res) => {
       const response = await dataValidate<RejectCallDto>({
@@ -270,7 +270,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.rejectCall(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .post(routerPath('assertSessions'), ...guards, async (req, res) => {
       const response = await dataValidate<WhatsAppNumberDto>({
@@ -279,7 +279,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.assertSessions(instance, data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     });
 
   return router;
