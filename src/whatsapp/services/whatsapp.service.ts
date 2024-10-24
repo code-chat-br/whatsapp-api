@@ -1407,6 +1407,20 @@ export class WAStartupService {
 
   private async prepareMediaMessage(mediaMessage: MediaMessage & { mimetype?: string }) {
     try {
+      if (typeof mediaMessage.media === 'string') {
+        const fileKeys = mediaMessage.media.replace(
+          /https:\/\/.*\.s3\.amazonaws\.com\//,
+          '',
+        );
+        // O serviço https://github.com/flipfloplab/s3_bucket_object_downloader
+        // Deve estar rodando na máquina do Codechat - e estar ligado na porta 8085
+        const downloaderUrl = `http://localhost:8085/file/${fileKeys}`;
+        mediaMessage.media = (
+          await axios.get(downloaderUrl, {
+            responseType: 'arraybuffer',
+          })
+        ).data;
+      }
       const prepareMedia = await prepareWAMessageMedia(
         {
           [mediaMessage.mediatype]: isURL(mediaMessage.media as string)
