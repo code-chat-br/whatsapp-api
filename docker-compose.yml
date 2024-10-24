@@ -65,5 +65,8 @@ services:
       - public-network
 
 volumes:
+  # In terminal run: docker volume create --name=instances_connecteds
   instances_connecteds:
+    external:
+      name: instances_connecteds
     driver: local

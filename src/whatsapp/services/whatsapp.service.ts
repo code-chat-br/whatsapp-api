@@ -78,7 +78,6 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { lstat, readFileSync } from 'fs';
 import { join } from 'path';
 import axios, { AxiosError } from 'axios';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
@@ -89,6 +88,7 @@ import { release } from 'os';
 import P from 'pino';
 import {
   AudioMessageFileDto,
+  Button,
   ContactMessage,
   MediaFileDto,
   MediaMessage,
@@ -138,6 +138,10 @@ import { ProviderFiles } from '../../provider/sessions';
 import { Websocket } from '../../websocket/server';
 import { ulid } from 'ulid';
 import { isValidUlid } from '../../validate/ulid';
+import sharp from 'sharp';
+import ffmpeg from 'fluent-ffmpeg';
+import { PassThrough, Stream } from 'stream';
+import { readFileSync } from 'fs';
 
 type InstanceQrCode = {
   count: number;
@@ -814,7 +818,7 @@ export class WAStartupService {
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
-        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE && type === 'notify') {
+        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
           const { id } = await this.repository.message.create({ data: messageRaw });
           messageRaw.id = id;
         }
@@ -1315,14 +1319,69 @@ export class WAStartupService {
     );
   }
 
+  private async generateVideoThumbnailFromStream<T = string>(
+    video: T,
+    timeInSeconds = '0',
+  ): Promise<Buffer> {
+    return new Promise((resolve, reject) => {
+      const thumbnailStream = new PassThrough();
+      const chunks = [];
+
+      let input: PassThrough | T = video;
+
+      if (Buffer.isBuffer(video)) {
+        input = new PassThrough();
+        (input as PassThrough).end(video);
+      }
+
+      ffmpeg(input as any)
+        .inputOptions(['-ss', timeInSeconds])
+        .outputOptions('-frames:v 1')
+        .outputFormat('image2pipe')
+        .on('start', (commandLine) => {
+          console.log('FFmpeg command: ' + commandLine); // Verificar o comando que está sendo executado
+        })
+        .on('error', (err) => {
+          reject(new Error(`Erro ao gerar thumbnail: ${err.message}`));
+        })
+        .on('end', () => {
+          resolve(Buffer.concat(chunks));
+        })
+        .pipe(thumbnailStream, { end: true });
+
+      thumbnailStream.on('data', (chunk) => chunks.push(chunk));
+    });
+  }
+
   private async prepareMediaMessage(mediaMessage: MediaMessage & { mimetype?: string }) {
     try {
+      let preview: Buffer;
+      let media: Buffer;
+      let mimetype = mediaMessage.mimetype;
+      if (isURL(mediaMessage.media as string)) {
+        const response = await axios.get(mediaMessage.media as string, {
+          responseType: 'arraybuffer',
+        });
+
+        media = response.data;
+        mimetype = response.headers['content-type'];
+        if (mediaMessage.mediatype === 'image') {
+          preview = response.data;
+        }
+      } else {
+        media = mediaMessage.media as Buffer;
+      }
+
+      if (mediaMessage.mediatype === 'video') {
+        try {
+          preview = await this.generateVideoThumbnailFromStream(media);
+        } catch (error) {
+          preview = readFileSync(join(ROOT_DIR, 'public', 'images', 'video-cover.png'));
+        }
+      }
+
       const prepareMedia = await prepareWAMessageMedia(
-        {
-          [mediaMessage.mediatype]: isURL(mediaMessage.media as string)
-            ? { url: mediaMessage.media }
-            : (mediaMessage.media as Buffer),
-        } as any,
+        { [mediaMessage.mediatype]: media } as any,
         { upload: this.client.waUploadToServer },
       );
 
@@ -1334,16 +1393,10 @@ export class WAStartupService {
         mediaMessage.fileName = arrayMatch[1];
       }
 
-      let mimetype: string | boolean;
-
-      if (typeof mediaMessage.media === 'string' && isURL(mediaMessage.media)) {
-        mimetype = mime.lookup(mediaMessage.media);
+      if (mediaMessage?.fileName) {
         if (!mimetype) {
-          const head = await axios.head(mediaMessage.media as string);
-          mimetype = head.headers['content-type'];
+          mimetype = mime.lookup(mediaMessage.fileName) as string;
         }
-      } else {
-        mimetype = mime.lookup(mediaMessage.fileName);
       }
 
       prepareMedia[mediaType].caption = mediaMessage?.caption;
@@ -1355,10 +1408,17 @@ export class WAStartupService {
       }
 
       if (mediaMessage.mediatype === 'video') {
-        prepareMedia[mediaType].jpegThumbnail = Uint8Array.from(
-          readFileSync(join(process.cwd(), 'public', 'images', 'video-cover.png')),
-        );
+        prepareMedia[mediaType].jpegThumbnail = preview;
         prepareMedia[mediaType].gifPlayback = false;
+      }
+
+      if (mediaMessage.mediatype === 'image') {
+        const p = await sharp(preview)
+          .resize(320, 240, { fit: 'contain' })
+          .toFormat('jpeg', { quality: 80 })
+          .toBuffer();
+
+        prepareMedia.imageMessage.jpegThumbnail = p;
       }
 
       return generateWAMessageFromContent(
@@ -1367,7 +1427,14 @@ export class WAStartupService {
         { userJid: this.instance.ownerJid },
       );
     } catch (error) {
-      this.logger.error(error);
+      const axiosError = error as AxiosError;
+      this.logger.error(axiosError?.message);
+
+      if (axiosError?.isAxiosError) {
+        const err = Buffer.from(axiosError?.response?.data as any).toString('utf-8');
+        throw new BadRequestException(axiosError?.message, err);
+      }
+
       throw new InternalServerErrorException(error?.toString() || error);
     }
   }

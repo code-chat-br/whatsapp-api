@@ -64,9 +64,6 @@ export class SendMessageController {
     if (isBase64(data?.mediaMessage?.media)) {
       throw new BadRequestException('Owned media must be a url');
     }
-    if (data?.mediaMessage.mediatype === 'document' && !data?.mediaMessage?.fileName) {
-      throw new BadRequestException('Enter the file name for the "document" type.');
-    }
     if (isURL(data?.mediaMessage?.media as string)) {
       return await this.waMonitor.waInstances.get(instanceName).mediaMessage(data);
     }
