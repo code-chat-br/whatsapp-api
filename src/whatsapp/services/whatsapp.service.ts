@@ -1411,7 +1411,7 @@ export class WAStartupService {
       }
 
       if (mediaMessage.mediatype === 'image') {
-        const p = await sharp(preview)
+        const p = await sharp(preview || media)
           .resize(320, 240, { fit: 'contain' })
           .toFormat('jpeg', { quality: 80 })
           .toBuffer();
@@ -1426,12 +1426,13 @@ export class WAStartupService {
       );
     } catch (error) {
       const axiosError = error as AxiosError;
-      this.logger.error(axiosError?.message);
-
       if (axiosError?.isAxiosError) {
+        this.logger.error(axiosError?.message);
         const err = Buffer.from(axiosError?.response?.data as any).toString('utf-8');
         throw new BadRequestException(axiosError?.message, err);
       }
+
+      this.logger.error(error);
 
       throw new InternalServerErrorException(error?.toString() || error);
     }
