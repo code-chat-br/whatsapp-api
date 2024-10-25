@@ -1394,9 +1394,7 @@ export class WAStartupService {
       }
 
       if (mediaMessage?.fileName) {
-        if (!mimetype) {
-          mimetype = mime.lookup(mediaMessage.fileName) as string;
-        }
+        mimetype = mime.lookup(mediaMessage.fileName) as string;
       }
 
       prepareMedia[mediaType].caption = mediaMessage?.caption;
