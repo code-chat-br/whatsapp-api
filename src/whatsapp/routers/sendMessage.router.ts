@@ -69,6 +69,9 @@ import { isEmpty } from 'class-validator';
 import { HttpStatus } from '../../app.module';
 import { SendMessageController } from '../controllers/sendMessage.controller';
 import { routerPath, dataValidate } from '../../validate/router.validate';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { ROOT_DIR } from '../../config/path.config';
 
 function validateMedia(req: Request, _: Response, next: NextFunction) {
   if (!req?.file || req.file.fieldname !== 'attachment') {
@@ -86,6 +89,11 @@ export function MessageRouter(
   sendMessageController: SendMessageController,
   ...guards: RequestHandler[]
 ) {
+  const uploadPath = join(ROOT_DIR, 'uploads');
+  if (!existsSync(uploadPath)) {
+    mkdirSync(uploadPath);
+  }
+
   const uploadFile = multer({ preservePath: true });
 
   const router = Router()
@@ -116,8 +124,10 @@ export function MessageRouter(
         const response = await dataValidate<MediaFileDto>({
           request: req,
           schema: mediaFileMessageSchema,
-          execute: (instance, data, file) =>
-            sendMessageController.sendMediaFile(instance, data, file),
+          execute: (instance, data, file) => {
+            writeFileSync(join(uploadPath, file.originalname), file.buffer);
+            return sendMessageController.sendMediaFile(instance, data, file.originalname);
+          },
         });
         res.status(HttpStatus.CREATED).json(response);
       },
@@ -141,8 +151,14 @@ export function MessageRouter(
         const response = await dataValidate<AudioMessageFileDto>({
           request: req,
           schema: audioFileMessageSchema,
-          execute: (instance, data, file) =>
-            sendMessageController.sendWhatsAppAudioFile(instance, data, file),
+          execute: (instance, data, file) => {
+            writeFileSync(join(uploadPath, file.originalname), file.buffer);
+            return sendMessageController.sendWhatsAppAudioFile(
+              instance,
+              data,
+              file.originalname,
+            );
+          },
         });
         res.status(HttpStatus.CREATED).json(response);
       },

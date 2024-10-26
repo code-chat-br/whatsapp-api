@@ -64,6 +64,11 @@ export class SendMessageController {
     if (isBase64(data?.mediaMessage?.media)) {
       throw new BadRequestException('Owned media must be a url');
     }
+    if (data.mediaMessage.mediatype === 'document' && !data.mediaMessage?.fileName) {
+      throw new BadRequestException(
+        'The "fileName" property must be provided for documents',
+      );
+    }
     if (isURL(data?.mediaMessage?.media as string)) {
       return await this.waMonitor.waInstances.get(instanceName).mediaMessage(data);
     }
@@ -72,7 +77,7 @@ export class SendMessageController {
   public async sendMediaFile(
     { instanceName }: InstanceDto,
     data: MediaFileDto,
-    file: Express.Multer.File,
+    fileName: string,
   ) {
     if (data?.delay && !isNumberString(data.delay)) {
       throw new BadRequestException('The "delay" property must have an integer.');
@@ -81,7 +86,7 @@ export class SendMessageController {
     }
     return await this.waMonitor.waInstances
       .get(instanceName)
-      .mediaFileMessage(data, file);
+      .mediaFileMessage(data, fileName);
   }
 
   public async sendWhatsAppAudio({ instanceName }: InstanceDto, data: SendAudioDto) {
@@ -98,16 +103,19 @@ export class SendMessageController {
   public async sendWhatsAppAudioFile(
     { instanceName }: InstanceDto,
     data: AudioMessageFileDto,
-    file: Express.Multer.File,
+    fileName: string,
   ) {
     if (data?.delay && !isNumberString(data.delay)) {
       throw new BadRequestException('The "delay" property must have an integer.');
     } else {
       data.delay = Number.parseInt(data?.delay as never);
     }
+    if (data?.convertAudio) {
+      data.convertAudio = data.convertAudio === 'true';
+    }
     return await this.waMonitor.waInstances
       .get(instanceName)
-      .audioWhatsAppFile(data, file);
+      .audioWhatsAppFile(data, fileName);
   }
 
   public async sendLocation({ instanceName }: InstanceDto, data: SendLocationDto) {

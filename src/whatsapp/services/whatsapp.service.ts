@@ -78,7 +78,7 @@ import {
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { join } from 'path';
+import { join, normalize } from 'path';
 import axios, { AxiosError } from 'axios';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
@@ -141,7 +141,14 @@ import { isValidUlid } from '../../validate/ulid';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
 import { PassThrough, Stream } from 'stream';
-import { readFileSync } from 'fs';
+import {
+  accessSync,
+  constants,
+  existsSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
 
 type InstanceQrCode = {
   count: number;
@@ -1338,46 +1345,157 @@ export class WAStartupService {
         .inputOptions(['-ss', timeInSeconds])
         .outputOptions('-frames:v 1')
         .outputFormat('image2pipe')
-        .on('start', (commandLine) => {
-          console.log('FFmpeg command: ' + commandLine); // Verificar o comando que está sendo executado
+        .on('start', () => {
+          thumbnailStream.on('data', (chunk) => chunks.push(chunk));
         })
         .on('error', (err) => {
-          reject(new Error(`Erro ao gerar thumbnail: ${err.message}`));
+          reject(new Error(`Error generating thumbnail: ${err.message}`));
         })
         .on('end', () => {
           resolve(Buffer.concat(chunks));
         })
         .pipe(thumbnailStream, { end: true });
-
-      thumbnailStream.on('data', (chunk) => chunks.push(chunk));
     });
   }
 
-  private async prepareMediaMessage(mediaMessage: MediaMessage & { mimetype?: string }) {
+  private async convertAudioToWH(
+    inputPath: string,
+    format: { input?: string; to?: string } = { input: 'mp3', to: 'aac' },
+  ) {
+    return new Promise<Buffer>((resolve, reject) => {
+      if (!existsSync(inputPath)) {
+        reject(new Error(`Input file not found: ${inputPath}`));
+        return;
+      }
+
+      try {
+        accessSync(inputPath, constants.R_OK);
+      } catch (error) {
+        reject(new Error(`No read permissions for file: ${inputPath}`));
+        return;
+      }
+
+      const chunks: Buffer[] = [];
+      const audioStream = new PassThrough();
+      const normalizedPath = normalize(inputPath);
+
+      const inputFormat =
+        format.input === 'mpga' || 'bin'
+          ? 'mp3'
+          : format.input === 'oga'
+            ? 'ogg'
+            : format.input;
+      const audioCodec = format.to === 'ogg' ? 'libvorbis' : 'aac';
+      const outputFormat = format.to === 'ogg' ? 'ogg' : 'adts';
+
+      const command = ffmpeg(normalizedPath)
+        .inputFormat(inputFormat)
+        .audioCodec(audioCodec)
+        .outputFormat(outputFormat);
+
+      command
+        .on('start', (commandLine) => {
+          console.log('FFmpeg started with command:', commandLine);
+          audioStream.on('data', (chunk) => chunks.push(chunk));
+        })
+        .on('error', (err, stdout, stderr) => {
+          console.error('FFmpeg error:', err.message);
+          console.error('FFmpeg stderr:', stderr);
+
+          ffmpeg(normalizedPath)
+            .inputFormat(inputFormat)
+            .outputFormat('wav')
+            .on('end', () => {
+              console.log('Converted to WAV, retrying final conversion...');
+              const intermediatePath = normalizedPath.replace(/\.[^/.]+$/, '.wav');
+              const secondCommand = ffmpeg(intermediatePath)
+                .audioCodec(audioCodec)
+                .outputFormat(outputFormat);
+
+              secondCommand
+                .on('error', (err2, stdout2, stderr2) => {
+                  console.error('Second FFmpeg error:', err2.message);
+                  reject(
+                    new Error(
+                      `Final conversion failed: ${err2.message}\nFFmpeg stderr: ${stderr2}`,
+                    ),
+                  );
+                })
+                .on('end', () => {
+                  console.log('Final conversion to target format successful');
+                  resolve(Buffer.concat(chunks));
+                })
+                .pipe(audioStream, { end: true });
+            })
+            .on('error', (err1) =>
+              reject(new Error(`WAV conversion failed: ${err1.message}`)),
+            )
+            .pipe(audioStream, { end: true });
+        })
+        .on('end', () => {
+          console.log('FFmpeg processing finished');
+          resolve(Buffer.concat(chunks));
+        })
+        .pipe(audioStream, { end: true });
+    });
+  }
+
+  private async prepareMediaMessage(
+    mediaMessage: MediaMessage & { mimetype?: string; convert?: boolean },
+  ) {
+    const uploadPath = join(ROOT_DIR, 'uploads');
+    let fileName = join(uploadPath, mediaMessage?.fileName || '');
+
     try {
       let preview: Buffer;
       let media: Buffer;
       let mimetype = mediaMessage.mimetype;
+
+      let ext = mediaMessage.extension;
+
       if (isURL(mediaMessage.media as string)) {
         const response = await axios.get(mediaMessage.media as string, {
           responseType: 'arraybuffer',
         });
 
-        media = response.data;
         mimetype = response.headers['content-type'];
+        if (!ext) {
+          ext = mime.extension(mimetype) as string;
+        }
+
+        if (!mediaMessage?.fileName) {
+          fileName = join(uploadPath, ulid() + '.' + ext);
+        }
+
+        writeFileSync(fileName, Buffer.from(response.data));
+
         if (mediaMessage.mediatype === 'image') {
           preview = response.data;
         }
-      } else {
-        media = mediaMessage.media as Buffer;
       }
 
       if (mediaMessage.mediatype === 'video') {
         try {
-          preview = await this.generateVideoThumbnailFromStream(media);
+          preview = await this.generateVideoThumbnailFromStream(fileName);
         } catch (error) {
           preview = readFileSync(join(ROOT_DIR, 'public', 'images', 'video-cover.png'));
         }
+      }
+
+      const isAccOrOgg = /aac|ogg/.test(mediaMessage?.mimetype || mimetype);
+      if (mediaMessage.convert && isAccOrOgg) {
+        if (['ogg', 'oga'].includes(ext)) {
+          media = readFileSync(fileName);
+        } else {
+          media = await this.convertAudioToWH(fileName, {
+            input: ext as string,
+            to: 'ogg',
+          });
+        }
+      }
+
+      if (!media) {
+        media = readFileSync(fileName);
       }
 
       const prepareMedia = await prepareWAMessageMedia(
@@ -1401,7 +1519,7 @@ export class WAStartupService {
       prepareMedia[mediaType].mimetype = mediaMessage?.mimetype || mimetype;
       prepareMedia[mediaType].fileName = mediaMessage.fileName;
 
-      if (mediaMessage?.mimetype === 'audio/aac') {
+      if (isAccOrOgg) {
         prepareMedia.audioMessage.ptt = true;
       }
 
@@ -1435,10 +1553,17 @@ export class WAStartupService {
       this.logger.error(error);
 
       throw new InternalServerErrorException(error?.toString() || error);
+    } finally {
+      if (existsSync(fileName)) {
+        unlinkSync(fileName);
+      }
     }
   }
 
   public async mediaMessage(data: SendMediaDto) {
+    if (data.mediaMessage?.fileName) {
+      data.mediaMessage.extension = data.mediaMessage.fileName.split('.').pop();
+    }
     const generate = await this.prepareMediaMessage(data.mediaMessage);
 
     return await this.sendMessageWithTyping(
@@ -1448,12 +1573,14 @@ export class WAStartupService {
     );
   }
 
-  public async mediaFileMessage(data: MediaFileDto, file: Express.Multer.File) {
+  public async mediaFileMessage(data: MediaFileDto, fileName: string) {
+    const ext = fileName.split('.').pop();
     const generate = await this.prepareMediaMessage({
-      fileName: file.originalname,
-      media: file.buffer,
+      fileName: fileName,
+      media: fileName,
       mediatype: data.mediatype,
       caption: data?.caption,
+      extension: ext,
     });
 
     return await this.sendMessageWithTyping(
@@ -1471,6 +1598,7 @@ export class WAStartupService {
       media: data.audioMessage.audio,
       mimetype: 'audio/aac',
       mediatype: 'audio',
+      convert: data?.options?.convertAudio,
     });
 
     return this.sendMessageWithTyping(
@@ -1480,12 +1608,15 @@ export class WAStartupService {
     );
   }
 
-  public async audioWhatsAppFile(data: AudioMessageFileDto, file: Express.Multer.File) {
+  public async audioWhatsAppFile(data: AudioMessageFileDto, fileName: string) {
+    const ext = fileName.split('.').pop();
     const generate = await this.prepareMediaMessage({
-      fileName: file.originalname,
-      media: file.buffer,
+      fileName: fileName,
+      media: fileName,
       mediatype: 'audio',
       mimetype: 'audio/aac',
+      convert: data?.convertAudio as boolean,
+      extension: ext,
     });
 
     return this.sendMessageWithTyping(

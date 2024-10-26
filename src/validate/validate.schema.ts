@@ -45,7 +45,6 @@
  */
 
 import { JSONSchema7, JSONSchema7Definition } from 'json-schema';
-import { title } from 'process';
 import { ulid } from 'ulid';
 
 const isNotEmpty = (...propertyNames: string[]): JSONSchema7 => {
@@ -101,6 +100,7 @@ const optionsSchema: JSONSchema7 = {
     },
     quotedMessageId: { type: 'integer', description: 'Enter the message id' },
     messageId: { type: 'string', description: 'Set your own id for the message.' },
+    convertAudio: { type: 'boolean', description: 'Convert audio to ogg' },
   },
 };
 
