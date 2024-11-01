@@ -59,7 +59,6 @@ model Instance {
   Chat             Chat[]
   Contact          Contact[]
   Webhook          Webhook?
-  Typebot          Typebot?
   ActivityLogs     ActivityLogs[]
   Message          Message[]
 }
@@ -101,8 +100,6 @@ model Message {
   isGroup          Boolean?        @db.Boolean
   Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId       Int
-  TypebotSession   TypebotSession? @relation(fields: [typebotSessionId], references: [id], onDelete: Cascade)
-  typebotSessionId Int?
   MessageUpdate    MessageUpdate[]
   Media            Media?
 
@@ -158,33 +155,10 @@ model Webhook {
   instanceId Int       @unique
 }
 
-model Typebot {
-  id             Int              @id @default(autoincrement())
-  publicId       String           @db.VarChar(200)
-  typebotUrl     String           @db.VarChar(500)
-  enabled        Boolean?         @default(true) @db.Boolean
-  enableGroup    Boolean?         @default(false) @db.Boolean
-  createdAt      DateTime?        @default(now())
-  updatedAt      DateTime?        @updatedAt
-  Instance       Instance         @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  instanceId     Int              @unique
-  TypebotSession TypebotSession[]
-}
-
 enum TypebotSessionStatus {
   open
   closed
   paused
-}
-
-model TypebotSession {
-  id        Int                  @id @default(autoincrement())
-  sessionId String               @db.VarChar(200)
-  remoteJid String               @db.VarChar(100)
-  status    TypebotSessionStatus @default(open)
-  Typebot   Typebot              @relation(fields: [typebotId], references: [id], onDelete: Cascade)
-  typebotId Int
-  Message   Message[]
 }
 
 enum StartConversationAs {
