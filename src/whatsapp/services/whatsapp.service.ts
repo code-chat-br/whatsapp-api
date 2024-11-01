@@ -1453,7 +1453,9 @@ export class WAStartupService {
 
       let ext = mediaMessage.extension;
 
-      if (['http', 'https'].includes(mediaMessage.media as string)) {
+      const isURL = /http(s?):\/\//.test(mediaMessage.media as string);
+
+      if (isURL) {
         const response = await axios.get(mediaMessage.media as string, {
           responseType: 'arraybuffer',
         });
