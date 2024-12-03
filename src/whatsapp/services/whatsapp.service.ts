@@ -88,7 +88,6 @@ import { release } from 'os';
 import P from 'pino';
 import {
   AudioMessageFileDto,
-  Button,
   ContactMessage,
   MediaFileDto,
   MediaMessage,
@@ -123,7 +122,7 @@ import {
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
 import Long from 'long';
-import NodeCache, { Data } from 'node-cache';
+import NodeCache from 'node-cache';
 import {
   AuthState,
   AuthStateProvider,
@@ -140,7 +139,7 @@ import { ulid } from 'ulid';
 import { isValidUlid } from '../../validate/ulid';
 import sharp from 'sharp';
 import ffmpeg from 'fluent-ffmpeg';
-import { PassThrough, Stream } from 'stream';
+import { PassThrough } from 'stream';
 import {
   accessSync,
   constants,
@@ -2064,6 +2063,11 @@ export class WAStartupService {
             },
           }
         : ((await this.getMessage(m, true)) as proto.IWebMessageInfo);
+
+      if (msg?.message?.documentWithCaptionMessage) {
+        msg.message.documentMessage =
+          msg.message.documentWithCaptionMessage?.message.documentMessage;
+      }
 
       for (const subtype of MessageSubtype) {
         if (msg?.message?.[subtype]) {
