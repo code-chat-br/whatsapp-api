@@ -2066,7 +2066,7 @@ export class WAStartupService {
 
       if (msg?.message?.documentWithCaptionMessage) {
         msg.message.documentMessage =
-          msg.message.documentWithCaptionMessage?.message.documentMessage;
+          msg.message.documentWithCaptionMessage?.message?.documentMessage;
       }
 
       for (const subtype of MessageSubtype) {
