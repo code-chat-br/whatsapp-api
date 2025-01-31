@@ -1495,7 +1495,7 @@ paths:
         summary: Fetch Profile Picture
         description: |
           This endpoint is used to fetch the profile picture URL of a contact in a chat instance.
-          It requires the `instanceNamce` parameter in the path and the `number` parameter in the request body.
+          It requires the `instanceName` parameter in the path and the `number` parameter in the request body.
         requestBody:
           content:
             application/json:
@@ -1504,7 +1504,7 @@ paths:
                 example:
                   number: <string> - required
         parameters:
-          - name: instanceNamce
+          - name: instanceName
             in: path
             schema:
               type: string
@@ -1875,7 +1875,7 @@ paths:
         - Chat Controller
       summary: Find Chats
       parameters:
-        - name: inatnceName
+        - name: instanceName
           in: path
           schema:
             type: string
