@@ -82,7 +82,6 @@ export type EventsType =
   | 'groups.upsert'
   | 'groups.update'
   | 'group-participants.update'
-  | 'status.instance'
   | 'refresh.token'
   | 'call.upsert'
   | 'labels.association'

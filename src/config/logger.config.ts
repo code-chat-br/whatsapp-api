@@ -115,6 +115,7 @@ export class Logger {
     this.configService.get<Log>('LOG').LEVEL.forEach((level) => types.push(Type[level]));
 
     const typeValue = typeof value;
+    const isObject = typeValue === 'object';
 
     if (types.includes(type)) {
       if (this.configService.get<Log>('LOG').COLOR) {
@@ -136,13 +137,11 @@ export class Logger {
           Color[type] + Command.BRIGHT,
           `[${this.subCtx || typeValue}]` + Command.RESET,
           Color[type],
-          typeValue !== 'object' ? value : '',
+          !isObject ? value : '',
           Command.RESET,
         );
-        if (this.context === LoggerMiddleware.name) {
-          typeValue === 'object' ? console.log(Level.DARK, value, '\n') : '';
-        } else {
-          typeValue === 'object' ? console.log(value, '\n') : '';
+        if (isObject) {
+          console.log(value, '\n');
         }
       } else {
         console.log(
