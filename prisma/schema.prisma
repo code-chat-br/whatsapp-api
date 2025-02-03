@@ -128,6 +128,7 @@ model MessageUpdate {
 model Chat {
   id         Int       @id @default(autoincrement())
   remoteJid  String    @db.VarChar(100)
+  content    Json?     @db.JsonB
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
