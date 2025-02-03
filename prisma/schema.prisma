@@ -47,20 +47,21 @@ enum InstanceConnectionStatus {
 }
 
 model Instance {
-  id               Int                       @id @default(autoincrement())
-  name             String                    @unique @db.VarChar(255)
-  description      String?                   @db.VarChar(255)
-  connectionStatus InstanceConnectionStatus? @default(OFFLINE)
-  ownerJid         String?                   @db.VarChar(100)
-  profilePicUrl    String?                   @db.VarChar(500)
-  createdAt        DateTime?                 @default(now())
-  updatedAt        DateTime?                 @updatedAt
-  Auth             Auth?
-  Chat             Chat[]
-  Contact          Contact[]
-  Webhook          Webhook?
-  ActivityLogs     ActivityLogs[]
-  Message          Message[]
+  id                 Int                       @id @default(autoincrement())
+  name               String                    @unique @db.VarChar(255)
+  description        String?                   @db.VarChar(255)
+  connectionStatus   InstanceConnectionStatus? @default(OFFLINE)
+  ownerJid           String?                   @db.VarChar(100)
+  profilePicUrl      String?                   @db.VarChar(500)
+  createdAt          DateTime?                 @default(now())
+  updatedAt          DateTime?                 @updatedAt
+  externalAttributes Json                      @db.Json
+  Auth               Auth?
+  Chat               Chat[]
+  Contact            Contact[]
+  Webhook            Webhook?
+  ActivityLogs       ActivityLogs[]
+  Message            Message[]
 }
 
 model Auth {
@@ -153,17 +154,6 @@ model Webhook {
   updatedAt  DateTime  @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId Int       @unique
-}
-
-enum TypebotSessionStatus {
-  open
-  closed
-  paused
-}
-
-enum StartConversationAs {
-  open
-  pending
 }
 
 model ActivityLogs {
