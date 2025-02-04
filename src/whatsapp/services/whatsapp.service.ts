@@ -1913,7 +1913,7 @@ export class WAStartupService {
       } else {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
-          onWhatsapp.push(new OnWhatsAppDto(result.jid, result.exists));
+          onWhatsapp.push(new OnWhatsAppDto(result.jid, !!result.exists));
         } catch (error) {
           onWhatsapp.push(new OnWhatsAppDto(number, false));
         }
