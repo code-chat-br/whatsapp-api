@@ -574,6 +574,8 @@ export class WAStartupService {
     'chats.upsert': async (chats: Chat[]) => {
       chats.forEach(async (chat) => {
         try {
+          const item = { ...chat };
+          delete item.id;
           const list: PrismType.Chat[] = [];
           const find = await this.repository.chat.findFirst({
             where: {
@@ -590,7 +592,16 @@ export class WAStartupService {
             });
             list.push(create);
           } else {
-            list.push(find);
+            const update = await this.repository.chat.update({
+              where: {
+                id: find.id,
+              },
+              data: {
+                content: item as any,
+                updatedAt: new Date(),
+              },
+            });
+            list.push(update);
           }
           this.ws.send(this.instance.name, 'chats.upsert', list);
 
@@ -611,10 +622,39 @@ export class WAStartupService {
       >[],
     ) => {
       const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
-        return { remoteJid: chat.id, instanceId: this.instance.id } as PrismType.Chat;
+        const item = { ...chat };
+        delete item.id;
+        return {
+          remoteJid: chat.id,
+          instanceId: this.instance.id,
+          content: item,
+        } as PrismType.Chat;
       });
       this.ws.send(this.instance.name, 'chats.update', chatsRaw);
       await this.sendDataWebhook('chatsUpdated', chatsRaw);
+      chatsRaw.forEach((chat) => {
+        this.repository.chat
+          .findFirst({
+            where: {
+              instanceId: this.instance.id,
+              remoteJid: chat.remoteJid,
+            },
+          })
+          .then((result) =>
+            this.repository.chat
+              .update({
+                where: {
+                  id: result.id,
+                },
+                data: {
+                  content: chat.content,
+                  updatedAt: new Date(),
+                },
+              })
+              .catch((err) => this.logger.error(err)),
+          )
+          .catch((err) => this.logger.error(err));
+      });
     },
 
     'chats.delete': async (chats: string[]) => {
