@@ -587,6 +587,7 @@ export class WAStartupService {
             const create = await this.repository.chat.create({
               data: {
                 remoteJid: chat.id,
+                content: item as any,
                 instanceId: this.instance.id,
               },
             });
