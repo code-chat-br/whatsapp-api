@@ -38,6 +38,7 @@
  */
 
 import makeWASocket, {
+  AnyMessageContent,
   BaileysEventMap,
   BufferedEventData,
   CacheStore,
@@ -1276,27 +1277,36 @@ export class WAStartupService {
           };
         }
 
+        let m: proto.IWebMessageInfo;
+
         const messageId = options?.messageId || ulid(Date.now());
 
-        const m = generateWAMessageFromContent(recipient, message, {
-          timestamp: new Date(),
-          userJid: this.instance.ownerJid,
-          messageId,
-          quoted: q,
-        });
+        if (message?.['react']) {
+          m = await this.client.sendMessage(recipient, message as AnyMessageContent, {
+            quoted: q,
+            messageId,
+          });
+        } else {
+          m = generateWAMessageFromContent(recipient, message, {
+            timestamp: new Date(),
+            userJid: this.instance.ownerJid,
+            messageId,
+            quoted: q,
+          });
 
-        const id = await this.client.relayMessage(recipient, m.message, { messageId });
+          const id = await this.client.relayMessage(recipient, m.message, { messageId });
 
-        m.key = {
-          id: id,
-          remoteJid: jid,
-          participant: isJidUser(jid) ? jid : undefined,
-          fromMe: true,
-        };
+          m.key = {
+            id: id,
+            remoteJid: jid,
+            participant: isJidUser(jid) ? jid : undefined,
+            fromMe: true,
+          };
 
-        for (const [key, value] of Object.entries(m)) {
-          if (!value || (isArray(value) && value.length) === 0) {
-            delete m[key];
+          for (const [key, value] of Object.entries(m)) {
+            if (!value || (isArray(value) && value.length) === 0) {
+              delete m[key];
+            }
           }
         }
 
@@ -1724,12 +1734,15 @@ export class WAStartupService {
   }
 
   public async reactionMessage(data: SendReactionDto) {
-    return await this.sendMessageWithTyping(data.reactionMessage.key.remoteJid, {
-      reactionMessage: {
-        key: data.reactionMessage.key,
-        text: data.reactionMessage.reaction,
+    return await this.sendMessageWithTyping<AnyMessageContent>(
+      data.reactionMessage.key.remoteJid,
+      {
+        react: {
+          key: data.reactionMessage.key,
+          text: data.reactionMessage.reaction,
+        },
       },
-    });
+    );
   }
 
   public async buttonsMessage(data: SendButtonsDto) {
