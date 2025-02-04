@@ -100,6 +100,7 @@ export class InstanceService {
         data: {
           name: instanceName,
           description: instance.description,
+          externalAttributes: instance?.externalAttributes,
           Auth: {
             create: {
               token: await this.generateToken(instanceName),

@@ -55,7 +55,7 @@ model Instance {
   profilePicUrl      String?                   @db.VarChar(500)
   createdAt          DateTime?                 @default(now())
   updatedAt          DateTime?                 @updatedAt
-  externalAttributes Json                      @db.Json
+  externalAttributes Json?                     @db.Json
   Auth               Auth?
   Chat               Chat[]
   Contact            Contact[]
