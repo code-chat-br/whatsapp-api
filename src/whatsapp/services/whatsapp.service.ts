@@ -2224,16 +2224,26 @@ export class WAStartupService {
   }
 
   public async fetchMessages(query: Query<PrismType.Message>) {
+    const where = {
+      instanceId: this.instance.id,
+      id: query?.where?.id,
+      keyId: query?.where?.keyId,
+      keyFromMe: query?.where?.keyFromMe,
+      keyRemoteJid: query.where?.keyRemoteJid,
+      device: query?.where?.device,
+      messageType: query?.where?.messageType,
+    };
+
+    if (query?.where?.['messageStatus']) {
+      where['MessageUpdate'] = {
+        some: {
+          status: query.where['messageStatus'],
+        },
+      };
+    }
+
     const count = await this.repository.message.count({
-      where: {
-        instanceId: this.instance.id,
-        id: query?.where?.id,
-        keyId: query?.where?.keyId,
-        keyFromMe: query?.where?.keyFromMe,
-        keyRemoteJid: query.where?.keyRemoteJid,
-        device: query?.where?.device,
-        messageType: query?.where?.messageType,
-      },
+      where,
     });
 
     if (!query?.offset) {
@@ -2245,15 +2255,7 @@ export class WAStartupService {
     }
 
     const messages = await this.repository.message.findMany({
-      where: {
-        instanceId: this.instance.id,
-        id: query?.where?.id,
-        keyId: query?.where?.keyId,
-        keyFromMe: query?.where?.keyFromMe,
-        keyRemoteJid: query.where?.keyRemoteJid,
-        device: query?.where?.device,
-        messageType: query?.where?.messageType,
-      },
+      where,
       orderBy: {
         messageTimestamp: 'desc',
       },
