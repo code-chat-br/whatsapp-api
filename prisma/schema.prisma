@@ -47,21 +47,21 @@ enum InstanceConnectionStatus {
 }
 
 model Instance {
-  id               Int                       @id @default(autoincrement())
-  name             String                    @unique @db.VarChar(255)
-  description      String?                   @db.VarChar(255)
-  connectionStatus InstanceConnectionStatus? @default(OFFLINE)
-  ownerJid         String?                   @db.VarChar(100)
-  profilePicUrl    String?                   @db.VarChar(500)
-  createdAt        DateTime?                 @default(now())
-  updatedAt        DateTime?                 @updatedAt
-  Auth             Auth?
-  Chat             Chat[]
-  Contact          Contact[]
-  Webhook          Webhook?
-  Typebot          Typebot?
-  ActivityLogs     ActivityLogs[]
-  Message          Message[]
+  id                 Int                       @id @default(autoincrement())
+  name               String                    @unique @db.VarChar(255)
+  description        String?                   @db.VarChar(255)
+  connectionStatus   InstanceConnectionStatus? @default(OFFLINE)
+  ownerJid           String?                   @db.VarChar(100)
+  profilePicUrl      String?                   @db.VarChar(500)
+  createdAt          DateTime?                 @default(now())
+  updatedAt          DateTime?                 @updatedAt
+  externalAttributes Json?                     @db.Json
+  Auth               Auth?
+  Chat               Chat[]
+  Contact            Contact[]
+  Webhook            Webhook?
+  ActivityLogs       ActivityLogs[]
+  Message            Message[]
 }
 
 model Auth {
@@ -101,8 +101,6 @@ model Message {
   isGroup          Boolean?        @db.Boolean
   Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId       Int
-  TypebotSession   TypebotSession? @relation(fields: [typebotSessionId], references: [id], onDelete: Cascade)
-  typebotSessionId Int?
   MessageUpdate    MessageUpdate[]
   Media            Media?
 
@@ -130,6 +128,7 @@ model MessageUpdate {
 model Chat {
   id         Int       @id @default(autoincrement())
   remoteJid  String    @db.VarChar(100)
+  content    Json?     @db.JsonB
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
@@ -156,40 +155,6 @@ model Webhook {
   updatedAt  DateTime  @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId Int       @unique
-}
-
-model Typebot {
-  id             Int              @id @default(autoincrement())
-  publicId       String           @db.VarChar(200)
-  typebotUrl     String           @db.VarChar(500)
-  enabled        Boolean?         @default(true) @db.Boolean
-  enableGroup    Boolean?         @default(false) @db.Boolean
-  createdAt      DateTime?        @default(now())
-  updatedAt      DateTime?        @updatedAt
-  Instance       Instance         @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  instanceId     Int              @unique
-  TypebotSession TypebotSession[]
-}
-
-enum TypebotSessionStatus {
-  open
-  closed
-  paused
-}
-
-model TypebotSession {
-  id        Int                  @id @default(autoincrement())
-  sessionId String               @db.VarChar(200)
-  remoteJid String               @db.VarChar(100)
-  status    TypebotSessionStatus @default(open)
-  Typebot   Typebot              @relation(fields: [typebotId], references: [id], onDelete: Cascade)
-  typebotId Int
-  Message   Message[]
-}
-
-enum StartConversationAs {
-  open
-  pending
 }
 
 model ActivityLogs {

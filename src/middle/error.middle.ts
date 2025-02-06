@@ -16,7 +16,7 @@ export class ErrorMiddle {
 
   public static appError(err: Error, _: Request, res: Response, __: NextFunction) {
     if (err) {
-      return res.status(err['status'] || 500).json(err);
+      res.status(err['status'] || 500).json(err);
     }
   }
 }

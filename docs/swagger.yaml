@@ -54,8 +54,8 @@ info:
     direct marketing, and real-time interactions. By combining WhatsApp's popularity with the functionality of the CodeChat API, businesses 
     can build stronger and more authentic relationships with their customers, generating lasting satisfaction and loyalty.
 
-    [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/workspace/codechat-whatsapp-api/api/fbe06c7b-7647-4c71-81ee-841f5b2e90d8?action=share&creator=14064846)
-  version: 1.3.2
+    [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
+  version: 1.3.3
   contact:
     name: jrCleber
     email: cleber@codechat.dev
@@ -1495,7 +1495,7 @@ paths:
         summary: Fetch Profile Picture
         description: |
           This endpoint is used to fetch the profile picture URL of a contact in a chat instance.
-          It requires the `instanceNamce` parameter in the path and the `number` parameter in the request body.
+          It requires the `instanceName` parameter in the path and the `number` parameter in the request body.
         requestBody:
           content:
             application/json:
@@ -1504,7 +1504,7 @@ paths:
                 example:
                   number: <string> - required
         parameters:
-          - name: instanceNamce
+          - name: instanceName
             in: path
             schema:
               type: string
@@ -1597,6 +1597,7 @@ paths:
       tags:
         - Chat Controller
       summary: Retrieve Media Message
+      deprecated: true
       description: |
         Retrieve a specific media message from a given chat instance. This endpoint requires the `instanceName` as a path parameter and `keyId` of the media message in the request body.
       parameters:
@@ -1606,6 +1607,64 @@ paths:
           schema:
             type: string
           description: The name of the chat instance from which the media message will be retrieved.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                keyId:
+                  type: string
+                  description: The unique identifier of the media message to be retrieved.
+              required:
+                - keyId
+              example:
+                keyId: "3A778B978B5D9995F574"
+      responses:
+        '200':
+          description: Media message retrieved successfully. The response is a binary file of the media.
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Media message not found or instance not found.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    description: Error message detailing why the media message or instance was not found.
+                example:
+                  error: "Media message or instance not found"
+
+  /chat/mediaData/{instanceName}:
+    post:
+      tags:
+        - Chat Controller
+      summary: Retrieve Media Message
+      description: |
+        Retrieve a specific media message from a given chat instance. This endpoint requires the `instanceName` as a path parameter and `keyId` of the media message in the request body.
+      parameters:
+        - name: instanceName
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The name of the chat instance from which the media message will be retrieved.
+        - name: binary
+          in: query
+          schema:
+            type: string
+            default: false
+            enum:
+              - true
+              - false
+          required: false
       requestBody:
         required: true
         content:
@@ -1816,7 +1875,7 @@ paths:
         - Chat Controller
       summary: Find Chats
       parameters:
-        - name: inatnceName
+        - name: instanceName
           in: path
           schema:
             type: string

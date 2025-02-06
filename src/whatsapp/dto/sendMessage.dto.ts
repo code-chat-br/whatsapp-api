@@ -47,6 +47,7 @@ export class Options {
   quotedMessageId?: number;
   messageId?: string;
   externalAttributes?: any;
+  convertAudio?: boolean;
 }
 class OptionsMessage {
   options: Options;
@@ -69,8 +70,8 @@ export class MediaMessage {
   caption?: string;
   // for document
   fileName?: string;
-  // url or base64
   media: string | Buffer;
+  extension?: string;
 }
 export class SendMediaDto extends Metadata {
   mediaMessage: MediaMessage;
@@ -93,6 +94,7 @@ export class SendAudioDto extends Metadata {
 export class AudioMessageFileDto extends Metadata {
   delay: number;
   audio: Buffer;
+  convertAudio: boolean | string;
 }
 
 class LocationMessage {
@@ -317,4 +319,16 @@ export class SendListLegacyDto extends Metadata {
     Object.assign(this, props);
     this.listMessage = new ListLegacy(props.listMessage);
   }
+}
+
+export class LinkMessage {
+  link: string;
+  thumbnailUrl?: string;
+  text?: string;
+  title?: string;
+  description?: string;
+}
+
+export class SendLinkDto extends Metadata {
+  linkMessage: LinkMessage;
 }

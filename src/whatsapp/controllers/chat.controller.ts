@@ -109,4 +109,10 @@ export class ChatController {
   public async rejectCall({ instanceName }: InstanceDto, data: RejectCallDto) {
     return await this.waMonitor.waInstances.get(instanceName).rejectCall(data);
   }
+
+  public async assertSessions({ instanceName }: InstanceDto, data: WhatsAppNumberDto) {
+    return await this.waMonitor.waInstances
+      .get(instanceName)
+      .assertSessions(data.numbers);
+  }
 }

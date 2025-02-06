@@ -46,15 +46,16 @@ import {
   mediaFileMessageSchema,
   mediaMessageSchema,
   reactionMessageSchema,
+  sendLinkSchema,
   textMessageSchema,
 } from '../../validate/validate.schema';
 import {
   AudioMessageFileDto,
-  Button,
   MediaFileDto,
   SendAudioDto,
   SendButtonsDto,
   SendContactDto,
+  SendLinkDto,
   SendListDto,
   SendListLegacyDto,
   SendLocationDto,
@@ -68,6 +69,9 @@ import { isEmpty } from 'class-validator';
 import { HttpStatus } from '../../app.module';
 import { SendMessageController } from '../controllers/sendMessage.controller';
 import { routerPath, dataValidate } from '../../validate/router.validate';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import { join } from 'path';
+import { ROOT_DIR } from '../../config/path.config';
 
 function validateMedia(req: Request, _: Response, next: NextFunction) {
   if (!req?.file || req.file.fieldname !== 'attachment') {
@@ -85,6 +89,11 @@ export function MessageRouter(
   sendMessageController: SendMessageController,
   ...guards: RequestHandler[]
 ) {
+  const uploadPath = join(ROOT_DIR, 'uploads');
+  if (!existsSync(uploadPath)) {
+    mkdirSync(uploadPath);
+  }
+
   const uploadFile = multer({ preservePath: true });
 
   const router = Router()
@@ -95,7 +104,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendText(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendMedia'), ...guards, async (req, res) => {
       const response = await dataValidate<SendMediaDto>({
@@ -104,7 +113,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendMedia(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(
       routerPath('sendMediaFile'),
@@ -115,10 +124,12 @@ export function MessageRouter(
         const response = await dataValidate<MediaFileDto>({
           request: req,
           schema: mediaFileMessageSchema,
-          execute: (instance, data, file) =>
-            sendMessageController.sendMediaFile(instance, data, file),
+          execute: (instance, data, file) => {
+            writeFileSync(join(uploadPath, file.originalname), file.buffer);
+            return sendMessageController.sendMediaFile(instance, data, file.originalname);
+          },
         });
-        return res.status(HttpStatus.CREATED).json(response);
+        res.status(HttpStatus.CREATED).json(response);
       },
     )
     .post(routerPath('sendWhatsAppAudio'), ...guards, async (req, res) => {
@@ -129,7 +140,7 @@ export function MessageRouter(
           sendMessageController.sendWhatsAppAudio(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(
       routerPath('sendWhatsAppAudioFile'),
@@ -140,10 +151,16 @@ export function MessageRouter(
         const response = await dataValidate<AudioMessageFileDto>({
           request: req,
           schema: audioFileMessageSchema,
-          execute: (instance, data, file) =>
-            sendMessageController.sendWhatsAppAudioFile(instance, data, file),
+          execute: (instance, data, file) => {
+            writeFileSync(join(uploadPath, file.originalname), file.buffer);
+            return sendMessageController.sendWhatsAppAudioFile(
+              instance,
+              data,
+              file.originalname,
+            );
+          },
         });
-        return res.status(HttpStatus.CREATED).json(response);
+        res.status(HttpStatus.CREATED).json(response);
       },
     )
     .post(routerPath('sendLocation'), ...guards, async (req, res) => {
@@ -153,7 +170,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendLocation(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendContact'), ...guards, async (req, res) => {
       const response = await dataValidate<SendContactDto>({
@@ -162,7 +179,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendContact(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendReaction'), ...guards, async (req, res) => {
       const response = await dataValidate<SendReactionDto>({
@@ -171,7 +188,7 @@ export function MessageRouter(
         execute: (instance, data) => sendMessageController.sendReaction(instance, data),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendButtons'), ...guards, async (req, res) => {
       const response = await dataValidate<SendButtonsDto>({
@@ -193,7 +210,7 @@ export function MessageRouter(
         },
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendList'), ...guards, async (req, res) => {
       const response = await dataValidate<SendListDto>({
@@ -208,7 +225,7 @@ export function MessageRouter(
         },
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .post(routerPath('sendList/legacy'), ...guards, async (req, res) => {
       const response = await dataValidate<SendListLegacyDto>({
@@ -226,7 +243,17 @@ export function MessageRouter(
         },
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendLink'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendLinkDto>({
+        request: req,
+        schema: sendLinkSchema,
+        execute: (instance, data) =>
+          sendMessageController.sendLinkPreview(instance, data),
+      });
+
+      res.status(HttpStatus.CREATED).json(response);
     });
 
   return router;

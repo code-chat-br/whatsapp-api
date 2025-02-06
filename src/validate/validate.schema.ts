@@ -100,6 +100,7 @@ const optionsSchema: JSONSchema7 = {
     },
     quotedMessageId: { type: 'integer', description: 'Enter the message id' },
     messageId: { type: 'string', description: 'Set your own id for the message.' },
+    convertAudio: { type: 'boolean', description: 'Convert audio to ogg' },
   },
 };
 
@@ -406,6 +407,28 @@ export const reactionMessageSchema: JSONSchema7 = {
     },
   },
   required: ['reactionMessage'],
+};
+
+export const sendLinkSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    linkMessage: {
+      type: 'object',
+      properties: {
+        text: { type: 'string' },
+        link: { type: 'string' },
+        description: { type: 'string' },
+        title: { type: 'string' },
+        thumbnailUrl: { type: 'string' },
+      },
+      required: ['link'],
+      ...isNotEmpty('text', 'link', 'description', 'title', 'thumbnailUrl'),
+    },
+  },
+  required: ['linkMessage', 'number'],
 };
 
 // Chat Schema

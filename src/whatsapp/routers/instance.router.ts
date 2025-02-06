@@ -54,7 +54,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.createInstance(instance, req),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     })
     .get(routerPath('connect'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -63,7 +63,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.connectToWhatsapp(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('connectionState'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -72,7 +72,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.connectionState(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('fetchInstance'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -81,7 +81,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.fetchInstance(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('fetchInstances', false), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -90,7 +90,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.fetchInstances(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .patch(routerPath('reload'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -99,7 +99,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.reloadConnection(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .patch(routerPath('update'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -108,7 +108,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.updateInstance(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .delete(routerPath('logout'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -117,7 +117,7 @@ export function InstanceRouter(
         execute: (instance) => instanceController.logout(instance),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .delete(routerPath('delete'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
@@ -127,7 +127,7 @@ export function InstanceRouter(
           instanceController.deleteInstance(instance, req?.query?.force === 'true'),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .put(routerPath('refreshToken'), async (req, res) => {
       const response = await dataValidate<OldToken>({
@@ -136,7 +136,7 @@ export function InstanceRouter(
         execute: (instance, data) => instanceController.refreshToken(instance, data, req),
       });
 
-      return res.status(HttpStatus.CREATED).json(response);
+      res.status(HttpStatus.CREATED).json(response);
     });
 
   return router;

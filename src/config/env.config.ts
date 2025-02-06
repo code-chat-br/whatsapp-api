@@ -40,7 +40,7 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { isBooleanString, isEmpty } from 'class-validator';
+import { isEmpty } from 'class-validator';
 import { config } from 'dotenv';
 
 config();

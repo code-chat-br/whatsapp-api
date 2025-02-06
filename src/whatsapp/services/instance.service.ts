@@ -100,6 +100,7 @@ export class InstanceService {
         data: {
           name: instanceName,
           description: instance.description,
+          externalAttributes: instance?.externalAttributes,
           Auth: {
             create: {
               token: await this.generateToken(instanceName),
@@ -175,6 +176,14 @@ export class InstanceService {
         profilePicUrl: true,
         createdAt: true,
         updatedAt: true,
+        Auth: {
+          select: {
+            id: true,
+            token: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        },
         Webhook: {
           select: {
             id: true,

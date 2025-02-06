@@ -48,7 +48,7 @@ export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]) {
         execute: (_, data) => s3Service.getMedia(data),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     })
     .get(routerPath('media/url/:id'), ...guards, async (req, res) => {
       req.body = req.params;
@@ -58,7 +58,7 @@ export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]) {
         execute: (_, data) => s3Service.getMediaUrl(data.id as string, data.expiry),
       });
 
-      return res.status(HttpStatus.OK).json(response);
+      res.status(HttpStatus.OK).json(response);
     });
 
   return router;

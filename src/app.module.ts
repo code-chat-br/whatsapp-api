@@ -44,7 +44,6 @@ import { Logger } from './config/logger.config';
 import { S3Service } from './integrations/minio/s3.service';
 import { Repository } from './repository/repository.service';
 import { ConfigService } from './config/env.config';
-import { TypebotService } from './integrations/typebot/typebot.service';
 import { eventEmitter } from './config/event.config';
 import { ChatController } from './whatsapp/controllers/chat.controller';
 import { GroupController } from './whatsapp/controllers/group.controller';
@@ -56,7 +55,6 @@ import { InstanceService } from './whatsapp/services/instance.service';
 import { WAMonitoringService } from './whatsapp/services/monitor.service';
 import { WebhookService } from './whatsapp/services/webhook.service';
 import { S3Router } from './integrations/minio/s3.router';
-import { TypebotRouter } from './integrations/typebot/typebot.router';
 import { ChatRouter } from './whatsapp/routers/chat.router';
 import { InstanceRouter } from './whatsapp/routers/instance.router';
 import { ViewsRouter } from './whatsapp/routers/view.router';
@@ -193,11 +191,6 @@ export async function AppModule(context: Map<string, any>) {
   const s3Router = S3Router(s3Service, ...middlewares);
   logger.info('Integration:S3Service - ON');
 
-  const typebotService = new TypebotService(repository, configService);
-  typebotService.load();
-  const typebotRouter = TypebotRouter(typebotService, ...middlewares);
-  logger.info('Integration:TypebotService - ON');
-
   const router = Router();
   router.use(...describeRoutes('/instance', instanceRouter, logger));
   router.use(...describeRoutes('/instance', viewsRouter, logger));
@@ -206,7 +199,6 @@ export async function AppModule(context: Map<string, any>) {
   router.use(...describeRoutes('/group', groupRouter, logger));
   router.use(...describeRoutes('/webhook', webhookRouter, logger));
   router.use(...describeRoutes('/s3', s3Router, logger));
-  router.use(...describeRoutes('/typebot', typebotRouter, logger));
 
   app.use(urlencoded({ extended: true, limit: '100mb' }), json({ limit: '100mb' }));
 

@@ -8,10 +8,11 @@ WORKDIR /codechat
 
 # Instalar dependências de construção primeiro
 RUN apt-get update && apt-get install -y git
+RUN apt-get install ffmpeg -y
 
 # Copiar arquivos package.json e instalar dependências
 COPY package*.json ./
-RUN npm install
+RUN npm install --force
 
 # Copiar os demais arquivos necessários para o build
 COPY tsconfig.json .

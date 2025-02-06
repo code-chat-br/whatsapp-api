@@ -27,3 +27,4 @@ lerna-debug.log*
 !/instances/.gitkeep
 /test/
 .env
+/uploads
