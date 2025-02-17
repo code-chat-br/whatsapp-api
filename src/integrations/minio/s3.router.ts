@@ -33,10 +33,10 @@
  */
 
 import { RequestHandler, Router } from 'express';
-import { HttpStatus } from '../../app.module';
-import { dataValidate, routerPath } from '../../validate/router.validate';
-import { s3MediaSchema, s3MediaUrlSchema } from '../../validate/validate.schema';
 import { MediaDto } from '../../whatsapp/dto/media.dto';
+import { s3MediaSchema, s3MediaUrlSchema } from '../../validate/validate.schema';
+import { HttpStatus } from '../../app.module';
+import { routerPath, dataValidate } from '../../validate/router.validate';
 import { S3Service } from './s3.service';
 
 export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]): Router {

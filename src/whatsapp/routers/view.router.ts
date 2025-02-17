@@ -35,8 +35,8 @@
  */
 
 import { RequestHandler, Router } from 'express';
-import { routerPath } from '../../validate/router.validate';
 import { ViewsController } from '../controllers/views.controller';
+import { routerPath } from '../../validate/router.validate';
 
 export function ViewsRouter(
   viewsController: ViewsController,

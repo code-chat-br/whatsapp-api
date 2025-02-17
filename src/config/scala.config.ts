@@ -32,10 +32,10 @@
  */
 
 import { Router } from 'express';
-import { readFileSync } from 'fs';
 import { join } from 'path';
-import { serve, setup } from 'swagger-ui-express';
 import YAML from 'yamljs';
+import { readFileSync } from 'fs';
+import { serve, setup } from 'swagger-ui-express';
 
 const router = Router();
 

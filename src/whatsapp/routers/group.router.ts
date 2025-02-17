@@ -35,21 +35,21 @@
  */
 
 import { RequestHandler, Router } from 'express';
-import { HttpStatus } from '../../app.module';
-import { dataValidate, groupValidate, routerPath } from '../../validate/router.validate';
 import {
   createGroupSchema,
   groupJidSchema,
-  updateGroupPicture,
   updateParticipantsSchema,
+  updateGroupPicture,
 } from '../../validate/validate.schema';
-import { GroupController } from '../controllers/group.controller';
 import {
   CreateGroupDto,
   GroupJid,
   GroupPictureDto,
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
+import { HttpStatus } from '../../app.module';
+import { GroupController } from '../controllers/group.controller';
+import { routerPath, dataValidate, groupValidate } from '../../validate/router.validate';
 
 export function GroupRouter(
   groupController: GroupController,
