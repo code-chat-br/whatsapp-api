@@ -49,7 +49,7 @@ if (process.env?.API_BACKEND) {
   json.servers[0].variables.prod_host.default = process.env?.API_BACKEND;
 }
 
-export const docsRouter = router.use(
+export const docsRouter: Router = router.use(
   '/docs',
   serve,
   setup(json, {

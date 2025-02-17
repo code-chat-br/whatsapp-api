@@ -66,7 +66,7 @@ import { ChatController } from '../controllers/chat.controller';
 import { routerPath, dataValidate } from '../../validate/router.validate';
 import FormData from 'form-data';
 
-export function ChatRouter(chatController: ChatController, ...guards: RequestHandler[]) {
+export function ChatRouter(chatController: ChatController, ...guards: RequestHandler[]): Router {
   const router = Router()
     .post(routerPath('whatsappNumbers'), ...guards, async (req, res) => {
       const response = await dataValidate<WhatsAppNumberDto>({

@@ -45,7 +45,7 @@ import { dataValidate, routerPath } from '../../validate/router.validate';
 export function WebhookRouter(
   webhookController: WebhookController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const router = Router()
     .put(routerPath('set'), ...guards, async (req, res) => {
       const response = await dataValidate<WebhookDto>({

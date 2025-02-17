@@ -39,7 +39,7 @@ import { HttpStatus } from '../../app.module';
 import { routerPath, dataValidate } from '../../validate/router.validate';
 import { S3Service } from './s3.service';
 
-export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]) {
+export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]): Router {
   const router = Router()
     .post(routerPath('findMedia'), ...guards, async (req, res) => {
       const response = dataValidate<MediaDto>({

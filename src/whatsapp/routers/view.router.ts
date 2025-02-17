@@ -41,7 +41,7 @@ import { routerPath } from '../../validate/router.validate';
 export function ViewsRouter(
   viewsController: ViewsController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const router = Router().get(routerPath('qrcode'), ...guards, (req, res) => {
     return viewsController.qrcode(req, res);
   });

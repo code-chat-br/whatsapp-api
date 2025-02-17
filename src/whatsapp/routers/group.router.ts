@@ -54,7 +54,7 @@ import { routerPath, dataValidate, groupValidate } from '../../validate/router.v
 export function GroupRouter(
   groupController: GroupController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const router = Router()
     .post(routerPath('create'), ...guards, async (req, res) => {
       const response = await dataValidate<CreateGroupDto>({

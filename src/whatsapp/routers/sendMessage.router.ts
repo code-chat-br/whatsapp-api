@@ -88,7 +88,7 @@ function validateMedia(req: Request, _: Response, next: NextFunction) {
 export function MessageRouter(
   sendMessageController: SendMessageController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const uploadPath = join(ROOT_DIR, 'uploads');
   if (!existsSync(uploadPath)) {
     mkdirSync(uploadPath);
