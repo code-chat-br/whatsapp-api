@@ -34,7 +34,15 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
+import { isEmpty } from 'class-validator';
 import { NextFunction, Request, RequestHandler, Response, Router } from 'express';
+import { existsSync, mkdirSync, writeFileSync } from 'fs';
+import multer from 'multer';
+import { join } from 'path';
+import { HttpStatus } from '../../app.module';
+import { ROOT_DIR } from '../../config/path.config';
+import { BadRequestException } from '../../exceptions';
+import { dataValidate, routerPath } from '../../validate/router.validate';
 import {
   audioFileMessageSchema,
   audioMessageSchema,
@@ -49,6 +57,7 @@ import {
   sendLinkSchema,
   textMessageSchema,
 } from '../../validate/validate.schema';
+import { SendMessageController } from '../controllers/sendMessage.controller';
 import {
   AudioMessageFileDto,
   MediaFileDto,
@@ -63,15 +72,6 @@ import {
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import multer from 'multer';
-import { BadRequestException } from '../../exceptions';
-import { isEmpty } from 'class-validator';
-import { HttpStatus } from '../../app.module';
-import { SendMessageController } from '../controllers/sendMessage.controller';
-import { routerPath, dataValidate } from '../../validate/router.validate';
-import { existsSync, mkdirSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { ROOT_DIR } from '../../config/path.config';
 
 function validateMedia(req: Request, _: Response, next: NextFunction) {
   if (!req?.file || req.file.fieldname !== 'attachment') {
@@ -88,7 +88,7 @@ function validateMedia(req: Request, _: Response, next: NextFunction) {
 export function MessageRouter(
   sendMessageController: SendMessageController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const uploadPath = join(ROOT_DIR, 'uploads');
   if (!existsSync(uploadPath)) {
     mkdirSync(uploadPath);

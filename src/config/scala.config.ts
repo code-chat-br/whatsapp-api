@@ -32,10 +32,10 @@
  */
 
 import { Router } from 'express';
-import { join } from 'path';
-import YAML from 'yamljs';
 import { readFileSync } from 'fs';
+import { join } from 'path';
 import { serve, setup } from 'swagger-ui-express';
+import YAML from 'yamljs';
 
 const router = Router();
 
@@ -49,7 +49,7 @@ if (process.env?.API_BACKEND) {
   json.servers[0].variables.prod_host.default = process.env?.API_BACKEND;
 }
 
-export const docsRouter = router.use(
+export const docsRouter: Router = router.use(
   '/docs',
   serve,
   setup(json, {

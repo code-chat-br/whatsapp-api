@@ -35,17 +35,17 @@
  */
 
 import { RequestHandler, Router } from 'express';
+import { HttpStatus } from '../../app.module';
+import { dataValidate, routerPath } from '../../validate/router.validate';
 import { instanceNameSchema, oldTokenSchema } from '../../validate/validate.schema';
+import { InstanceController } from '../controllers/instance.controller';
 import { InstanceDto } from '../dto/instance.dto';
 import { OldToken } from '../services/instance.service';
-import { HttpStatus } from '../../app.module';
-import { InstanceController } from '../controllers/instance.controller';
-import { dataValidate, routerPath } from '../../validate/router.validate';
 
 export function InstanceRouter(
   instanceController: InstanceController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const router = Router()
     .post('/create', ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({

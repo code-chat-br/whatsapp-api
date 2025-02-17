@@ -35,13 +35,13 @@
  */
 
 import { RequestHandler, Router } from 'express';
-import { ViewsController } from '../controllers/views.controller';
 import { routerPath } from '../../validate/router.validate';
+import { ViewsController } from '../controllers/views.controller';
 
 export function ViewsRouter(
   viewsController: ViewsController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const router = Router().get(routerPath('qrcode'), ...guards, (req, res) => {
     return viewsController.qrcode(req, res);
   });

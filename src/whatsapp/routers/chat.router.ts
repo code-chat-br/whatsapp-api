@@ -34,7 +34,13 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { query, RequestHandler, Router } from 'express';
+import { Contact, Message } from '@prisma/client';
+import { RequestHandler, Router } from 'express';
+import FormData from 'form-data';
+import { Transform } from 'stream';
+import { HttpStatus } from '../../app.module';
+import { Query } from '../../repository/repository.service';
+import { dataValidate, routerPath } from '../../validate/router.validate';
 import {
   archiveChatSchema,
   contactValidateSchema,
@@ -47,6 +53,7 @@ import {
   updatePresenceSchema,
   whatsappNumberSchema,
 } from '../../validate/validate.schema';
+import { ChatController } from '../controllers/chat.controller';
 import {
   ArchiveChatDto,
   DeleteMessage,
@@ -58,15 +65,11 @@ import {
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
-import { Transform } from 'stream';
-import { Query } from '../../repository/repository.service';
-import { Contact, Message } from '@prisma/client';
-import { HttpStatus } from '../../app.module';
-import { ChatController } from '../controllers/chat.controller';
-import { routerPath, dataValidate } from '../../validate/router.validate';
-import FormData from 'form-data';
 
-export function ChatRouter(chatController: ChatController, ...guards: RequestHandler[]) {
+export function ChatRouter(
+  chatController: ChatController,
+  ...guards: RequestHandler[]
+): Router {
   const router = Router()
     .post(routerPath('whatsappNumbers'), ...guards, async (req, res) => {
       const response = await dataValidate<WhatsAppNumberDto>({

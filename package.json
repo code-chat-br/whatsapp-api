@@ -58,8 +58,10 @@
     "form-data": "^4.0.0",
     "hbs": "^4.2.0",
     "js-yaml": "^4.1.0",
+    "json-schema": "^0.4.0",
     "jsonschema": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
+    "long": "^5.3.0",
     "mime-types": "^2.1.35",
     "mine": "^0.1.0",
     "minio": "^8.0.0",
@@ -72,6 +74,7 @@
     "qrcode-terminal": "^0.12.0",
     "sharp": "^0.33.5",
     "swagger-ui-express": "^5.0.1",
+    "ts-node": "^10.9.2",
     "ulid": "^2.3.0",
     "ws": "^8.18.0",
     "yamljs": "^0.3.0"
@@ -83,6 +86,7 @@
     "@types/express-session": "^1.17.10",
     "@types/fluent-ffmpeg": "^2.1.26",
     "@types/js-yaml": "^4.0.9",
+    "@types/json-schema": "^7.0.15",
     "@types/jsonwebtoken": "^9.0.5",
     "@types/mime-types": "^2.1.4",
     "@types/multer": "^1.4.12",
@@ -102,5 +106,6 @@
     "prisma": "^5.14.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
-  }
+  },
+  "packageManager": "pnpm@10.2.0+sha512.0d27364e0139c6aadeed65ada153135e0ca96c8da42123bd50047f961339dc7a758fc2e944b428f52be570d1bd3372455c1c65fa2e7aa0bfbf931190f9552001"
 }

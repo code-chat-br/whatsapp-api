@@ -35,17 +35,17 @@
  */
 
 import { RequestHandler, Router } from 'express';
+import { HttpStatus } from '../../app.module';
+import { dataValidate, routerPath } from '../../validate/router.validate';
 import { instanceNameSchema, webhookSchema } from '../../validate/validate.schema';
+import { WebhookController } from '../controllers/webhook.controller';
 import { InstanceDto } from '../dto/instance.dto';
 import { WebhookDto } from '../dto/webhook.dto';
-import { HttpStatus } from '../../app.module';
-import { WebhookController } from '../controllers/webhook.controller';
-import { dataValidate, routerPath } from '../../validate/router.validate';
 
 export function WebhookRouter(
   webhookController: WebhookController,
   ...guards: RequestHandler[]
-) {
+): Router {
   const router = Router()
     .put(routerPath('set'), ...guards, async (req, res) => {
       const response = await dataValidate<WebhookDto>({

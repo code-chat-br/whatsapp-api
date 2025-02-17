@@ -33,13 +33,13 @@
  */
 
 import { RequestHandler, Router } from 'express';
-import { MediaDto } from '../../whatsapp/dto/media.dto';
-import { s3MediaSchema, s3MediaUrlSchema } from '../../validate/validate.schema';
 import { HttpStatus } from '../../app.module';
-import { routerPath, dataValidate } from '../../validate/router.validate';
+import { dataValidate, routerPath } from '../../validate/router.validate';
+import { s3MediaSchema, s3MediaUrlSchema } from '../../validate/validate.schema';
+import { MediaDto } from '../../whatsapp/dto/media.dto';
 import { S3Service } from './s3.service';
 
-export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]) {
+export function S3Router(s3Service: S3Service, ...guards: RequestHandler[]): Router {
   const router = Router()
     .post(routerPath('findMedia'), ...guards, async (req, res) => {
       const response = dataValidate<MediaDto>({
