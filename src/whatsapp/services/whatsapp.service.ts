@@ -830,7 +830,7 @@ export class WAStartupService {
     }) => {
       for (const received of messages) {
         if (!received?.message) {
-          return;
+          continue;
         }
 
         this.client.sendPresenceUpdate('unavailable');
