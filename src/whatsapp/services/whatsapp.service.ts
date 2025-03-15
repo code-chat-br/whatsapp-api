@@ -1331,6 +1331,7 @@ export class WAStartupService {
           device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
           typebotSessionId: undefined,
+          externalAttributes: options?.externalAttributes
         };
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
@@ -1339,8 +1340,6 @@ export class WAStartupService {
         });
         messageSent.id = id;
       }
-
-      messageSent['externalAttributes'] = options?.externalAttributes;
 
       this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
@@ -2273,6 +2272,7 @@ export class WAStartupService {
         messageTimestamp: true,
         instanceId: true,
         device: true,
+        externalAttributes: true,
         MessageUpdate: {
           select: {
             status: true,
