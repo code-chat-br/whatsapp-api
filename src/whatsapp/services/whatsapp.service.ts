@@ -871,14 +871,18 @@ export class WAStartupService {
           messageRaw.id = id;
         }
 
-        if (type === 'append') {
-          const find = await this.repository.message.findFirst({
-            where: {
-              keyId: messageRaw.keyId,
-              instanceId: messageRaw.instanceId,
-            },
-          });
+        const find = await this.repository.message.findFirst({
+          where: {
+            keyId: messageRaw.keyId,
+            instanceId: messageRaw.instanceId,
+          },
+        });
 
+        if (received.key.fromMe && find?.externalAttributes) {
+          messageRaw.externalAttributes = find.externalAttributes;
+        }
+
+        if (type === 'append') {
           if (find?.id) {
             messageRaw.id = find.id;
           }
