@@ -202,26 +202,23 @@ export class InstanceService {
 
   public async deleteInstance(instance: InstanceDto, force = false) {
     try {
-      const c1 = await this.repository.auth.count({
+      const c1 = await this.repository.webhook.count({
         where: { Instance: { name: instance.instanceName } },
       });
-      const c2 = await this.repository.webhook.count({
+      const c2 = await this.repository.message.count({
         where: { Instance: { name: instance.instanceName } },
       });
-      const c3 = await this.repository.message.count({
+      const c3 = await this.repository.chat.count({
         where: { Instance: { name: instance.instanceName } },
       });
-      const c4 = await this.repository.chat.count({
+      const c4 = await this.repository.contact.count({
         where: { Instance: { name: instance.instanceName } },
       });
-      const c5 = await this.repository.contact.count({
-        where: { Instance: { name: instance.instanceName } },
-      });
-      const c6 = await this.repository.activityLogs.count({
+      const c5 = await this.repository.activityLogs.count({
         where: { Instance: { name: instance.instanceName } },
       });
 
-      if (!force && (c1 || c2 || c3 || c4 || c5 || c6)) {
+      if (!force && (c1 || c2 || c3 || c4 || c5)) {
         throw [
           new Error('This instance has dependencies and cannot be deleted'),
           new Error('"force" parameter to delete all dependencies'),
