@@ -614,6 +614,16 @@ export const mediaUrlSchema: JSONSchema7 = {
   ...isNotEmpty('id'),
 };
 
+export const editMessageSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    text: { type: 'string' },
+  },
+  required: ['text'],
+  ...isNotEmpty('text'),
+};
+
 // Group Schema
 export const createGroupSchema: JSONSchema7 = {
   $id: ulid(),
