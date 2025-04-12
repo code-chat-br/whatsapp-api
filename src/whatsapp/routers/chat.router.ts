@@ -290,7 +290,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         execute: (instance, data) => chatController.editMessage(instance, data),
       });
 
-      return response;
+      res.status(HttpStatus.OK).json(response);
     });
 
   return router;

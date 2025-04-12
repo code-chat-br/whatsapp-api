@@ -1338,7 +1338,6 @@ export class WAStartupService {
           instanceId: this.instance.id,
           device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
-          typebotSessionId: undefined,
         };
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
@@ -2415,6 +2414,14 @@ export class WAStartupService {
         return;
       }
       throw new BadRequestException('Error fetching group', error.toString());
+    }
+  }
+
+  public async findAllGroups() {
+    try {
+      return await this.client.groupFetchAllParticipating();
+    } catch (error) {
+      throw new BadRequestException('Error searching all groups', error.toString());
     }
   }
 
