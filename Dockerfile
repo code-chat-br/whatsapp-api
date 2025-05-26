@@ -1,5 +1,5 @@
 ### BASE IMAGE
-FROM --platform=$BUILDPLATFORM node:20-bullseye-slim AS base
+FROM node:20-bullseye-slim AS base
 
 ### BUILD IMAGE
 FROM base AS builder
