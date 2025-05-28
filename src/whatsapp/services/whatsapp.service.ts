@@ -661,8 +661,9 @@ export class WAStartupService {
               remoteJid: chat.remoteJid,
             },
           })
-          .then((result) =>
-            this.repository.chat
+          .then((result) =>{
+            if (result) {
+              this.repository.chat
               .update({
                 where: {
                   id: result.id,
@@ -672,8 +673,9 @@ export class WAStartupService {
                   updatedAt: new Date(),
                 },
               })
-              .catch((err) => this.logger.error(err)),
-          )
+              .catch((err) => this.logger.error(err))
+            }
+          })
           .catch((err) => this.logger.error(err));
       });
     },
