@@ -43,6 +43,7 @@ import {
   WhatsAppNumberDto,
   ReadMessageIdDto,
   RejectCallDto,
+  EditMessage,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
@@ -114,5 +115,9 @@ export class ChatController {
     return await this.waMonitor.waInstances
       .get(instanceName)
       .assertSessions(data.numbers);
+  }
+
+  public async editMessage({ instanceName }: InstanceDto, data: EditMessage) {
+    return await this.waMonitor.waInstances.get(instanceName).editMessage(data);
   }
 }

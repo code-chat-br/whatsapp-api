@@ -104,10 +104,18 @@ import {
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import { isArray, isBase64, isNotEmpty, isURL } from 'class-validator';
+import {
+  isArray,
+  isBase64,
+  isInt,
+  isNotEmpty,
+  isNumberString,
+  isURL,
+} from 'class-validator';
 import {
   ArchiveChatDto,
   DeleteMessage,
+  EditMessage,
   OnWhatsAppDto,
   ReadMessageDto,
   ReadMessageIdDto,
@@ -841,7 +849,7 @@ export class WAStartupService {
     }) => {
       for (const received of messages) {
         if (!received?.message) {
-          return;
+          continue;
         }
 
         this.client.sendPresenceUpdate('unavailable');
@@ -1292,7 +1300,7 @@ export class WAStartupService {
 
         const messageId = options?.messageId || ulid(Date.now());
 
-        if (message?.['react']) {
+        if (message?.['react'] || message?.['edit']) {
           m = await this.client.sendMessage(recipient, message as AnyMessageContent, {
             quoted: q,
             messageId,
@@ -1341,7 +1349,6 @@ export class WAStartupService {
           instanceId: this.instance.id,
           device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
-          typebotSessionId: undefined,
         };
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
@@ -1924,6 +1931,36 @@ export class WAStartupService {
     });
   }
 
+  public async editMessage(data: EditMessage) {
+    try {
+      const where: any = {
+        instanceId: this.instance.id,
+      };
+      if (isInt(data.id)) {
+        const id = Number.parseInt(data.id);
+        where.id = id;
+      } else {
+        where.keyId = data.id;
+      }
+
+      const message = await this.repository.message.findFirst({ where });
+      const messageKey: proto.IMessageKey = {
+        id: message.keyId,
+        fromMe: message.keyFromMe,
+        remoteJid: message.keyRemoteJid,
+        participant: message?.keyParticipant,
+      };
+
+      return await this.sendMessageWithTyping<AnyMessageContent>(message.keyRemoteJid, {
+        edit: messageKey,
+        text: data.text,
+      });
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadRequestException(error.toString());
+    }
+  }
+
   // Chat Controller
   public async whatsappNumber(data: WhatsAppNumberDto) {
     const onWhatsapp: OnWhatsAppDto[] = [];
@@ -2388,6 +2425,14 @@ export class WAStartupService {
         return;
       }
       throw new BadRequestException('Error fetching group', error.toString());
+    }
+  }
+
+  public async findAllGroups() {
+    try {
+      return await this.client.groupFetchAllParticipating();
+    } catch (error) {
+      throw new BadRequestException('Error searching all groups', error.toString());
     }
   }
 

@@ -5,7 +5,7 @@ services:
     image: postgres:latest
     container_name: postgres_server
     environment:
-      POSTGRES_PASSWORD: pass
+      POSTGRES_PASSWORD: '123456'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -19,3 +19,4 @@ networks:
 
 volumes:
   postgres_data:
+    external: true

@@ -1,5 +1,5 @@
 ### BASE IMAGE
-FROM --platform=$BUILDPLATFORM node:20-bullseye-slim AS base
+FROM node:20-bullseye-slim AS base
 
 ### BUILD IMAGE
 FROM base AS builder
@@ -7,8 +7,7 @@ FROM base AS builder
 WORKDIR /codechat
 
 # Instalar dependências de construção primeiro
-RUN apt-get update && apt-get install -y git
-RUN apt-get install ffmpeg -y
+RUN apt-get update && apt-get install -y git ffmpeg && rm -rf /var/lib/apt/lists/*
 
 # Copiar arquivos package.json e instalar dependências
 COPY package*.json ./

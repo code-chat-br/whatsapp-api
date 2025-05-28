@@ -34,11 +34,12 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { query, RequestHandler, Router } from 'express';
+import { RequestHandler, Router } from 'express';
 import {
   archiveChatSchema,
   contactValidateSchema,
   deleteMessageSchema,
+  editMessageSchema,
   messageValidateSchema,
   profilePictureSchema,
   readMessageForIdSchema,
@@ -50,6 +51,7 @@ import {
 import {
   ArchiveChatDto,
   DeleteMessage,
+  EditMessage,
   NumberDto,
   ReadMessageDto,
   ReadMessageIdDto,
@@ -277,6 +279,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         request: req,
         schema: whatsappNumberSchema,
         execute: (instance, data) => chatController.assertSessions(instance, data),
+      });
+
+      res.status(HttpStatus.OK).json(response);
+    })
+    .post(routerPath('editMessage'), ...guards, async (req, res) => {
+      const response = await dataValidate<EditMessage>({
+        request: req,
+        schema: editMessageSchema,
+        execute: (instance, data) => chatController.editMessage(instance, data),
       });
 
       res.status(HttpStatus.OK).json(response);
