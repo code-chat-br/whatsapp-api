@@ -1748,7 +1748,12 @@ export class WAStartupService {
       } else {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
-          onWhatsapp.push(new OnWhatsAppDto(result.jid, result.exists));
+          onWhatsapp.push(
+            new OnWhatsAppDto(
+              result.jid,
+              typeof result.exists === 'boolean' ? result.exists : false,
+            ),
+          );
         } catch (error) {
           onWhatsapp.push(new OnWhatsAppDto(number, false));
         }
@@ -1879,15 +1884,7 @@ export class WAStartupService {
       if (!everyOne) {
         await this.client.chatModify(
           {
-            clear: {
-              messages: [
-                {
-                  id: message.keyId,
-                  fromMe: message.keyFromMe,
-                  timestamp: message.messageTimestamp,
-                },
-              ],
-            },
+            clear: !!message,
           },
           message.keyRemoteJid,
         );
