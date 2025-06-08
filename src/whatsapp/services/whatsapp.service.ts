@@ -520,7 +520,7 @@ export class WAStartupService {
 
     this.authState = (await this.defineAuthState()) as AuthState;
 
-    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
+    const { version } = await import("@whiskeysockets/baileys").then(m => m.fetchLatestBaileysVersion());
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
