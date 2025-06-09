@@ -160,7 +160,8 @@ export class Button {
     const json = {
       call: () =>
         toString({ display_text: this.displayText, phone_number: this.phoneNumber }),
-      reply: () => toString({ display_text: this.displayText, id: this.id }),
+      reply: () =>
+        toString({ display_text: this.displayText, id: this.id, disabled: false }),
       copy: () => toString({ display_text: this.displayText, copy_code: this.copyCode }),
       url: () =>
         toString({

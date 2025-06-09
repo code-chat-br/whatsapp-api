@@ -104,14 +104,7 @@ import {
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import {
-  isArray,
-  isBase64,
-  isInt,
-  isNotEmpty,
-  isNumberString,
-  isURL,
-} from 'class-validator';
+import { isArray, isBase64, isInt, isNotEmpty, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
   DeleteMessage,
@@ -1763,7 +1756,7 @@ export class WAStartupService {
     })();
 
     const message: proto.IMessage = {
-      viewOnceMessage: {
+      viewOnceMessageV2: {
         message: {
           messageContextInfo: {
             deviceListMetadata: {},
@@ -1823,7 +1816,7 @@ export class WAStartupService {
     })();
 
     const message: proto.IMessage = {
-      viewOnceMessage: {
+      viewOnceMessageV2: {
         message: {
           messageContextInfo: {
             deviceListMetadata: {},
@@ -1858,10 +1851,6 @@ export class WAStartupService {
                   name: 'single_select',
                   buttonParamsJson: value.toSectionsString(),
                 };
-              }),
-              messageParamsJson: JSON.stringify({
-                from: 'api',
-                templateId: ulid(Date.now()),
               }),
             },
           },
