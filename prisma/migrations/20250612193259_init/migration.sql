@@ -17,12 +17,11 @@ CREATE TABLE `Instance` (
 -- CreateTable
 CREATE TABLE `Auth` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `token` VARCHAR(191) NOT NULL,
+    `token` TEXT NOT NULL,
     `createdAt` DATETIME(3) NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NULL,
     `instanceId` INTEGER NOT NULL,
 
-    UNIQUE INDEX `Auth_token_key`(`token`),
     UNIQUE INDEX `Auth_instanceId_key`(`instanceId`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

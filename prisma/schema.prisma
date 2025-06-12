@@ -66,7 +66,7 @@ model Instance {
 
 model Auth {
   id         Int       @id @default(autoincrement())
-  token      String    @unique
+  token      String    @db.Text
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
@@ -100,7 +100,7 @@ model Message {
   device           DeviceMessage
   isGroup          Boolean?        @db.TinyInt
   Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  instanceId       Int
+  instanceId       Int             @db.Int
   MessageUpdate    MessageUpdate[]
   Media            Media?
 
