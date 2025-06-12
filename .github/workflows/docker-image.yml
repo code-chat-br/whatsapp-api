@@ -2,9 +2,9 @@ name: CodeChat Docker Image CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "mysql-support" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "mysql-support" ]
 
 jobs:
   build:
