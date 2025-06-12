@@ -163,7 +163,7 @@ Authentications must be inserted in the request header.
 
 ### App in Docker
   - [docker-compose](./docker-compose.yml)
-  - [DockerHub-codechat/api:develop](https://hub.docker.com/r/codechat/api/tags)
+  - [DockerHub-codechat/api](https://hub.docker.com/r/codechat/api/tags)
   
 
 After building the application, in the same directory as the files above, run the following command:
