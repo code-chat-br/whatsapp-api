@@ -47,6 +47,6 @@ jobs:
           push: true
           tags: |
             codechat/api:latest
-            codechat/api:v${{ env.version }}
+            codechat/api:v${{ env.version }}-mysql
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache

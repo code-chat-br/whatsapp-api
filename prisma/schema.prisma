@@ -37,7 +37,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -70,7 +70,7 @@ model Auth {
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  instanceId Int       @unique @db.Integer
+  instanceId Int       @unique @db.Int
 }
 
 enum MessageSource {
@@ -91,14 +91,14 @@ model Message {
   id               Int             @id @default(autoincrement())
   keyId            String          @db.VarChar(100)
   keyRemoteJid     String          @db.VarChar(100)
-  keyFromMe        Boolean         @db.Boolean
+  keyFromMe        Boolean         @db.TinyInt
   keyParticipant   String?         @db.VarChar(100)
   pushName         String?         @db.VarChar(100)
   messageType      String          @db.VarChar(100)
-  content          Json            @db.JsonB
-  messageTimestamp Int             @db.Integer
+  content          Json            @db.Json
+  messageTimestamp Int             @db.Int
   device           DeviceMessage
-  isGroup          Boolean?        @db.Boolean
+  isGroup          Boolean?        @db.TinyInt
   Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId       Int
   MessageUpdate    MessageUpdate[]
@@ -128,7 +128,7 @@ model MessageUpdate {
 model Chat {
   id         Int       @id @default(autoincrement())
   remoteJid  String    @db.VarChar(100)
-  content    Json?     @db.JsonB
+  content    Json?     @db.Json
   createdAt  DateTime? @default(now())
   updatedAt  DateTime? @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
@@ -149,8 +149,8 @@ model Contact {
 model Webhook {
   id         Int       @id @default(autoincrement())
   url        String    @db.VarChar(500)
-  enabled    Boolean?  @default(true) @db.Boolean
-  events     Json?     @db.JsonB
+  enabled    Boolean?  @default(true) @db.TinyInt
+  events     Json?     @db.Json
   createdAt  DateTime? @default(now())
   updatedAt  DateTime  @updatedAt
   Instance   Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
@@ -162,8 +162,8 @@ model ActivityLogs {
   dateTime    DateTime? @default(now())
   context     String?   @db.VarChar(100)
   type        String?   @db.VarChar(100)
-  content     Json?     @db.JsonB
+  content     Json?     @db.Json
   description String?   @db.VarChar(500)
   Instance    Instance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  instanceId  Int?      @db.Integer
+  instanceId  Int?      @db.Int
 }
