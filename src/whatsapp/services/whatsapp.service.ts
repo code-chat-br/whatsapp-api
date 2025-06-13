@@ -748,7 +748,7 @@ export class WAStartupService {
           } else {
             list.push(find);
           }
-          this.ws.send(this.instance.name, 'contacts.upsert', list);
+          this.ws.send(this.instance.name, 'contacts.update', list);
 
           await this.sendDataWebhook('contactsUpsert', list);
         } catch (error) {
