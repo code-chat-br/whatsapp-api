@@ -174,14 +174,14 @@ docker-compose up
 |     |   |
 |-----|---|
 | Send Text | ✔ |
-| Send Buttons | ✔ only \[ios,android\] |
+| Send Buttons | ❌ |
 | Send Media: audio - video - image - document - gif <br></br>base64: ```false``` | ✔ |
 | Send Media File | ✔ |
 | Send Audio type WhatsApp | ✔ |
 | Send Audio type WhatsApp - File | ✔ |
 | Send Location | ✔ |
-| Send List | ✔ only \[ios,android\] |
-| Send Link Preview | ❌ |
+| Send List | ❌ |
+| Send Link Preview | ✔ |
 | Send Contact | ✔ |
 | Send Reaction - emoji | ✔ |
 
@@ -190,25 +190,30 @@ docker-compose up
 
 ## Webhook Events
 
-| Name | Event | TypeData | Description |
-|------|-------|-----------|------------|
-| QRCODE_UPDATED | qrcode.updated | json | Sends the base64 of the qrcode for reading |
-| CONNECTION_UPDATE | connection.update | json | Informs the status of the connection with whatsapp |
-| MESSAGES_SET | message.set | json | Sends a list of all your messages uploaded on whatsapp</br>This event occurs only once |
-| MESSAGES_UPSERT | message.upsert | json |  Notifies you when a message is received |
-| MESSAGES_UPDATE | message.update | json | Tells you when a message is updated |
-| SEND_MESSAGE | send.message | json | Notifies when a message is sent |
-| CONTACTS_SET | contacts.set | json | Performs initial loading of all contacts</br>This event occurs only once |
-| CONTACTS_UPSERT | contacts.upsert | json | Reloads all contacts with additional information</br>This event occurs only once |
-| CONTACTS_UPDATE | contacts.update | json | Informs you when the chat is updated |
-| PRESENCE_UPDATE | presence.update | json |  Informs if the user is online, if he is performing some action like writing or recording and his last seen</br>'unavailable' | 'available' | 'composing' | 'recording' | 'paused' |
-| CHATS_SET | chats.set | json | Send a list of all loaded chats |
-| CHATS_UPDATE | chats.update | json | Informs you when the chat is updated |
-| CHATS_UPSERT | chats.upsert | json | Sends any new chat information |
-| GROUPS_UPSERT | groups.upsert | JSON | Notifies when a group is created |
-| GROUPS_UPDATE | groups.update | JSON | Notifies when a group has its information updated |
-| GROUP_PARTICIPANTS_UPDATE | group-participants.update | JSON | Notifies when an action occurs involving a participant</br>'add' | 'remove' | 'promote' | 'demote' |
-| NEW_TOKEN | new.jwt | JSON | Notifies when the token (jwt) is updated
+| Name                        | Event                       | TypeData | Description                                                                           |
+| --------------------------- | --------------------------- | -------- | ------------------------------------------------------------------------------------- | 
+| QRCODE\_UPDATED             | `qrcode.updated`            | JSON     | Sends the base64 of the QR code for reading                                           |
+| CONNECTION\_UPDATE          | `connection.update`         | JSON     | Informs the status of the connection with WhatsApp                                    |
+| MESSAGES\_SET               | `messages.set`              | JSON     | Sends a list of all your messages uploaded on WhatsApp<br>This event occurs only once |
+| MESSAGES\_UPSERT            | `messages.upsert`           | JSON     | Notifies you when a message is received                                               |
+| MESSAGES\_UPDATE            | `messages.update`           | JSON     | Tells you when a message is updated                                                   |
+| SEND\_MESSAGE               | `send.message`              | JSON     | Notifies when a message is sent                                                       |
+| CONTACTS\_SET               | `contacts.set`              | JSON     | Performs initial loading of all contacts<br>This event occurs only once               |
+| CONTACTS\_UPSERT            | `contacts.upsert`           | JSON     | Reloads all contacts with additional information<br>This event occurs only once       |
+| CONTACTS\_UPDATE            | `contacts.update`           | JSON     | Informs you when a contact is updated                                                 |
+| PRESENCE\_UPDATE            | `presence.update`           | JSON     | Informs if the user is online, typing, recording, or last seen<br>`unavailable` `available` `composing` `recording` `paused` |
+| CHATS\_SET                  | `chats.set`                 | JSON     | Sends a list of all loaded chats                                                      |
+| CHATS\_UPDATE               | `chats.update`              | JSON     | Informs you when the chat is updated                                                  |
+| CHATS\_UPSERT               | `chats.upsert`              | JSON     | Sends any new chat information                                                        |
+| CHATS\_DELETE               | `chats.delete`              | JSON     | Informs when a chat is deleted                                                        |
+| GROUPS\_UPSERT              | `groups.upsert`             | JSON     | Notifies when a group is created                                                      |
+| GROUPS\_UPDATE              | `groups.update`             | JSON     | Notifies when a group has its information updated                                     |
+| GROUP\_PARTICIPANTS\_UPDATE | `group-participants.update` | JSON     | Notifies when an action occurs involving a participant<br>`add` `remove` `promote` `demote`|
+| REFRESH\_TOKEN              | `refresh.token`             | JSON     | Notifies when the JWT token is updated                                                |
+| CALL\_UPSERT                | `call.upsert`               | JSON     | Notifies when there is a new call event                                               |
+| LABELS\_ASSOCIATION         | `labels.association`        | JSON     | Associates labels to chats or contacts                                                |
+| LABELS\_EDIT                | `labels.edit`               | JSON     | Notifies when a label is edited                                                       |
+
 
 
 ## SSL
