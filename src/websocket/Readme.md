@@ -111,3 +111,24 @@ socket("qrcode.updated", (msg, event) => {
     console.log(msg)
 })
 ```
+
+---
+
+## Tipos de evento
+
+| Name                        | Event                       | TypeData | Description                                                                           |
+| --------------------------- | --------------------------- | -------- | ------------------------------------------------------------------------------------- | 
+| QRCODE\_UPDATED             | `qrcode.updated`            | JSON     | Sends the base64 of the QR code for reading                                           |
+| CONNECTION\_UPDATE          | `connection.update`         | JSON     | Informs the status of the connection with WhatsApp                                    |
+| MESSAGES\_UPSERT            | `messages.upsert`           | JSON     | Notifies you when a message is received                                               |
+| MESSAGES\_UPDATE            | `messages.update`           | JSON     | Tells you when a message is updated                                                   |
+| SEND\_MESSAGE               | `send.message`              | JSON     | Notifies when a message is sent                                                       |
+| CONTACTS\_UPSERT            | `contacts.upsert`           | JSON     | Reloads all contacts with additional information<br>This event occurs only once       |
+| CONTACTS\_UPDATE            | `contacts.update`           | JSON     | Informs you when a contact is updated                                                 |
+| PRESENCE\_UPDATE            | `presence.update`           | JSON     | Informs if the user is online, typing, recording, or last seen<br>`unavailable` `available` `composing` `recording` `paused`|
+| CHATS\_UPDATE               | `chats.update`              | JSON     | Informs you when the chat is updated                                                  |
+| CHATS\_UPSERT               | `chats.upsert`              | JSON     | Sends any new chat information                                                        |
+| GROUPS\_UPSERT              | `groups.upsert`             | JSON     | Notifies when a group is created                                                      |
+| GROUPS\_UPDATE              | `groups.update`             | JSON     | Notifies when a group has its information updated                                     |
+| GROUP\_PARTICIPANTS\_UPDATE | `group-participants.update` | JSON     | Notifies when an action occurs involving a participant<br>`add` `remove` `promote` `demote`|
+| CALL\_UPSERT                | `call.upsert`               | JSON     | Notifies when there is a new call event                                               |
