@@ -20,9 +20,9 @@
     })(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
 
     fbq('init', '1269134504699994');
-    fbq('track', 'PageView', {
+    fbq('track', 'PageView', JSON.stringify({
         environment: env,
         docker: isDocker,
         version: version,
-    });
+    }));
 })();
