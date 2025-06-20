@@ -36,6 +36,7 @@ import { join } from 'path';
 import YAML from 'yamljs';
 import { readFileSync } from 'fs';
 import { serve, setup } from 'swagger-ui-express';
+import pkg from '../../package.json';
 
 const router = Router();
 
@@ -49,6 +50,12 @@ if (process.env?.API_BACKEND) {
   json.servers[0].variables.prod_host.default = process.env?.API_BACKEND;
 }
 
+const queryParams = new URLSearchParams({
+  isDocker: process.env?.DOCKER_ENV || 'false',
+  env: process.env?.NODE_ENV || 'dev',
+  version: pkg.version,
+});
+
 export const docsRouter = router.use(
   '/docs',
   serve,
@@ -56,5 +63,6 @@ export const docsRouter = router.use(
     customSiteTitle: 'CodeChat Api V1',
     customCssUrl: '/css/dark-theme-swagger.css',
     customfavIcon: '/images/logo.png',
+    customJs: `/js/pixel.js?${queryParams}`,
   }),
 );

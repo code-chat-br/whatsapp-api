@@ -46,16 +46,10 @@
 │   │   ├── auth.guard.ts
 │   │   └── instance.guard.ts
 │   ├── /integrations
-│   │   ├── /minio
-│   │   │   ├── minio.utils.ts
-│   │   │   ├── s3.router.ts
-│   │   │   └── s3.service.ts
-│   │   └── /typebot
-│   │       ├── /dto
-│   │       │   ├── response.ts
-│   │       │   └── typebot.dto.ts
-│   │       ├── typebot.router.ts
-│   │       └── typebot.service.ts
+│   │   └── /minio
+│   │       ├── minio.utils.ts
+│   │       ├── s3.router.ts
+│   │       └── s3.service.ts
 │   ├── /middle
 │   │   ├── error.middle.ts
 │   │   └── logger.middle.ts
@@ -100,7 +94,6 @@
 │   └── qrcode.hbd
 │
 ├── .env.dev
-├── .eslintignore
 ├── .eslintrc.js
 ├── .gitignore
 ├── .prettierrc.js

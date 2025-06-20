@@ -42,6 +42,7 @@ import { WAMonitoringService } from '../services/monitor.service';
 import { Repository } from '../../repository/repository.service';
 import { Auth } from '@prisma/client';
 import { HttpStatus } from '../../app.module';
+import pkg from '../../../package.json';
 
 export class ViewsController {
   constructor(
@@ -73,6 +74,9 @@ export class ViewsController {
         ...param,
         auth,
         connectionState: instance?.connectionStatus.state || 'close',
+        isDocker: process.env?.DOCKER_ENV || 'false',
+        env: process.env?.NODE_ENV || 'dev',
+        version: pkg.version,
       });
     } catch (error) {
       console.log('ERROR: ', error);
