@@ -1324,8 +1324,6 @@ export class WAStartupService {
           }
         }
 
-        this.client.ev.emit('messages.upsert', { messages: [m], type: 'notify' });
-
         return {
           keyId: m.key.id,
           keyFromMe: m.key.fromMe,
@@ -1356,6 +1354,9 @@ export class WAStartupService {
 
       this.ws.send(this.instance.name, 'send.message', messageSent);
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
+        this.logger.error(error),
+      );
+       this.sendDataWebhook('messagesUpsert', messageSent).catch((error) =>
         this.logger.error(error),
       );
 
@@ -2093,20 +2094,7 @@ export class WAStartupService {
       });
 
       if (!everyOne) {
-        await this.client.chatModify(
-          {
-            clear: {
-              messages: [
-                {
-                  id: message.keyId,
-                  fromMe: message.keyFromMe,
-                  timestamp: message.messageTimestamp,
-                },
-              ],
-            },
-          } as any,
-          message.keyRemoteJid,
-        );
+        await this.client.chatModify({ clear: true }, message.keyRemoteJid);
       }
 
       await this.client.sendMessage(message.keyRemoteJid, {
