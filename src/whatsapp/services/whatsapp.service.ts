@@ -1324,8 +1324,6 @@ export class WAStartupService {
           }
         }
 
-        this.client.ev.emit('messages.upsert', { messages: [m], type: 'notify' });
-
         return {
           keyId: m.key.id,
           keyFromMe: m.key.fromMe,
@@ -1355,7 +1353,12 @@ export class WAStartupService {
       messageSent['externalAttributes'] = options?.externalAttributes;
 
       this.ws.send(this.instance.name, 'send.message', messageSent);
+      this.ws.send(this.instance.name, 'messages.upsert', messageSent);
+      
       this.sendDataWebhook('sendMessage', messageSent).catch((error) =>
+        this.logger.error(error),
+      );
+      this.sendDataWebhook('messagesUpsert', messageSent).catch((error) =>
         this.logger.error(error),
       );
 
