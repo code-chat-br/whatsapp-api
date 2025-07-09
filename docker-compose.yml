@@ -1,5 +1,3 @@
-version: '3.8'
-
 networks:
   public-network:
     driver: bridge
@@ -7,67 +5,15 @@ networks:
 services:
   api:
     container_name: codechat_api
-    image: codechat/api:v1.3.4
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
     ports:
       - 8084:8084
     volumes:
-      - instances_connecteds:/codechat/instances
-    environment:
-      - SERVER_PORT=8084
-      - SESSION_SECRET=W0NvZGVDaGF0XTpbU2Vzc
-
-      - LOG_LEVEL=ERROR|WARN|INFO|DEBUG|LOG|VERBOSE|DARK
-      - LOG_COLOR=true
-
-      - DATABASE_ENABLED=true
-      - DATABASE_URL=postgres://[USER]:[PASS]@[HOST]:[PORT]/[DATABASE_NAME]?schema=public
-      - DATABASE_SYNC_MESSAGES=true
-      - DATABASE_SAVE_DATA_NEW_MESSAGE=true
-      - DATABASE_SAVE_MESSAGE_UPDATE=true
-      - DATABASE_SAVE_DATA_CONTACTS=true
-      - DATABASE_SAVE_DATA_CHATS=true
-
-      - GLOBAL_WEBHOOK_URL=url
-      - GLOBAL_WEBHOOK_ENABLED=false
-
-      - INSTANCE_EXPIRATION_TIME=false
-
-      - CONFIG_SESSION_PHONE_CLIENT=CodeChat_V1
-      - CONFIG_SESSION_PHONE_NAME=Edge
-
-      - WA_VERSION=[ 2, 3000, 1023235404 ]
-
-      - QRCODE_LIMIT=10
-      - QRCODE_EXPIRATION_TIME=60
-      - QRCODE_LIGHT_COLOR='#ffffff'
-      - QRCODE_DARK_COLOR='#198754'
-
-      - CONNECTION_TIMEOUT=300
-
-      - AUTHENTICATION_GLOBAL_AUTH_TOKEN=zYzP7ocstxh3SJ23D4FZTCu4ehnM8v4hu
-      - AUTHENTICATION_JWT_EXPIRES_IN=0
-      - AUTHENTICATION_JWT_SECRET=3RFYiiRmvNiokSBrLZzx
-
-      - PROVIDER_ENABLED=false
-      - PROVIDER_HOST=127.0.0.1
-      - PROVIDER_PORT=5656
-      - PROVIDER_PREFIX=codechat
-
-      - BASE_URL=
-
-      # - S3_ENABLED=false
-      # - S3_ACCESS_KEY=[ACCESS_KEY]
-      # - S3_SECRET_KEY=[SECRET_KEY]
-      # - S3_BUCKET=[BUCKET]
-      # - S3_PORT=9000
-      # - S3_ENDPOINT=[ENDPOINT]
-      # - S3_USE_SSL=false
+      - ./instances:/codechat/instances
+    env_file:
+      - .env
     networks:
       - public-network
-
-volumes:
-  # In terminal run: docker volume create --name=instances_connecteds
-  instances_connecteds:
-    external:
-      name: instances_connecteds
