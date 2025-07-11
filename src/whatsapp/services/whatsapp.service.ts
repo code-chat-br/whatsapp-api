@@ -644,7 +644,7 @@ export class WAStartupService {
             },
           })
           .then((result) => {
-            if (result?.id) {
+            if (result && result.id) {
               this.repository.chat
                 .update({
                   where: {
@@ -813,7 +813,7 @@ export class WAStartupService {
 
           messagesRaw.push({
             keyId: m.key.id,
-            keyRemoteJid: m.key.remoteJid,
+            keyRemoteJid: m.key?.remoteJid || m.key?.['lid'],
             keyFromMe: m.key.fromMe,
             pushName: m?.pushName || m.key.remoteJid.split('@')[0],
             keyParticipant: m?.participant || m.key?.participant,
@@ -844,6 +844,7 @@ export class WAStartupService {
     }) => {
       for (const received of messages) {
         if (!received?.message) {
+          await this.client.waitForMessage(received.key.id)
           continue;
         }
 
@@ -863,7 +864,7 @@ export class WAStartupService {
 
         const messageRaw = {
           keyId: received.key.id,
-          keyRemoteJid: received.key.remoteJid,
+          keyRemoteJid: received.key?.remoteJid || received?.key?.['lid'],
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
           keyParticipant: received?.participant || received.key?.participant,
@@ -1171,7 +1172,7 @@ export class WAStartupService {
   }
 
   private createJid(number: string): string {
-    if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
+    if (number.includes('@g.us') || number.includes('@s.whatsapp.net') || number.includes('@lid')) {
       return number;
     }
 
@@ -1327,7 +1328,7 @@ export class WAStartupService {
         return {
           keyId: m.key.id,
           keyFromMe: m.key.fromMe,
-          keyRemoteJid: m.key.remoteJid,
+          keyRemoteJid: m.key?.remoteJid || m.key?.['lid'],
           keyParticipant: m?.participant,
           pushName: m?.pushName,
           messageType: getContentType(m.message),
