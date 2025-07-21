@@ -54,6 +54,18 @@ type CreateLogs = {
   content: any;
 };
 
+export function getDatabaseProvider(
+  databaseUrl?: string,
+): 'mysql' | 'postgresql' | 'unknown' {
+  if (!databaseUrl) return 'unknown';
+
+  if (databaseUrl.startsWith('mysql://')) return 'mysql';
+  if (databaseUrl.startsWith('postgres://') || databaseUrl.startsWith('postgresql://'))
+    return 'postgresql';
+
+  return 'unknown';
+}
+
 export class Repository extends PrismaClient {
   constructor(private readonly configService: ConfigService) {
     super();
@@ -76,41 +88,48 @@ export class Repository extends PrismaClient {
     data: Partial<Webhook> & { events?: WebhookEvents },
   ) {
     const find = await this.webhook.findUnique({
-      where: {
-        id: webhookId,
-      },
+      where: { id: webhookId },
     });
+
     if (!find) {
       throw new NotFoundException(['Webhook not found', `Webhook id: ${webhookId}`]);
     }
+
     try {
-      for await (const [key, value] of Object.entries(data?.events)) {
-        if (value === undefined) {
-          continue;
+      const provider = getDatabaseProvider(process.env.DATABASE_URL);
+
+      if (data?.events && find.events) {
+        for await (const [key, value] of Object.entries(data.events)) {
+          if (value === undefined) continue;
+
+          if (provider === 'mysql') {
+            const path = `$.${key}`;
+            const jsonValue = value ? 'true' : 'false';
+
+            await this.$executeRawUnsafe(
+              `UPDATE Webhook SET events = JSON_SET(events, ?, CAST(? AS JSON)) WHERE id = ?`,
+              path,
+              jsonValue,
+              webhookId,
+            );
+          } else if (provider === 'postgresql') {
+            await this.$executeRawUnsafe(
+              `UPDATE "Webhook" SET events = jsonb_set(events, '{${key}}', to_jsonb($1::boolean)) WHERE id = $2`,
+              value,
+              webhookId,
+            );
+          } else {
+            throw new Error(`Unsupported database provider: ${provider}`);
+          }
         }
-
-        if (!find?.events) {
-          break;
-        }
-
-        const k = `ARRAY['${key}']`;
-        const v = `to_jsonb(${value}::boolean)`;
-
-        await this.$queryRaw(
-          Prisma.sql`UPDATE "Webhook" SET events = jsonb_set(events, ${Prisma.raw(
-            k,
-          )}, ${Prisma.raw(v)}) WHERE id = ${webhookId}`,
-        );
       }
 
       const updated = await this.webhook.update({
-        where: {
-          id: webhookId,
-        },
+        where: { id: webhookId },
         data: {
           url: data?.url,
           enabled: data?.enabled,
-          events: !find?.events ? data?.events : undefined,
+          events: !find.events ? data?.events : undefined,
         },
         select: {
           id: true,
@@ -123,7 +142,7 @@ export class Repository extends PrismaClient {
 
       return updated;
     } catch (error) {
-      throw new BadRequestException([error?.message, error?.stack]);
+      throw new BadRequestException(error?.message, error?.stack);
     }
   }
 
