@@ -53,6 +53,7 @@ import makeWASocket, {
   GroupMetadata,
   isJidGroup,
   isJidUser,
+  isLidUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
   ParticipantAction,
@@ -782,7 +783,8 @@ export class WAStartupService {
     }) => {
       for (const received of messages) {
         if (!received?.message) {
-          return;
+          await this.client.waitForMessage(received.key.id);
+          continue;
         }
 
         this.client.sendPresenceUpdate('unavailable');
@@ -1195,7 +1197,11 @@ export class WAStartupService {
   }
 
   private createJid(number: string): string {
-    if (number.includes('@g.us') || number.includes('@s.whatsapp.net')) {
+    if (
+      number.includes('@g.us') ||
+      number.includes('@s.whatsapp.net') ||
+      number.includes('@lid')
+    ) {
       return number;
     }
 
@@ -1740,19 +1746,19 @@ export class WAStartupService {
     const onWhatsapp: OnWhatsAppDto[] = [];
     for await (const number of data.numbers) {
       const jid = this.createJid(number);
+      if (isLidUser(jid)) {
+        onWhatsapp.push(new OnWhatsAppDto(jid, !!true, jid as string));
+      }
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
-        onWhatsapp.push(new OnWhatsAppDto(group.id, !!group?.id, group?.subject));
+        onWhatsapp.push(new OnWhatsAppDto(group.id, !!group?.id, '', group?.subject));
       } else if (jid.includes('@broadcast')) {
         onWhatsapp.push(new OnWhatsAppDto(jid, true));
       } else {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
           onWhatsapp.push(
-            new OnWhatsAppDto(
-              result.jid,
-              typeof result.exists === 'boolean' ? result.exists : false,
-            ),
+            new OnWhatsAppDto(result.jid, !!result.exists, result.lid as string),
           );
         } catch (error) {
           onWhatsapp.push(new OnWhatsAppDto(number, false));
