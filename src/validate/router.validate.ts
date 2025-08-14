@@ -65,7 +65,9 @@ export async function dataValidate<T>(args: DataValidate<T>) {
   const body = request.body;
   const instance = request.params as unknown as InstanceDto;
 
-  if (request?.query && Object.keys(request.query).length > 0) {
+  const isNotEmptyQuery = request?.query && Object.keys(request.query).length > 0;
+
+  if (isNotEmptyQuery) {
     Object.assign(instance, request.query);
   }
 
@@ -74,7 +76,7 @@ export async function dataValidate<T>(args: DataValidate<T>) {
   }
 
   if (
-    request?.query &&
+    isNotEmptyQuery &&
     ['get', 'delete', 'patch'].includes(request.method.toLowerCase())
   ) {
     Object.assign(body, request.query);
