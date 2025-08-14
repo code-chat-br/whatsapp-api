@@ -40,7 +40,6 @@ import { JSONSchema7 } from 'json-schema';
 import { Request } from 'express';
 import { validate } from 'jsonschema';
 import { BadRequestException } from '../exceptions';
-import 'express-async-errors';
 import { Logger } from '../config/logger.config';
 import { GroupJid } from '../whatsapp/dto/group.dto';
 import { ConfigService } from '../config/env.config';

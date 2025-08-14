@@ -68,7 +68,6 @@ import { LoggerMiddleware } from './middle/logger.middle';
 import { InstanceGuard } from './guards/instance.guard';
 import { JwtGuard } from './guards/auth.guard';
 import { ErrorMiddle } from './middle/error.middle';
-import 'express-async-errors';
 import { docsRouter } from './config/swagger.config';
 import { ProviderFiles } from './provider/sessions';
 import { Websocket } from './websocket/server';
