@@ -1977,7 +1977,7 @@ export class WAStartupService {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
           onWhatsapp.push(
-            new OnWhatsAppDto(result.jid, !!result.exists, result?.lid as string),
+            new OnWhatsAppDto(result.jid, !!result.exists, result?.['lid'] as string),
           );
         } catch (error) {
           onWhatsapp.push(new OnWhatsAppDto(number, false));
