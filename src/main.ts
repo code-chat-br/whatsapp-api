@@ -36,7 +36,6 @@ import { ConfigService, HttpServer } from './config/env.config';
 import { onUnexpectedError } from './config/error.config';
 import { Logger } from './config/logger.config';
 import { AppModule } from './app.module';
-import 'express-async-errors';
 
 const context = new Map<string, any>();
 

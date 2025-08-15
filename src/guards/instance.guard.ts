@@ -48,7 +48,6 @@ import { INSTANCE_DIR } from '../config/path.config';
 import { BadRequestException, ForbiddenException } from '../exceptions';
 import { InstanceDto } from '../whatsapp/dto/instance.dto';
 import { WAMonitoringService } from '../whatsapp/services/monitor.service';
-import 'express-async-errors';
 import { ProviderFiles } from '../provider/sessions';
 
 async function fetchInstanceFromCache(
