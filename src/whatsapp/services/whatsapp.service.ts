@@ -2319,7 +2319,7 @@ export class WAStartupService {
     const messages = await this.repository.message.findMany({
       where,
       orderBy: {
-        messageTimestamp: 'desc',
+        id: 'desc',
       },
       skip: query.offset * (query?.page === 1 ? 0 : query?.page - 1),
       take: query.offset,
