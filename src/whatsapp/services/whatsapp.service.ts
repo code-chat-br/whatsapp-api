@@ -37,6 +37,8 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
+import { Boom } from '@hapi/boom';
+import PrismType, { Instance, Webhook } from '@prisma/client';
 import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
@@ -71,43 +73,54 @@ import makeWASocket, {
   WAMessageUpdate,
   WASocket,
 } from '@whiskeysockets/baileys';
+import axios, { AxiosError, AxiosInstance } from 'axios';
+import { isArray, isBase64, isInt, isNotEmpty, isURL } from 'class-validator';
+import EventEmitter2 from 'eventemitter2';
+import ffmpeg from 'fluent-ffmpeg';
+import {
+  accessSync,
+  constants,
+  existsSync,
+  readFileSync,
+  rmSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
+import http from 'http';
+import mime from 'mime-types';
+import NodeCache from 'node-cache';
+import { release } from 'os';
+import { join, normalize } from 'path';
+import P from 'pino';
+import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
+import qrcodeTerminal from 'qrcode-terminal';
+import sharp from 'sharp';
+import { PassThrough } from 'stream';
+import { ulid } from 'ulid';
 import {
   ConfigService,
   ConfigSessionPhone,
   Database,
-  GlobalWebhook,
-  QrCode,
-  ProviderSession,
   EnvProxy,
+  GlobalWebhook,
+  ProviderSession,
+  QrCode,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { join, normalize } from 'path';
-import axios, { AxiosError } from 'axios';
-import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
-import qrcodeTerminal from 'qrcode-terminal';
-import { Boom } from '@hapi/boom';
-import EventEmitter2 from 'eventemitter2';
-import { release } from 'os';
-import P from 'pino';
+import { BadRequestException, InternalServerErrorException } from '../../exceptions';
+import * as s3Service from '../../integrations/minio/minio.utils';
+import { ProviderFiles } from '../../provider/sessions';
+import { Query, Repository } from '../../repository/repository.service';
+import { getJidUser, getUserGroup } from '../../utils/extract-id';
+import { createProxyAgents } from '../../utils/proxy';
 import {
-  AudioMessageFileDto,
-  ContactMessage,
-  MediaFileDto,
-  MediaMessage,
-  Options,
-  SendAudioDto,
-  SendButtonsDto,
-  SendContactDto,
-  SendLinkDto,
-  SendListDto,
-  SendListLegacyDto,
-  SendLocationDto,
-  SendMediaDto,
-  SendReactionDto,
-  SendTextDto,
-} from '../dto/sendMessage.dto';
-import { isArray, isBase64, isInt, isNotEmpty, isURL } from 'class-validator';
+  AuthState,
+  AuthStateProvider,
+} from '../../utils/use-multi-file-auth-state-provider-files';
+import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
+import { isValidUlid } from '../../validate/ulid';
+import { Websocket } from '../../websocket/server';
 import {
   ArchiveChatDto,
   DeleteMessage,
@@ -119,43 +132,27 @@ import {
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
-import { BadRequestException, InternalServerErrorException } from '../../exceptions';
 import {
   CreateGroupDto,
   GroupJid,
   GroupPictureDto,
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
-import NodeCache from 'node-cache';
 import {
-  AuthState,
-  AuthStateProvider,
-} from '../../utils/use-multi-file-auth-state-provider-files';
-import mime from 'mime-types';
-import { Instance, Webhook } from '@prisma/client';
+  AudioMessageFileDto,
+  ContactMessage,
+  MediaFileDto,
+  MediaMessage,
+  Options,
+  SendAudioDto,
+  SendContactDto,
+  SendLinkDto,
+  SendLocationDto,
+  SendMediaDto,
+  SendReactionDto,
+  SendTextDto
+} from '../dto/sendMessage.dto';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
-import { Query, Repository } from '../../repository/repository.service';
-import PrismType from '@prisma/client';
-import * as s3Service from '../../integrations/minio/minio.utils';
-import { ProviderFiles } from '../../provider/sessions';
-import { Websocket } from '../../websocket/server';
-import { ulid } from 'ulid';
-import { isValidUlid } from '../../validate/ulid';
-import sharp from 'sharp';
-import ffmpeg from 'fluent-ffmpeg';
-import { PassThrough } from 'stream';
-import {
-  accessSync,
-  constants,
-  existsSync,
-  readFileSync,
-  rmSync,
-  unlinkSync,
-  writeFileSync,
-} from 'fs';
-import { createProxyAgents } from '../../utils/proxy';
-import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
-import { getJidUser, getUserGroup } from '../../utils/extract-id';
 
 type InstanceQrCode = {
   count: number;
@@ -180,6 +177,18 @@ export class WAStartupService {
       this.configService,
       this.providerFiles,
     );
+
+    const httpAgent = new http.Agent({
+      keepAlive: true,
+      maxSockets: 100,
+      maxFreeSockets: 10,
+      timeout: 60000
+    })
+
+    this.axiosInstance = axios.create({
+      httpAgent,
+      timeout: 10000
+    })
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -191,6 +200,7 @@ export class WAStartupService {
   private readonly stateConnection: InstanceStateConnection = { state: 'close' };
   private readonly databaseOptions: Database =
     this.configService.get<Database>('DATABASE');
+  private readonly axiosInstance: AxiosInstance;
 
   private endSession = false;
   public client: WASocket;
@@ -297,7 +307,7 @@ export class WAStartupService {
     try {
       if (this.webhook?.enabled) {
         if (this.webhook?.events && this.webhook?.events[event]) {
-          await axios.post(
+          await this.axiosInstance.post(
             this.webhook.url,
             {
               event: eventDesc,
@@ -308,7 +318,7 @@ export class WAStartupService {
           );
         }
         if (!this.webhook?.events) {
-          await axios.post(
+          await this.axiosInstance.post(
             this.webhook.url,
             {
               event: eventDesc,
@@ -342,7 +352,7 @@ export class WAStartupService {
     try {
       const globalWebhook = this.configService.get<GlobalWebhook>('GLOBAL_WEBHOOK');
       if (globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
-        await axios.post(
+        await this.axiosInstance.post(
           globalWebhook.URL,
           {
             event: eventDesc,
@@ -1654,7 +1664,7 @@ export class WAStartupService {
       const isURL = /http(s?):\/\//.test(mediaMessage.media as string);
 
       if (isURL) {
-        const response = await axios.get(mediaMessage.media as string, {
+        const response = await this.axiosInstance.get(mediaMessage.media as string, {
           responseType: 'arraybuffer',
         });
 
@@ -1927,7 +1937,7 @@ export class WAStartupService {
         jpegThumbnail: await (async () => {
           if (data.linkMessage?.thumbnailUrl) {
             try {
-              const response = await axios.get(data.linkMessage.thumbnailUrl, {
+              const response = await this.axiosInstance.get(data.linkMessage.thumbnailUrl, {
                 responseType: 'arraybuffer',
               });
               return new Uint8Array(response.data);
@@ -2417,7 +2427,7 @@ export class WAStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
-        pic = (await axios.get(picture.image, { responseType: 'arraybuffer' })).data;
+        pic = (await this.axiosInstance.get(picture.image, { responseType: 'arraybuffer' })).data;
       } else if (isBase64(picture.image)) {
         pic = Buffer.from(picture.image, 'base64');
       } else {
