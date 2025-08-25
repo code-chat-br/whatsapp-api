@@ -39,6 +39,7 @@ import {
   archiveChatSchema,
   contactValidateSchema,
   deleteMessageSchema,
+  editMessageSchema,
   messageValidateSchema,
   profilePictureSchema,
   readMessageForIdSchema,
@@ -50,6 +51,7 @@ import {
 import {
   ArchiveChatDto,
   DeleteMessage,
+  EditMessageDto,
   NumberDto,
   ReadMessageDto,
   ReadMessageIdDto,
@@ -127,6 +129,15 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         request: req,
         schema: deleteMessageSchema,
         execute: (instance, data) => chatController.deleteMessage(instance, data),
+      });
+
+      return res.status(HttpStatus.OK).json(response);
+    })
+    .put(routerPath('editMessage'), ...guards, async (req, res) => {
+      const response = await dataValidate<EditMessageDto>({
+        request: req,
+        schema: editMessageSchema,
+        execute: (instance, data) => chatController.editMessage(instance, data),
       });
 
       return res.status(HttpStatus.OK).json(response);

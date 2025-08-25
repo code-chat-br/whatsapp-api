@@ -108,6 +108,7 @@ import { isArray, isBase64, isNotEmpty, isURL } from 'class-validator';
 import {
   ArchiveChatDto,
   DeleteMessage,
+  EditMessageDto,
   OnWhatsAppDto,
   ReadMessageDto,
   ReadMessageIdDto,
@@ -1909,6 +1910,38 @@ export class WAStartupService {
     } catch (error) {
       throw new InternalServerErrorException(
         'Error while deleting message for everyone',
+        error?.toString(),
+      );
+    }
+  }
+
+  public async editMessage(edit: EditMessageDto) {
+    try {
+      const id = Number.parseInt(edit.id);
+      const message = await this.repository.message.findUnique({
+        where: { id },
+      });
+
+      if (!message) {
+        throw new Error('Message not found in database');
+      }
+
+      const messageKey = {
+        remoteJid: message.keyRemoteJid,
+        fromMe: message.keyFromMe,
+        id: message.keyId,
+        participant: message.keyParticipant,
+      };
+
+      await this.client.sendMessage(message.keyRemoteJid, {
+        text: edit.newContent,
+        edit: messageKey,
+      });
+
+      return { editedAt: new Date(), message };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        'Error while editing message',
         error?.toString(),
       );
     }

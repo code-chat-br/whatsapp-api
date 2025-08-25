@@ -514,6 +514,17 @@ export const deleteMessageSchema: JSONSchema7 = {
   ...isNotEmpty('id'),
 };
 
+export const editMessageSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    id: { type: 'string', pattern: '\\d+', minLength: 1 },
+    newContent: { type: 'string', minLength: 1 },
+  },
+  required: ['id', 'newContent'],
+  ...isNotEmpty('id', 'newContent'),
+};
+
 export const contactValidateSchema: JSONSchema7 = {
   $id: ulid(),
   type: 'object',

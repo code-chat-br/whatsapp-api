@@ -88,6 +88,11 @@ export class DeleteMessage {
   everyOne?: 'true' | 'false';
 }
 
+export class EditMessageDto {
+  id: string;
+  newContent: string;
+}
+
 export class RejectCallDto {
   callId: string;
   callFrom: string;
