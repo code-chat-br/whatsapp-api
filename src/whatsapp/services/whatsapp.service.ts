@@ -183,12 +183,12 @@ export class WAStartupService {
       maxSockets: 100,
       maxFreeSockets: 10,
       timeout: 60000
-    })
+    });
 
     this.axiosInstance = axios.create({
       httpAgent,
-      timeout: 10000
-    })
+      timeout: 60000
+    });
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
