@@ -1586,6 +1586,9 @@ export class WAStartupService {
 
       if (mediaMessage?.fileName) {
         mimetype = mime.lookup(mediaMessage.fileName) as string;
+        if(mimetype === 'application/mp4') {
+          mimetype = 'video/mp4';
+        }
       }
 
       prepareMedia[mediaType].caption = mediaMessage?.caption;
