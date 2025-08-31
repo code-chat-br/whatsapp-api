@@ -1933,10 +1933,44 @@ export class WAStartupService {
         participant: message.keyParticipant,
       };
 
-      await this.client.sendMessage(message.keyRemoteJid, {
-        text: edit.newContent,
-        edit: messageKey,
-      });
+      let editPayload: any;
+      const originalContent = message.content as any;
+
+      switch (message.messageType) {
+        case 'imageMessage':
+          editPayload = {
+            image: { url: originalContent.url },
+            caption: edit.newContent,
+            edit: messageKey,
+          };
+          break;
+
+        case 'videoMessage':
+          editPayload = {
+            video: { url: originalContent.url },
+            caption: edit.newContent,
+            edit: messageKey,
+          };
+          break;
+
+        case 'documentMessage':
+          editPayload = {
+            document: { url: originalContent.url },
+            fileName: originalContent.fileName,
+            caption: edit.newContent,
+            edit: messageKey,
+          };
+          break;
+
+        default:
+          editPayload = {
+            text: edit.newContent,
+            edit: messageKey,
+          };
+          break;
+      }
+
+      await this.client.sendMessage(message.keyRemoteJid, editPayload);
 
       return { editedAt: new Date(), message };
     } catch (error) {
