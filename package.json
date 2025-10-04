@@ -45,7 +45,7 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
     "@prisma/client": "^6.14.0",
-    "@whiskeysockets/baileys": "^6.7.18",
+    "@whiskeysockets/baileys": "^6.7.20",
     "axios": "^1.11.0",
     "class-validator": "^0.14.0",
     "cross-env": "^10.0.0",
@@ -66,7 +66,7 @@
     "multer": "^2.0.1",
     "node-cache": "^5.1.2",
     "npm": "^11.4.2",
-    "pino": "^9.9.0",
+    "pino": "^10.0.0",
     "pino-pretty": "^13.0.0",
     "qrcode": "^1.5.1",
     "qrcode-terminal": "^0.12.0",
@@ -92,15 +92,16 @@
     "@types/swagger-ui-express": "^4.1.6",
     "@types/ws": "^8.5.10",
     "@types/yamljs": "^0.2.34",
-    "@typescript-eslint/eslint-plugin": "8.39.1",
-    "@typescript-eslint/parser": "8.39.1",
+    "@typescript-eslint/eslint-plugin": "8.45.0",
+    "@typescript-eslint/parser": "8.45.0",
     "copy-webpack-plugin": "^13.0.1",
-    "eslint": "9.33.0",
+    "eslint": "9.37.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.6.2",
     "prisma": "^6.14.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.45.0"
   }
 }
