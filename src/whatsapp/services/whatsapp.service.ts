@@ -550,7 +550,13 @@ export class WAStartupService {
 
   public async reloadConnection(): Promise<WASocket> {
     try {
-      this.client = await this.setSocket();
+      await new Promise((resolve) => {
+        this.client.ws?.once('close', resolve);
+        this.client.ws?.['socket']?.['terminate']?.();
+      });
+      this.client.ws['socket'] = null;
+      await this.client.ws.connect();
+
       return this.client;
     } catch (error) {
       this.logger.error(error);
