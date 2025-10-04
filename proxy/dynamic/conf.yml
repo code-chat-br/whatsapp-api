@@ -1,0 +1,127 @@
+http:
+  ###############################################################
+  # Agrupamento de middlewares no namespace "middlewares"
+  ###############################################################
+  middlewares:
+    # Reemitir solicitações um determinado número de vezes
+    # para um servidor back-end se ele não responder
+    try_retry:
+      retry:
+        # Número de tentativas
+        attempts: 2
+        # Tempo de espera para uma nova tentativa
+        initialInterval: "500ms"
+
+    # Reproduzindo a solicitação com "retryExpression"
+    limit_body:
+      buffering:
+        # retryExpression pode usar:
+        # IsNetworkError(): erro de rede
+        # Attempts(): número de tentativas
+        retryExpression: "IsNetworkError() && Attempts() < 2"
+
+        # Tamanho máximo do corpo da requisição
+        # 1024 * 3 * 1000
+        maxRequestBodyBytes: 3072000
+
+    # Middleware de autenticação para exibição do dashboard
+    dashboard_auth_traefik:
+      basicAuth:
+        #---------------------------------------------
+        # Gerando senha:
+        # openssl passwd -apr1 -stdin <<< "sua_senha_1"
+        #---------------------------------------------
+        # user=codechat
+        # pass=$apr1$/a8pff2v$lxxb/jjz0bL3GhUbtyWOV/
+        users:
+          - "codechat:$apr1$nWn0eGv2$XT4pvuV353HeM7stkcq/B/"
+
+    # Middleware de autenticação para exibição do prisma studio
+    prisma_db_auth:
+      basicAuth:
+        #---------------------------------------------
+        # Gerando senha:
+        # openssl passwd -apr1 -stdin <<< "sua_senha_2"
+        #---------------------------------------------
+        # user=codechat
+        # pass=$apr1$0.Skc2fw$l4e/9KllHQrAB.Qsmtgeu.
+        users:
+          - "codechat:$apr1$/RFAfXKf$DjmgFM6FHQpWa6U16F6cI/"
+
+  ###############################################################
+  # Roteadores
+  ###############################################################
+  routers:
+    #------------------------------------------------------------
+    # Roteador do traefik_dashboard
+    #------------------------------------------------------------
+    traefik_dashboard:
+      rule: "Host(`traefik.domain.com`)"
+      entryPoints:
+        - web_secure
+      service: api@internal
+      middlewares:
+        - dashboard_auth_traefik
+      tls:
+        certresolver: letsencrypt_resolver
+
+    #------------------------------------------------------------
+    # Roteador do studio_db_v1
+    #------------------------------------------------------------
+    studio_db_v1:
+      rule: "Host(`paneldb.domain.com`)"
+      entryPoints:
+        - web_secure
+      service: studio_db_v1
+      middlewares:
+        - prisma_db_auth
+      tls:
+        certresolver: letsencrypt_resolver
+
+    #------------------------------------------------------------
+    # Roteador do codechat_api_v1
+    #------------------------------------------------------------
+    codechat_api_v1:
+      rule: "Host(`api.domain.com`)"
+      entryPoints:
+        - web_secure
+      service: codechat_api_v1
+      middlewares:
+        - limit_body
+        - try_retry
+      tls:
+        certresolver: letsencrypt_resolver
+
+  ###############################################################
+  # Serviços
+  ###############################################################
+  services:
+    #------------------------------------------------------------
+    # Serviço traefik_dashboard
+    #------------------------------------------------------------
+    traefik_dashboard:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://127.0.0.1:80"
+        # Exemplo de outro servidor no loadbalancer:
+        # servers:
+        #   - url: "http://127.0.0.1:8080"
+
+    #------------------------------------------------------------
+    # Serviço studio_db_v1
+    #------------------------------------------------------------
+    studio_db_v1:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://127.0.0.1:4444"
+
+    #------------------------------------------------------------
+    # Serviço codechat_api_v1
+    #------------------------------------------------------------
+    codechat_api_v1:
+      loadBalancer:
+        passHostHeader: true
+        servers:
+          - url: "http://127.0.0.1:8084"

@@ -1,0 +1,155 @@
+###############################################################
+# Configuração global
+###############################################################
+
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: true
+
+###############################################################
+# Configuração de pontos de entrada
+###############################################################
+
+# Definição de pontos de entrada
+entryPoints:
+  web_secure:
+    address: ":443"
+    http:
+      # TLS habilitado
+      tls: {}
+
+  web:
+    address: ":80"
+    # Redirecionamento permanente para https
+    http:
+      redirections:
+        entryPoint:
+          to: web_secure
+          scheme: https
+          permanent: true
+          priority: 1
+
+###############################################################
+# Configuração de logs do Traefik
+###############################################################
+
+# registros do Traefik
+# Habilitado por padrão e logado em stdout
+log:
+  # Nível de registro
+  #
+  # níveis = TRACE, DEBUG, INFO, WARN, ERROR, FATAL, PANIC
+  level: DEBUG
+
+  # Define o caminho do arquivo para o log do traefik. 
+  # Se não for especificado, stdout será usado.
+  # Diretórios intermediários são criados se necessário.
+  # mkdir -p /var/log/traefik/
+  filePath: /var/log/traefik/traefik.json
+
+  # O formato é "json" ou "common".
+  # Opcional. Padrão: "common"
+  format: json
+
+  # Tamanho máximo dos logs (em MB)
+  # 100 mb
+  maxSize: 100
+
+  # Número máximo de dias para reter arquivos de log antigos
+  # 30 dias
+  maxAge: 30
+
+###############################################################
+# Configuração de logs de acesso
+###############################################################
+
+accessLog:
+  # Define o caminho do arquivo para o log de acesso. 
+  # Se não for especificado, stdout será usado.
+  # mkdir -p /var/log/traefik/
+  filePath: /var/log/traefik/access.log
+
+  # Formato: "json" ou "common"
+  # Padrão: "common"
+  format: json
+
+  # Número de linhas para gravação assíncrona
+  # 100 linhas
+  bufferingSize: 100
+
+################################################################
+# Configuração de API e painel
+################################################################
+
+# Habilitando API e dashboard
+api:
+  # Habilite a API em modo inseguro
+  # insecure: true
+
+  # Painel habilitado
+  # Padrão: true
+  dashboard: true
+
+# Habilitar ping
+# ping:
+#   # Nome do ponto de entrada relacionado
+#   # Padrão: "traefik"
+#   # Caminho = /traefik
+#   # Métodos = GET,HEAD
+#   # Retorna código 200 com conteúdo "OK"
+#   entryPoint: traefik
+
+###############################################################
+# PROVEDORES
+###############################################################
+
+providers:
+  ###############################################################
+  # Back-end de configuração por arquivo
+  ###############################################################
+  file:
+    # Caminho do arquivo de configuração
+    # mkdir -p /etc/traefik/dynamic
+    # cp ./dynamic/conf.toml ./etc/traefik/dynamic/conf.toml
+    filename: /etc/traefik/dynamic/conf.toml
+
+    # Defina watch: true para permitir que o Traefik observe alterações
+    # Padrão: true
+    watch: true
+
+  ###############################################################
+  # Back-end de configuração do Docker
+  ###############################################################
+  docker:
+    # Endpoint do servidor Docker. Pode ser soquete tcp ou unix.
+    # Padrão: "unix:///var/run/docker.sock"
+    endpoint: "unix:///var/run/docker.sock"
+
+    # Expor contêineres por padrão no traefik
+    # Padrão: true
+    exposedByDefault: false
+
+    # Definindo a rede pública de comunicação entre os containers
+    network: local_network
+
+    # Assiste aos eventos do Docker
+    # Padrão: true
+    watch: true
+
+###############################################################
+# Resolvedores de certificados
+###############################################################
+
+certificatesResolvers:
+  letsencrypt_resolver:
+    acme:
+      # Endereço de e-mail usado para registro
+      email: "cleber@codechat.dev"
+
+      # Arquivo usado para armazenamento de certificados
+      # mkdir -p /etc/traefik/letsencrypt
+      storage: "/etc/traefik/letsencrypt/acme.json"
+
+      # Usa desafio HTTP-01 ACME
+      httpChallenge:
+        entryPoint: web
