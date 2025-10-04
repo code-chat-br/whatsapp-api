@@ -123,7 +123,9 @@ export class InstanceService {
       });
 
       return create;
-    } catch (error) {}
+    } catch (error) {
+      //
+    }
   }
 
   public async updateInstance(instance: InstanceDto) {
@@ -161,7 +163,9 @@ export class InstanceService {
       }
 
       return updated;
-    } catch (error) {}
+    } catch (error) {
+      //
+    }
   }
 
   public async fetchInstance(instanceName?: string) {

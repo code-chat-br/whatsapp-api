@@ -54,7 +54,9 @@ const logger = new Logger(new ConfigService(), 'Validate');
 
 export function routerPath(path: string, param = true) {
   let route = '/' + path;
-  param ? (route += '/:instanceName') : null;
+  if (param) {
+    route += '/:instanceName';
+  }
 
   return route;
 }

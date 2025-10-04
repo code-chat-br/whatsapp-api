@@ -2,20 +2,28 @@ version: '3.8'
 
 services:
   postgres_server:
-    image: postgres:latest
+    image: postgres:17
     container_name: postgres_server
     environment:
       POSTGRES_PASSWORD: '123456'
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5433:5432"
     networks:
       - public_network
+
+    labels:
+      - traefik.enable=true
+      - traefik.tcp.routers.postgres.rule=HostSNI(`*`)
+      - traefik.tcp.routers.postgres.entryPoints=postgres_db
+      - traefik.tcp.routers.postgres.service=postgres
+      - traefik.tcp.services.postgres.loadBalancer.server.port=5432
 
 networks:
   public_network:
     driver: bridge
+    external: true
 
 volumes:
   postgres_data:

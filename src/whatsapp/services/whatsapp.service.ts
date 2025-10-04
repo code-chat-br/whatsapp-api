@@ -432,8 +432,7 @@ export class WAStartupService {
     }
 
     if (connection === 'close') {
-      const shouldReconnect =
-        (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      const shouldReconnect = (lastDisconnect.error as Boom)?.output?.statusCode !== 401;
       if (shouldReconnect) {
         await this.connectToWhatsapp();
       } else {
@@ -512,7 +511,7 @@ export class WAStartupService {
   private async setSocket() {
     this.endSession = false;
 
-    this.authState = (await this.defineAuthState()) as AuthState;
+    this.authState = await this.defineAuthState();
 
     const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
@@ -820,7 +819,7 @@ export class WAStartupService {
             keyParticipant: m?.participant || m.key?.participant,
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
-            messageTimestamp: m.messageTimestamp as number,
+            messageTimestamp: m.messageTimestamp,
             instanceId: this.instance.id,
             device: getDevice(m.key.id),
           } as PrismType.Message);
@@ -871,7 +870,7 @@ export class WAStartupService {
           keyParticipant: received?.participant || received.key?.participant,
           messageType,
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
-          messageTimestamp: received.messageTimestamp as number,
+          messageTimestamp: received.messageTimestamp,
           instanceId: this.instance.id,
           device: (() => {
             if (isValidUlid(received.key.id)) {
@@ -967,7 +966,7 @@ export class WAStartupService {
         5: 'PLAYED',
       };
       for await (const { key, update } of args) {
-        if (update.status === 4 && key?.remoteJid) {
+        if (update.status === proto.WebMessageInfo.Status.READ && key?.remoteJid) {
           key.remoteJid = key.remoteJid.replace(/:\d+(?=@)/, '');
         }
 
@@ -1342,7 +1341,7 @@ export class WAStartupService {
             if (Long.isLong(m.messageTimestamp)) {
               return m.messageTimestamp.toNumber();
             }
-            return m.messageTimestamp as number;
+            return m.messageTimestamp;
           })(),
           instanceId: this.instance.id,
           device: 'web',
@@ -1409,7 +1408,7 @@ export class WAStartupService {
 
       if (Buffer.isBuffer(video)) {
         input = new PassThrough();
-        (input as PassThrough).end(video);
+        input.end(video);
       }
 
       ffmpeg(input as any)
@@ -1450,12 +1449,11 @@ export class WAStartupService {
       const audioStream = new PassThrough();
       const normalizedPath = normalize(inputPath);
 
-      const inputFormat =
-        format.input === 'mpga' || 'bin'
-          ? 'mp3'
-          : format.input === 'oga'
-            ? 'ogg'
-            : format.input;
+      const inputFormat = ['mpga', 'bin'].includes(format?.input)
+        ? 'mp3'
+        : format.input === 'oga'
+          ? 'ogg'
+          : format.input;
       const audioCodec = format.to === 'ogg' ? 'libvorbis' : 'aac';
       const outputFormat = format.to === 'ogg' ? 'ogg' : 'adts';
 
@@ -1561,7 +1559,7 @@ export class WAStartupService {
           media = readFileSync(fileName);
         } else {
           media = await this.convertAudioToWH(fileName, {
-            input: ext as string,
+            input: ext,
             to: 'ogg',
           });
         }
@@ -1586,7 +1584,7 @@ export class WAStartupService {
 
       if (mediaMessage?.fileName) {
         mimetype = mime.lookup(mediaMessage.fileName) as string;
-        if(mimetype === 'application/mp4') {
+        if (mimetype === 'application/mp4') {
           mimetype = 'video/mp4';
         }
       }
@@ -1926,7 +1924,9 @@ export class WAStartupService {
                 responseType: 'arraybuffer',
               });
               return new Uint8Array(response.data);
-            } catch {}
+            } catch (error) {
+              //
+            }
           }
         })(),
       },
@@ -1969,7 +1969,7 @@ export class WAStartupService {
     for await (const number of data.numbers) {
       const jid = this.createJid(number);
       if (isLidUser(jid)) {
-        onWhatsapp.push(new OnWhatsAppDto(jid, !!true, jid as string));
+        onWhatsapp.push(new OnWhatsAppDto(jid, !!true, jid));
       }
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
@@ -2314,7 +2314,7 @@ export class WAStartupService {
       orderBy: {
         messageTimestamp: 'desc',
       },
-      skip: query.offset * (query?.page === 1 ? 0 : (query?.page as number) - 1),
+      skip: query.offset * (query?.page === 1 ? 0 : query?.page - 1),
       take: query.offset,
       select: {
         id: true,
