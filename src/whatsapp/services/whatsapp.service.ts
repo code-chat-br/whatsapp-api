@@ -645,7 +645,7 @@ export class WAStartupService {
             },
           })
           .then((result) => {
-            if (result && result.id) {
+            if (result?.id) {
               this.repository.chat
                 .update({
                   where: {
@@ -656,7 +656,7 @@ export class WAStartupService {
                     updatedAt: new Date(),
                   },
                 })
-                .catch((err) => this.logger.error(err));
+                .catch((err) => null);
             } else {
               this.repository.chat
                 .create({
