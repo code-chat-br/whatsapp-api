@@ -64,7 +64,7 @@ export function routerPath(path: string, param = true) {
 export async function dataValidate<T>(args: DataValidate<T>) {
   const { request, schema, execute } = args;
 
-  const body = request.body;
+  const body = request.body ?? {};
   const instance = request.params as unknown as InstanceDto;
 
   const isNotEmptyQuery = request?.query && Object.keys(request.query).length > 0;
@@ -119,7 +119,7 @@ export async function groupValidate<T>(args: DataValidate<T>) {
   }
 
   const instance = request.params as unknown as InstanceDto;
-  const body = request.body;
+  const body = request.body ?? {};
 
   Object.assign(body, groupJid);
 
