@@ -53,7 +53,6 @@ import makeWASocket, {
   getDevice,
   GroupMetadata,
   isJidGroup,
-  isJidUser,
   isLidUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
@@ -66,6 +65,7 @@ import makeWASocket, {
   WACallEvent,
   WAConnectionState,
   WAMediaUpload,
+  WAMessage,
   WAMessageUpdate,
   WASocket,
   WAVersion,
@@ -1288,7 +1288,7 @@ export class WAStartupService {
       }
 
       const messageSent: Partial<PrismType.Message> = await (async () => {
-        let q: proto.IWebMessageInfo;
+        let q: WAMessage;
         if (quoted) {
           q = {
             key: {
@@ -1324,7 +1324,7 @@ export class WAStartupService {
           m.key = {
             id: id,
             remoteJid: jid,
-            participant: isJidUser(jid) ? jid : undefined,
+            participant: isLidUser(jid) ? jid : undefined,
             fromMe: true,
           };
 
@@ -2004,7 +2004,7 @@ export class WAStartupService {
     try {
       const keys: proto.IMessageKey[] = [];
       data.readMessages.forEach((read) => {
-        if (isJidGroup(read.remoteJid) || isJidUser(read.remoteJid)) {
+        if (isJidGroup(read.remoteJid) || isLidUser(read.remoteJid)) {
           keys.push({
             remoteJid: read.remoteJid,
             fromMe: read.fromMe,
@@ -2384,10 +2384,7 @@ export class WAStartupService {
       throw new BadRequestException('Empty or invalid array');
     }
     try {
-      await this.client.assertSessions(
-        chats.map((c) => this.createJid(c)),
-        true,
-      );
+      await this.client.assertSessions(chats.map((c) => this.createJid(c)));
       return { message: 'Session asserted' };
     } catch (error) {
       throw new InternalServerErrorException('Error asserting session', error.toString());

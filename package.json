@@ -1,6 +1,6 @@
 {
   "name": "whatsapp-api",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Rest api for communication with WhatsApp",
   "main": "./dist/src/main.js",
   "scripts": {
@@ -45,7 +45,7 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
     "@prisma/client": "^6.14.0",
-    "@whiskeysockets/baileys": "^6.7.20",
+    "@whiskeysockets/baileys": "^7.0.0-rc.5",
     "axios": "^1.11.0",
     "class-validator": "^0.14.0",
     "cross-env": "^10.0.0",
