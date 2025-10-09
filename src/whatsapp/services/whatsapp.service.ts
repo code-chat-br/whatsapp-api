@@ -807,8 +807,14 @@ export class WAStartupService {
             continue;
           }
 
-          if (Long.isLong(m?.messageTimestamp)) {
-            m.messageTimestamp = m.messageTimestamp?.toNumber();
+          let timestamp = m?.messageTimestamp;
+
+          if (timestamp && typeof timestamp === 'object' && typeof timestamp.toNumber === 'function') {
+            timestamp = timestamp.toNumber();
+          }else if (timestamp && typeof timestamp === 'object' && 'low' in timestamp && 'high' in timestamp) {
+            timestamp = Number(timestamp.low) || 0;
+          }else if (typeof timestamp !== 'number') {
+            timestamp = 0;
           }
 
           const messageType = getContentType(m.message);
@@ -825,7 +831,7 @@ export class WAStartupService {
             keyParticipant: m?.participant || m.key?.participant,
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
-            messageTimestamp: m.messageTimestamp,
+            messageTimestamp: timestamp,
             instanceId: this.instance.id,
             device: getDevice(m.key.id),
           } as PrismType.Message);
