@@ -77,6 +77,7 @@ import {
   GlobalWebhook,
   QrCode,
   ProviderSession,
+  EnvProxy,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
@@ -151,6 +152,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
+import { createProxyAgents } from '../../utils/proxy';
 
 type InstanceQrCode = {
   count: number;
@@ -825,10 +827,10 @@ export class WAStartupService {
 
           messagesRaw.push({
             keyId: m.key.id,
-            keyRemoteJid: m.key?.remoteJid || m.key?.['lid'],
+            keyRemoteJid: this.normalizeJid(m.key),
             keyFromMe: m.key.fromMe,
             pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-            keyParticipant: m?.participant || m.key?.participant,
+            keyParticipant: m?.participant || this.normalizeParticipant(m.key),
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
             messageTimestamp: timestamp,
@@ -876,10 +878,11 @@ export class WAStartupService {
 
         const messageRaw = {
           keyId: received.key.id,
-          keyRemoteJid: received.key?.remoteJid || received?.key?.['lid'],
+          keyRemoteJid: this.normalizeJid(received.key),
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          keyParticipant: received?.participant || received.key?.participant,
+          keyParticipant:
+            received?.participant || this.normalizeParticipant(received.key),
           messageType,
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp,
@@ -1181,6 +1184,14 @@ export class WAStartupService {
     } else {
       return jid;
     }
+  }
+
+  private normalizeJid(key: proto.IMessageKey) {
+    return key?.remoteJid || key?.['remoteJidAlt'] || key?.['lid'];
+  }
+
+  private normalizeParticipant(key: proto.IMessageKey) {
+    return key?.participant || key?.['participantAlt'];
   }
 
   private createJid(number: string): string {
