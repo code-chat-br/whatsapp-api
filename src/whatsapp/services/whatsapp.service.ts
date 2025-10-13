@@ -881,6 +881,16 @@ export class WAStartupService {
           } as any;
         }
 
+        if (received.message?.protocolMessage) {
+          const m = received.message.protocolMessage;
+          if (typeof m?.type === 'number') {
+            const typeName =
+              proto.Message.ProtocolMessage.Type[m.type as any] ?? 'UNKNOWN_TYPE';
+            m.type = typeName as any;
+            received.message.protocolMessage = m;
+          }
+        }
+
         const messageRaw = {
           keyId: received.key.id,
           keyRemoteJid: this.normalizeJid(received.key),
