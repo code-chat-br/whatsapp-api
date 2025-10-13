@@ -111,6 +111,8 @@ export type GlobalWebhook = { URL: string; ENABLED: boolean };
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
 export type QrCodLimit = number;
 
+export type EnvProxy = { WS?: string; FETCH?: string };
+
 export interface Env {
   SERVER: HttpServer;
   STORE: StoreConf;
@@ -127,6 +129,7 @@ export interface Env {
   SESSION_SECRET: string;
   S3?: Bucket;
   WA_VERSION: string;
+  PROXY: EnvProxy;
 }
 
 export type Key = keyof Env;
@@ -245,6 +248,10 @@ export class ConfigService {
         USE_SSL: process.env?.S3_USE_SSL === 'true',
       },
       WA_VERSION: process.env?.WA_VERSION,
+      PROXY: {
+        WS: process.env?.WS_PROXY_URL || null,
+        FETCH: process.env?.FETCH_PROXY_URL || null,
+      },
     };
   }
 }

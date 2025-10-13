@@ -522,6 +522,9 @@ export class WAStartupService {
     const { EXPIRATION_TIME } = this.configService.get<QrCode>('QRCODE');
     const CONNECTION_TIMEOUT = this.configService.get<number>('CONNECTION_TIMEOUT');
 
+    const proxy = this.configService.get<EnvProxy>('PROXY');
+    const agents = createProxyAgents(proxy?.WS, proxy?.FETCH);
+
     const socketConfig: UserFacingSocketConfig = {
       auth: {
         creds: this.authState.state.creds,
@@ -530,6 +533,8 @@ export class WAStartupService {
           P({ level: 'silent' }) as any,
         ),
       },
+      agent: agents?.wsAgent,
+      fetchAgent: agents?.fetchAgent,
       logger: P({ level: 'silent' }) as any,
       printQRInTerminal: false,
       browser,
