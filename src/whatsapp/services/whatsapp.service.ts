@@ -193,6 +193,7 @@ export class WAStartupService {
   public client: WASocket;
   private authState: Partial<AuthState> = {};
   private authStateProvider: AuthStateProvider;
+  private clientGeneration = 0;
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -573,10 +574,16 @@ export class WAStartupService {
 
   public async connectToWhatsapp(): Promise<WASocket> {
     try {
+      // Remove listener from the old connection before creating a new one.
+      if (this.client) {
+        await this.closeBaileysSocket('reconnect');
+      }
+
       this.instanceQr.count = 0;
       await this.loadWebhook();
       this.client = await this.setSocket();
-      this.eventHandler();
+      const gen = ++this.clientGeneration;
+      this.eventHandler(gen);
 
       return this.client;
     } catch (error) {
@@ -1076,8 +1083,11 @@ export class WAStartupService {
     },
   };
 
-  private eventHandler() {
+  private eventHandler(gen: number) {
     this.client.ev.process((events) => {
+      // Do not process events from outdated/closed clients
+      if (gen !== this.clientGeneration) return;
+
       if (!this.endSession) {
         if (events?.['connection.update']) {
           this.connectionUpdate(events['connection.update']);
@@ -2527,4 +2537,64 @@ export class WAStartupService {
       throw new BadRequestException('Unable to leave the group', error.toString());
     }
   }
+
+  private registeredEvents: (keyof BaileysEventMap)[] = [
+    'connection.update',
+    'creds.update',
+    'messaging-history.set',
+    'messages.upsert',
+    'messages.update',
+    'presence.update',
+    'groups.upsert',
+    'groups.update',
+    'group-participants.update',
+    'chats.upsert',
+    'chats.update',
+    'chats.delete',
+    'contacts.upsert',
+    'contacts.update',
+    'call',
+    'labels.association',
+    'labels.edit'
+  ];
+
+  private removeAllBaileysListeners() {
+  for (const evName of this.registeredEvents) {
+    try {
+      this.client.ev.removeAllListeners(evName);
+    } catch {}
+  }
+}
+
+  private async closeBaileysSocket(reason = 'manual shutdown') {
+    if (!this.client) return;
+
+    // 1) Stop processing events during teardown
+    this.endSession = true;
+
+    // 2) Remove all listeners from the emitter
+    this.removeAllBaileysListeners();
+
+    // 3) Close the WebSocket (gracefully)
+    try { this.client.ws?.close(); } catch {}
+
+    // 4) Ask Baileys to close the connection
+    try { this.client.end(new Error(reason)); } catch {}
+
+    // 5) Wait for the 'close' event to ensure it has finished
+    await new Promise<void>((resolve) => {
+      let done = false;
+      const finish = () => { if (!done) { done = true; resolve(); } };
+      if (this.client?.ws?.once) {
+        this.client.ws.once('close', finish);
+        setTimeout(finish, 3000); // Safety timeout
+      } else {
+        finish();
+      }
+    });
+
+    this.client = null as any;
+    this.endSession = false;
+  }
+
 }
