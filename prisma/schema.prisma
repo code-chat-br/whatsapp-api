@@ -167,3 +167,131 @@ model ActivityLogs {
   Instance    Instance? @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId  Int?      @db.Integer
 }
+
+// ========================================================================
+// PANGEIA TASK MANAGEMENT SYSTEM
+// ========================================================================
+
+enum TeamMemberRole {
+  LEADER      // Líder da equipe
+  ASSIGNED    // Encarregado/Membro
+}
+
+enum TaskStatus {
+  PENDING     // Pendente
+  IN_PROGRESS // Em progresso
+  COMPLETED   // Concluída
+  CANCELLED   // Cancelada
+  ON_HOLD     // Em espera
+}
+
+enum TaskPriority {
+  LOW         // Baixa
+  MEDIUM      // Média
+  HIGH        // Alta
+  URGENT      // Urgente
+}
+
+// Equipe Pangeia
+model Team {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique @db.VarChar(100)
+  description String?      @db.VarChar(500)
+  active      Boolean      @default(true) @db.Boolean
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  members     TeamMember[]
+  tasks       Task[]
+
+  @@index([name])
+}
+
+// Membros da equipe (líderes e encarregados)
+model TeamMember {
+  id               Int              @id @default(autoincrement())
+  whatsappJid      String           @db.VarChar(100) // WhatsApp ID do membro
+  name             String           @db.VarChar(100)
+  role             TeamMemberRole   @default(ASSIGNED)
+  active           Boolean          @default(true) @db.Boolean
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  team             Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId           Int
+  assignedTasks    TaskAssignment[]
+  createdTasks     Task[]           @relation("TaskCreator")
+  taskComments     TaskComment[]
+  taskStatusChanges TaskStatusHistory[]
+
+  @@unique([teamId, whatsappJid])
+  @@index([whatsappJid])
+  @@index([teamId, role])
+}
+
+// Tarefas
+model Task {
+  id          Int                 @id @default(autoincrement())
+  title       String              @db.VarChar(255)
+  description String?             @db.Text
+  status      TaskStatus          @default(PENDING)
+  priority    TaskPriority        @default(MEDIUM)
+  dueDate     DateTime?
+  completedAt DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  team        Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  teamId      Int
+  creator     TeamMember          @relation("TaskCreator", fields: [creatorId], references: [id])
+  creatorId   Int
+  assignments TaskAssignment[]
+  comments    TaskComment[]
+  statusHistory TaskStatusHistory[]
+
+  @@index([teamId, status])
+  @@index([status, priority])
+  @@index([dueDate])
+}
+
+// Atribuição de tarefas a membros
+model TaskAssignment {
+  id         Int        @id @default(autoincrement())
+  assignedAt DateTime   @default(now())
+  task       Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId     Int
+  member     TeamMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  memberId   Int
+
+  @@unique([taskId, memberId])
+  @@index([memberId])
+  @@index([taskId])
+}
+
+// Comentários em tarefas
+model TaskComment {
+  id        Int        @id @default(autoincrement())
+  content   String     @db.Text
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  task      Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId    Int
+  author    TeamMember @relation(fields: [authorId], references: [id])
+  authorId  Int
+
+  @@index([taskId])
+  @@index([createdAt])
+}
+
+// Histórico de mudanças de status
+model TaskStatusHistory {
+  id           Int        @id @default(autoincrement())
+  previousStatus TaskStatus?
+  newStatus    TaskStatus
+  changedAt    DateTime   @default(now())
+  comment      String?    @db.Text
+  task         Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId       Int
+  changedBy    TeamMember @relation(fields: [changedById], references: [id])
+  changedById  Int
+
+  @@index([taskId])
+  @@index([changedAt])
+}

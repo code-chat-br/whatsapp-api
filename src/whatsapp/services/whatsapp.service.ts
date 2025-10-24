@@ -153,6 +153,8 @@ import {
   writeFileSync,
 } from 'fs';
 import { createProxyAgents } from '../../utils/proxy';
+import { PangeiaMessageHandler } from '../../pangeia/services/message-handler.service';
+import { PrismaClient } from '@prisma/client';
 
 type InstanceQrCode = {
   count: number;
@@ -177,6 +179,29 @@ export class WAStartupService {
       this.configService,
       this.providerFiles,
     );
+
+    // Inicializa o handler do agente Pangeia
+    const prisma = new PrismaClient();
+
+    // Configuração de IA (opcional)
+    let aiConfig;
+    if (process.env.PANGEIA_AI_PROVIDER) {
+      aiConfig = {
+        provider: process.env.PANGEIA_AI_PROVIDER as any,
+        apiKey: process.env.PANGEIA_AI_API_KEY || '',
+        model: process.env.PANGEIA_AI_MODEL,
+        temperature: parseFloat(process.env.PANGEIA_AI_TEMPERATURE || '0.7'),
+        maxTokens: parseInt(process.env.PANGEIA_AI_MAX_TOKENS || '500'),
+      };
+    }
+
+    this.pangeiaHandler = new PangeiaMessageHandler(
+      prisma,
+      async (to: string, text: string) => {
+        return await this.textMessage({ number: to, text, delay: 0 });
+      },
+      aiConfig
+    );
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -193,6 +218,7 @@ export class WAStartupService {
   public client: WASocket;
   private authState: Partial<AuthState> = {};
   private authStateProvider: AuthStateProvider;
+  private pangeiaHandler: PangeiaMessageHandler;
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -937,6 +963,13 @@ export class WAStartupService {
         this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
+
+        // Processa mensagem através do agente Pangeia (se for direcionada a ele)
+        try {
+          await this.pangeiaHandler.handleIncomingMessage(received);
+        } catch (error) {
+          this.logger.error(['Error processing Pangeia message', error?.message, error?.stack]);
+        }
 
         if (s3Service.BUCKET?.ENABLE) {
           try {

@@ -72,6 +72,8 @@ import { docsRouter } from './config/swagger.config';
 import { ProviderFiles } from './provider/sessions';
 import { Websocket } from './websocket/server';
 import { createServer } from 'http';
+import { pangeiaRouter } from './pangeia/routers/pangeia.router';
+import { PrismaClient } from '@prisma/client';
 
 export function describeRoutes(
   rootPath: string,
@@ -190,6 +192,11 @@ export async function AppModule(context: Map<string, any>) {
   const s3Router = S3Router(s3Service, ...middlewares);
   logger.info('Integration:S3Service - ON');
 
+  // Pangeia Task Management System
+  const prisma = new PrismaClient();
+  const pangeiaRouterInstance = pangeiaRouter(prisma);
+  logger.info('Pangeia Task Management - ON');
+
   const router = Router();
   router.use(...describeRoutes('/instance', instanceRouter, logger));
   router.use(...describeRoutes('/instance', viewsRouter, logger));
@@ -198,6 +205,7 @@ export async function AppModule(context: Map<string, any>) {
   router.use(...describeRoutes('/group', groupRouter, logger));
   router.use(...describeRoutes('/webhook', webhookRouter, logger));
   router.use(...describeRoutes('/s3', s3Router, logger));
+  router.use(...describeRoutes('/pangeia', pangeiaRouterInstance, logger));
 
   app.use(urlencoded({ extended: true, limit: '100mb' }), json({ limit: '100mb' }));
 
