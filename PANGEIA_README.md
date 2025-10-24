@@ -39,6 +39,194 @@ O **Pangeia** é um agente conversacional inteligente integrado ao WhatsApp que 
 - Notificação de líderes sobre novas tarefas
 - Lembretes de tarefas pendentes
 
+🧠 **IA Conversacional (NOVO!)**
+- Entende linguagem natural sem comandos fixos
+- Aprende com o contexto da conversa
+- Suporte para múltiplos provedores de IA (OpenAI, Anthropic, Groq, Local)
+- Respostas personalizadas e naturais
+- Memória de conversação
+- Fallback inteligente para regex quando IA não está disponível
+
+## 🧠 IA Conversacional
+
+O Pangeia agora conta com **IA Generativa** para entender comandos de forma muito mais natural e flexível!
+
+### Como Funciona
+
+**SEM IA (modo regex):**
+```
+Usuário: "criar tarefa Revisar código"
+```
+
+**COM IA (modo natural):**
+```
+Usuário: "preciso que alguém revise o código do backend"
+Pangeia: ✅ Tarefa criada! #15 - Revisar código do backend
+
+Usuário: "atribui pra Maria"
+Pangeia: ✅ Tarefa #15 atribuída a Maria Santos!
+
+Usuário: "qual o status dela?"
+Pangeia: 📋 #15 - Revisar código do backend
+         ⏳ Status: Pendente
+         👤 Atribuída a: Maria Santos
+```
+
+### Provedores Suportados
+
+1. **OpenAI GPT** (Recomendado para produção)
+   - Modelos: gpt-4o, gpt-4o-mini, gpt-3.5-turbo
+   - Melhor qualidade de compreensão
+   - Custo: Pago por token
+
+2. **Anthropic Claude** (Alternativa premium)
+   - Modelos: claude-3-5-sonnet, claude-3-haiku
+   - Excelente raciocínio
+   - Custo: Pago por token
+
+3. **Groq** (Recomendado para testes - GRATUITO!)
+   - Modelos: llama-3.1-70b-versatile, mixtral-8x7b
+   - Ultra rápido (até 10x mais rápido)
+   - Custo: **GRATUITO** (com limites)
+   - Ideal para desenvolvimento
+
+4. **Local/Ollama** (100% Privado)
+   - Rode sua própria IA localmente
+   - Modelos: llama3, mistral, phi, etc
+   - Custo: Grátis, mas precisa de hardware
+
+### Configuração Rápida
+
+#### Opção 1: Groq (Gratuito e Rápido) ⚡
+
+1. Crie conta em [console.groq.com](https://console.groq.com)
+2. Gere uma API key
+3. Adicione no `.env`:
+
+```bash
+PANGEIA_AI_PROVIDER=groq
+PANGEIA_AI_API_KEY=gsk_...
+PANGEIA_AI_MODEL=llama-3.1-70b-versatile
+```
+
+#### Opção 2: OpenAI (Melhor Qualidade) 🎯
+
+1. Crie conta em [platform.openai.com](https://platform.openai.com)
+2. Adicione créditos e gere API key
+3. Adicione no `.env`:
+
+```bash
+PANGEIA_AI_PROVIDER=openai
+PANGEIA_AI_API_KEY=sk-proj-...
+PANGEIA_AI_MODEL=gpt-4o-mini
+```
+
+#### Opção 3: Anthropic Claude 🧠
+
+```bash
+PANGEIA_AI_PROVIDER=anthropic
+PANGEIA_AI_API_KEY=sk-ant-...
+PANGEIA_AI_MODEL=claude-3-5-sonnet-20241022
+```
+
+#### Opção 4: Ollama (Local e Gratuito) 🏠
+
+1. Instale Ollama: [ollama.com](https://ollama.com)
+2. Baixe um modelo: `ollama pull llama3`
+3. Configure:
+
+```bash
+PANGEIA_AI_PROVIDER=local
+PANGEIA_AI_API_KEY=http://localhost:11434/api/chat
+PANGEIA_AI_MODEL=llama3
+```
+
+### Configuração Avançada
+
+Copie `.env.pangeia.example` para `.env` e configure:
+
+```bash
+# Provider
+PANGEIA_AI_PROVIDER=groq
+
+# API Key
+PANGEIA_AI_API_KEY=sua_api_key_aqui
+
+# Modelo (opcional - cada provider tem padrão)
+PANGEIA_AI_MODEL=llama-3.1-70b-versatile
+
+# Temperatura (0.0 - 1.0) - controla criatividade
+PANGEIA_AI_TEMPERATURE=0.7
+
+# Máximo de tokens na resposta
+PANGEIA_AI_MAX_TOKENS=500
+```
+
+### Comparação de Provedores
+
+| Provider | Custo | Velocidade | Qualidade | Privacidade | Recomendado Para |
+|----------|-------|------------|-----------|-------------|------------------|
+| **Groq** | ⭐ Grátis | ⚡⚡⚡⚡⚡ | ⭐⭐⭐⭐ | ⭐⭐⭐ | Desenvolvimento |
+| **OpenAI** | 💰 Pago | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | Produção |
+| **Claude** | 💰 Pago | ⚡⚡⚡ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | Produção Premium |
+| **Ollama** | ⭐ Grátis | ⚡⚡ | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | Máxima Privacidade |
+
+### Recursos da IA
+
+✨ **Compreensão Contextual**
+- Entende referências ("ela", "essa tarefa", "última")
+- Mantém contexto das últimas 10 mensagens
+- Lembra das tarefas recentes do usuário
+
+✨ **Flexibilidade de Comandos**
+- "preciso criar uma task pra revisar docs" ✅
+- "quais são as minhas coisas pendentes?" ✅
+- "finaliza a 5" ✅
+- "atribui pro João" ✅
+
+✨ **Respostas Naturais**
+- Respostas personalizadas baseadas no contexto
+- Tom amigável e motivador
+- Sugestões proativas
+
+✨ **Sistema Híbrido Inteligente**
+- Se a IA falhar, usa regex automaticamente
+- Se confiança for baixa (<60%), usa regex
+- Zero downtime, sempre funciona!
+
+### Testando a IA
+
+```
+# Comando tradicional (funciona sempre)
+/pangeia criar tarefa Revisar documentação
+
+# Com IA (mais natural)
+/pangeia preciso que alguém revise a documentação
+/pangeia cria uma task pra revisar os docs
+/pangeia adiciona: revisar documentação do projeto
+```
+
+Todos funcionam! A IA entende a intenção. 🎯
+
+### Logs da IA
+
+Quando a IA está ativa, você verá logs no console:
+
+```
+[Pangeia] IA ativada com provider: groq
+[Pangeia AI] Intent: create_task, Confidence: 0.95
+```
+
+Quando usa fallback:
+
+```
+[Pangeia AI] Baixa confiança (0.45), usando fallback regex
+```
+
+### Desativando a IA
+
+Se preferir usar apenas regex patterns (sem IA), simplesmente **não configure** as variáveis de ambiente do Pangeia. O sistema funciona perfeitamente sem IA!
+
 ## 🚀 Instalação
 
 ### 1. Executar Migração do Banco de Dados

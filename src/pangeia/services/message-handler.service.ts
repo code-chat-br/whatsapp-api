@@ -12,6 +12,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { PangeiaAgentService } from './agent.service';
+import { AIConfig } from './ai.service';
 
 export interface IncomingMessage {
   key: {
@@ -34,8 +35,9 @@ export class PangeiaMessageHandler {
   constructor(
     private readonly prisma: PrismaClient,
     private readonly sendMessage: SendMessageFunction,
+    aiConfig?: AIConfig,
   ) {
-    this.agentService = new PangeiaAgentService(prisma);
+    this.agentService = new PangeiaAgentService(prisma, aiConfig);
   }
 
   /**

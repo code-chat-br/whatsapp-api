@@ -14,6 +14,8 @@ import { PrismaClient } from '@prisma/client';
 import { TeamService } from './team.service';
 import { TaskService } from './task.service';
 import { TaskStatus, TaskPriority } from '../dto/task.dto';
+import { AIService, AIConfig } from './ai.service';
+import { ConversationContextService } from './conversation-context.service';
 
 interface MessageContext {
   whatsappJid: string; // Quem enviou a mensagem
@@ -31,13 +33,30 @@ interface CommandMatch {
 export class PangeiaAgentService {
   private teamService: TeamService;
   private taskService: TaskService;
+  private aiService: AIService | null = null;
+  private contextService: ConversationContextService;
+  private useAI: boolean = false;
 
   // Equipe padrão Pangeia (será criada automaticamente se não existir)
   private readonly DEFAULT_TEAM_NAME = 'Pangeia';
 
-  constructor(private readonly prisma: PrismaClient) {
+  constructor(private readonly prisma: PrismaClient, aiConfig?: AIConfig) {
     this.teamService = new TeamService(prisma);
     this.taskService = new TaskService(prisma);
+    this.contextService = new ConversationContextService();
+
+    // Inicializa IA se configuração foi fornecida
+    if (aiConfig) {
+      try {
+        AIService.validateConfig(aiConfig);
+        this.aiService = new AIService(aiConfig);
+        this.useAI = true;
+        console.log(`[Pangeia] IA ativada com provider: ${aiConfig.provider}`);
+      } catch (error) {
+        console.warn('[Pangeia] IA não configurada ou inválida, usando modo regex:', error.message);
+        this.useAI = false;
+      }
+    }
   }
 
   /**
@@ -54,7 +73,18 @@ export class PangeiaAgentService {
       // Se a mensagem começa com /pangeia ou @pangeia, processa como comando
       if (this.isAddressedToAgent(normalizedText)) {
         const cleanText = this.removeAgentPrefix(normalizedText);
-        return await this.handleCommand(context, cleanText);
+        const response = await this.handleCommand(context, cleanText);
+
+        // Registra interação no contexto
+        const member = await this.getOrCreateMember(context);
+        this.contextService.addMessage(
+          context.whatsappJid,
+          context.messageText,
+          'processed',
+          response
+        );
+
+        return response;
       }
 
       // Se não é direcionado ao agente, ignora
@@ -97,8 +127,49 @@ export class PangeiaAgentService {
 
   /**
    * Identifica a intenção e entidades da mensagem
+   * Usa IA se disponível, senão usa regex
    */
   private async identifyIntent(text: string, context: MessageContext): Promise<CommandMatch> {
+    // Se IA está habilitada, tenta usar primeiro
+    if (this.useAI && this.aiService) {
+      try {
+        const member = await this.getOrCreateMember(context);
+        const userContext = this.contextService.getContext(
+          context.whatsappJid,
+          member.name,
+          member.role === 'LEADER'
+        );
+
+        const aiResponse = await this.aiService.identifyIntent(text, {
+          userName: member.name,
+          isLeader: member.role === 'LEADER',
+          recentTasks: this.contextService.getRecentTasksFormatted(context.whatsappJid),
+        });
+
+        // Se confiança da IA for alta, usa
+        if (aiResponse.confidence >= 0.6) {
+          console.log(`[Pangeia AI] Intent: ${aiResponse.intent}, Confidence: ${aiResponse.confidence}`);
+          return {
+            intent: aiResponse.intent,
+            entities: aiResponse.entities,
+            confidence: aiResponse.confidence,
+          };
+        } else {
+          console.log(`[Pangeia AI] Baixa confiança (${aiResponse.confidence}), usando fallback regex`);
+        }
+      } catch (error) {
+        console.error('[Pangeia AI] Erro ao usar IA, usando fallback regex:', error);
+      }
+    }
+
+    // Fallback para regex (código original)
+    return await this.identifyIntentWithRegex(text, context);
+  }
+
+  /**
+   * Identifica intenção usando regex patterns (método original)
+   */
+  private async identifyIntentWithRegex(text: string, context: MessageContext): Promise<CommandMatch> {
     const patterns = [
       // ===== COMANDOS DE AJUDA =====
       {

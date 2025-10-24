@@ -182,11 +182,25 @@ export class WAStartupService {
 
     // Inicializa o handler do agente Pangeia
     const prisma = new PrismaClient();
+
+    // Configuração de IA (opcional)
+    let aiConfig;
+    if (process.env.PANGEIA_AI_PROVIDER) {
+      aiConfig = {
+        provider: process.env.PANGEIA_AI_PROVIDER as any,
+        apiKey: process.env.PANGEIA_AI_API_KEY || '',
+        model: process.env.PANGEIA_AI_MODEL,
+        temperature: parseFloat(process.env.PANGEIA_AI_TEMPERATURE || '0.7'),
+        maxTokens: parseInt(process.env.PANGEIA_AI_MAX_TOKENS || '500'),
+      };
+    }
+
     this.pangeiaHandler = new PangeiaMessageHandler(
       prisma,
       async (to: string, text: string) => {
         return await this.textMessage({ number: to, text, delay: 0 });
-      }
+      },
+      aiConfig
     );
   }
 
