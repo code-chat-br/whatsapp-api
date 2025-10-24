@@ -153,6 +153,8 @@ import {
   writeFileSync,
 } from 'fs';
 import { createProxyAgents } from '../../utils/proxy';
+import { PangeiaMessageHandler } from '../../pangeia/services/message-handler.service';
+import { PrismaClient } from '@prisma/client';
 
 type InstanceQrCode = {
   count: number;
@@ -177,6 +179,15 @@ export class WAStartupService {
       this.configService,
       this.providerFiles,
     );
+
+    // Inicializa o handler do agente Pangeia
+    const prisma = new PrismaClient();
+    this.pangeiaHandler = new PangeiaMessageHandler(
+      prisma,
+      async (to: string, text: string) => {
+        return await this.textMessage({ number: to, text, delay: 0 });
+      }
+    );
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -193,6 +204,7 @@ export class WAStartupService {
   public client: WASocket;
   private authState: Partial<AuthState> = {};
   private authStateProvider: AuthStateProvider;
+  private pangeiaHandler: PangeiaMessageHandler;
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -937,6 +949,13 @@ export class WAStartupService {
         this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
 
         await this.sendDataWebhook('messagesUpsert', messageRaw);
+
+        // Processa mensagem através do agente Pangeia (se for direcionada a ele)
+        try {
+          await this.pangeiaHandler.handleIncomingMessage(received);
+        } catch (error) {
+          this.logger.error(['Error processing Pangeia message', error?.message, error?.stack]);
+        }
 
         if (s3Service.BUCKET?.ENABLE) {
           try {
