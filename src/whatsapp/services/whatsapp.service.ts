@@ -485,7 +485,7 @@ export class WAStartupService {
       const webMessageInfo: Partial<proto.WebMessageInfo> = {
         key: {
           id: message.keyId,
-          remoteJid: this.asString(message.keyRemoteJid),
+          remoteJid: message.keyRemoteJid,
           fromMe: message.keyFromMe,
         },
         message: {
@@ -954,7 +954,7 @@ export class WAStartupService {
               const mimetype = mime.lookup(fileName).toString();
               const fullName = join(
                 `${id}_${name}`,
-                this.asString(messageRaw.keyRemoteJid),
+                messageRaw.keyRemoteJid,
                 mediaType,
                 fileName,
               );
@@ -1333,7 +1333,7 @@ export class WAStartupService {
         if (quoted) {
           q = {
             key: {
-              remoteJid: this.asString(quoted.keyRemoteJid),
+              remoteJid: quoted.keyRemoteJid,
               fromMe: quoted.keyFromMe,
               id: quoted.keyId,
             },
@@ -2001,11 +2001,11 @@ export class WAStartupService {
       const messageKey: proto.IMessageKey = {
         id: message.keyId,
         fromMe: message.keyFromMe,
-        remoteJid: this.asString(message.keyRemoteJid),
-        participant: this.asString(message?.keyParticipant),
+        remoteJid: message.keyRemoteJid,
+        participant: message?.keyParticipant,
       };
 
-      return await this.sendMessageWithTyping<AnyMessageContent>(this.asString(message.keyRemoteJid), {
+      return await this.sendMessageWithTyping<AnyMessageContent>(message.keyRemoteJid, {
         edit: messageKey,
         text: data.text,
       });
@@ -2083,13 +2083,13 @@ export class WAStartupService {
               key: {
                 id: lastMessage.keyId,
                 fromMe: lastMessage.keyFromMe,
-                remoteJid: this.asString(lastMessage.keyRemoteJid),
+                remoteJid: lastMessage.keyRemoteJid,
               },
               messageTimestamp: lastMessage.messageTimestamp,
             },
           ],
         },
-        this.asString(lastMessage.keyRemoteJid),
+        lastMessage.keyRemoteJid,
       );
 
       return { deletedAt: new Date(), chatId: lastMessage.keyRemoteJid };
@@ -2113,10 +2113,10 @@ export class WAStartupService {
 
       for (const message of messages) {
         keys.push({
-          remoteJid: this.asString(message.keyRemoteJid),
+          remoteJid: message.keyRemoteJid,
           fromMe: message.keyFromMe,
           id: message.keyId,
-          participant: this.asString(message?.keyParticipant),
+          participant: message?.keyParticipant,
         });
       }
       await this.client.readMessages(keys);
@@ -2174,16 +2174,16 @@ export class WAStartupService {
               ],
             },
           } as any,
-          this.asString(message.keyRemoteJid),
+          message.keyRemoteJid,
         );
       }
 
-      await this.client.sendMessage(this.asString(message.keyRemoteJid), {
+      await this.client.sendMessage(message.keyRemoteJid, {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
-          participant: this.asString(message?.keyParticipant),
-          remoteJid: this.asString(message.keyRemoteJid),
+          participant: message?.keyParticipant,
+          remoteJid: message.keyRemoteJid,
         },
       });
 
@@ -2217,7 +2217,7 @@ export class WAStartupService {
             key: {
               id: m.keyId,
               fromMe: m.keyFromMe,
-              remoteJid: this.asString(m.keyRemoteJid),
+              remoteJid: m.keyRemoteJid,
             },
             message: {
               [m.messageType]: m.content,
@@ -2336,7 +2336,7 @@ export class WAStartupService {
       id: query?.where?.id,
       keyId: query?.where?.keyId,
       keyFromMe: query?.where?.keyFromMe,
-      keyRemoteJid: this.asString(query.where?.keyRemoteJid),
+      keyRemoteJid: query.where?.keyRemoteJid,
       device: query?.where?.device,
       messageType: query?.where?.messageType,
     };
@@ -2541,10 +2541,4 @@ export class WAStartupService {
       throw new BadRequestException('Unable to leave the group', error.toString());
     }
   }
-  
-	public asString(value: unknown): string {
-	  return value == null ? '' : String(value);
-	}
- 
-  
 }
