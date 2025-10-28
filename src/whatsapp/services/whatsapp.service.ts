@@ -2541,4 +2541,5 @@ export class WAStartupService {
       throw new BadRequestException('Unable to leave the group', error.toString());
     }
   }
+  
 }
