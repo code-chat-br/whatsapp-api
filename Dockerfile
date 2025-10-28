@@ -23,7 +23,7 @@ COPY ./views ./views
 COPY .env.dev .env
 
 # Definir variável de ambiente para a construção
-ENV DATABASE_URL=postgres://postgres:pass@localhost/db_test
+ENV DATABASE_URL=mysql://mysql:pass@localhost/db_test
 RUN npx prisma generate
 
 RUN npm run build
