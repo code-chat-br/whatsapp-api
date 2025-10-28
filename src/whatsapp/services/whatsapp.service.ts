@@ -1055,15 +1055,11 @@ export class WAStartupService {
     },
 
     'group-participants.update': (participantsUpdate: {
-      id: string;
-	  author: string;
-	  authorPn?: string;
-      participants: {
-		  id: string;
-		  phoneNumber: string;
-		  admin: string | null;
-	  }[];
-      action: ParticipantAction;
+      id: string
+	  author: string
+	  authorPn?: string
+	  participants: GroupParticipant[]
+	  action: ParticipantAction
     }) => {
       this.ws.send(this.instance.name, 'group-participants.update', participantsUpdate);
       this.sendDataWebhook('groupsParticipantsUpdated', participantsUpdate);
