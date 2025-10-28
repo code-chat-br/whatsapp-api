@@ -872,6 +872,16 @@ export class WAStartupService {
         if (Long.isLong(received?.messageTimestamp)) {
           received.messageTimestamp = received.messageTimestamp.toNumber();
         }
+		
+		let timestamp = received?.messageTimestamp;
+
+        if (timestamp && typeof timestamp === 'object' && typeof timestamp.toNumber === 'function') {
+          timestamp = timestamp.toNumber();
+        }else if (timestamp && typeof timestamp === 'object' && 'low' in timestamp && 'high' in timestamp) {
+          timestamp = Number(timestamp.low) || 0;
+        }else if (typeof timestamp !== 'number') {
+          timestamp = 0;
+        }
 
         const messageType = getContentType(received.message);
 
@@ -900,7 +910,7 @@ export class WAStartupService {
             received?.participant || this.normalizeParticipant(received.key),
           messageType,
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
-          messageTimestamp: received.messageTimestamp,
+          messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: (() => {
             if (isValidUlid(received.key.id)) {
@@ -1366,6 +1376,16 @@ export class WAStartupService {
             }
           }
         }
+		
+		let timestamp = m?.messageTimestamp;
+
+        if (timestamp && typeof timestamp === 'object' && typeof timestamp.toNumber === 'function') {
+          timestamp = timestamp.toNumber();
+        }else if (timestamp && typeof timestamp === 'object' && 'low' in timestamp && 'high' in timestamp) {
+          timestamp = Number(timestamp.low) || 0;
+        }else if (typeof timestamp !== 'number') {
+          timestamp = 0;
+        }
 
         return {
           keyId: m.key.id,
@@ -1375,12 +1395,7 @@ export class WAStartupService {
           pushName: m?.pushName,
           messageType: getContentType(m.message),
           content: m.message[getContentType(m.message)] as PrismType.Prisma.JsonValue,
-          messageTimestamp: (() => {
-            if (Long.isLong(m.messageTimestamp)) {
-              return m.messageTimestamp.toNumber();
-            }
-            return m.messageTimestamp;
-          })(),
+          messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
