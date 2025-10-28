@@ -869,10 +869,6 @@ export class WAStartupService {
 
         this.client.sendPresenceUpdate('unavailable');
 
-        if (Long.isLong(received?.messageTimestamp)) {
-          received.messageTimestamp = received.messageTimestamp.toNumber();
-        }
-		
 		let timestamp = received?.messageTimestamp;
 
         if (timestamp && typeof timestamp === 'object' && typeof timestamp.toNumber === 'function') {
