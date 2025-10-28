@@ -52,6 +52,7 @@ import makeWASocket, {
   getContentType,
   getDevice,
   GroupMetadata,
+  GroupParticipant,
   isJidGroup,
   isLidUser,
   makeCacheableSignalKeyStore,
@@ -953,7 +954,7 @@ export class WAStartupService {
               const mimetype = mime.lookup(fileName).toString();
               const fullName = join(
                 `${id}_${name}`,
-                messageRaw.keyRemoteJid,
+                asString(messageRaw.keyRemoteJid),
                 mediaType,
                 fileName,
               );
@@ -1332,7 +1333,7 @@ export class WAStartupService {
         if (quoted) {
           q = {
             key: {
-              remoteJid: quoted.keyRemoteJid,
+              remoteJid: asString(quoted.keyRemoteJid),
               fromMe: quoted.keyFromMe,
               id: quoted.keyId,
             },
@@ -2000,11 +2001,11 @@ export class WAStartupService {
       const messageKey: proto.IMessageKey = {
         id: message.keyId,
         fromMe: message.keyFromMe,
-        remoteJid: message.keyRemoteJid,
-        participant: message?.keyParticipant,
+        remoteJid: asString(message.keyRemoteJid),
+        participant: asString(message?.keyParticipant),
       };
 
-      return await this.sendMessageWithTyping<AnyMessageContent>(message.keyRemoteJid, {
+      return await this.sendMessageWithTyping<AnyMessageContent>(asString(message.keyRemoteJid), {
         edit: messageKey,
         text: data.text,
       });
@@ -2067,7 +2068,7 @@ export class WAStartupService {
   public async deleteChat(chatId: string) {
     try {
       const lastMessage = await this.repository.message.findFirst({
-        where: { keyRemoteJid: this.createJid(chatId) },
+        where: { keyRemoteJid: asString(this.createJid(chatId)) },
         orderBy: { messageTimestamp: 'desc' },
       });
       if (!lastMessage) {
@@ -2082,7 +2083,7 @@ export class WAStartupService {
               key: {
                 id: lastMessage.keyId,
                 fromMe: lastMessage.keyFromMe,
-                remoteJid: lastMessage.keyRemoteJid,
+                remoteJid: asString(lastMessage.keyRemoteJid),
               },
               messageTimestamp: lastMessage.messageTimestamp,
             },
@@ -2112,10 +2113,10 @@ export class WAStartupService {
 
       for (const message of messages) {
         keys.push({
-          remoteJid: message.keyRemoteJid,
+          remoteJid: asString(message.keyRemoteJid),
           fromMe: message.keyFromMe,
           id: message.keyId,
-          participant: message?.keyParticipant,
+          participant: asString(message?.keyParticipant),
         });
       }
       await this.client.readMessages(keys);
@@ -2173,7 +2174,7 @@ export class WAStartupService {
               ],
             },
           } as any,
-          message.keyRemoteJid,
+          asString(message.keyRemoteJid),
         );
       }
 
@@ -2182,7 +2183,7 @@ export class WAStartupService {
           id: message.keyId,
           fromMe: message.keyFromMe,
           participant: message?.keyParticipant,
-          remoteJid: message.keyRemoteJid,
+          remoteJid: asString(message.keyRemoteJid),
         },
       });
 
@@ -2216,7 +2217,7 @@ export class WAStartupService {
             key: {
               id: m.keyId,
               fromMe: m.keyFromMe,
-              remoteJid: m.keyRemoteJid,
+              remoteJid: asString(m.keyRemoteJid),
             },
             message: {
               [m.messageType]: m.content,
@@ -2540,4 +2541,10 @@ export class WAStartupService {
       throw new BadRequestException('Unable to leave the group', error.toString());
     }
   }
+  
+	public asString(value: unknown): string {
+	  return value == null ? '' : String(value);
+	}
+ 
+  
 }
