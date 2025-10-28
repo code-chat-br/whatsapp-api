@@ -1056,9 +1056,11 @@ export class WAStartupService {
 
     'group-participants.update': (participantsUpdate: {
       id: string;
+	  author: string;
       participants: {
-		default: string;
-		alternative: string;
+		  id: string;
+		  phoneNumber: string;
+		  admin: string | null;
 	  }[];
       action: ParticipantAction;
     }) => {
