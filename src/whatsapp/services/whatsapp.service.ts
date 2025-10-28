@@ -906,7 +906,7 @@ export class WAStartupService {
           keyParticipant:
             received?.participant || this.normalizeParticipant(received.key),
           messageType,
-          content: received.message[messageType] as PrismType.Prisma.JsonValue,
+          content: JSON.parse(JSON.stringify(received.message[messageType])) as PrismType.Prisma.JsonValue,
           messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: (() => {
@@ -1393,7 +1393,7 @@ export class WAStartupService {
           keyParticipant: m?.participant,
           pushName: m?.pushName,
           messageType: getContentType(m.message),
-          content: m.message[getContentType(m.message)] as PrismType.Prisma.JsonValue,
+          content: JSON.parse(JSON.stringify(m.message[getContentType(m.message)])) as PrismType.Prisma.JsonValue,
           messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: 'web',
