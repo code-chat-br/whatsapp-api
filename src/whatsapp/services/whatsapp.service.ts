@@ -2182,7 +2182,7 @@ export class WAStartupService {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
-          participant: message?.keyParticipant,
+          participant: this.asString(message?.keyParticipant),
           remoteJid: this.asString(message.keyRemoteJid),
         },
       });
@@ -2336,7 +2336,7 @@ export class WAStartupService {
       id: query?.where?.id,
       keyId: query?.where?.keyId,
       keyFromMe: query?.where?.keyFromMe,
-      keyRemoteJid: query.where?.keyRemoteJid,
+      keyRemoteJid: this.asString(query.where?.keyRemoteJid),
       device: query?.where?.device,
       messageType: query?.where?.messageType,
     };
