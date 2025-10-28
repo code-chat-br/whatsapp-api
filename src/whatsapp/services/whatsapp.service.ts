@@ -1056,7 +1056,7 @@ export class WAStartupService {
 
     'group-participants.update': (participantsUpdate: {
       id: string;
-      participants: string[];
+      participants: GroupParticipant[];
       action: ParticipantAction;
     }) => {
       this.ws.send(this.instance.name, 'group-participants.update', participantsUpdate);
