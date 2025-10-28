@@ -485,7 +485,7 @@ export class WAStartupService {
       const webMessageInfo: Partial<proto.WebMessageInfo> = {
         key: {
           id: message.keyId,
-          remoteJid: message.keyRemoteJid,
+          remoteJid: this.asString(message.keyRemoteJid),
           fromMe: message.keyFromMe,
         },
         message: {
@@ -2068,7 +2068,7 @@ export class WAStartupService {
   public async deleteChat(chatId: string) {
     try {
       const lastMessage = await this.repository.message.findFirst({
-        where: { keyRemoteJid: this.asString(this.createJid(chatId)) },
+        where: { keyRemoteJid: this.createJid(chatId) },
         orderBy: { messageTimestamp: 'desc' },
       });
       if (!lastMessage) {
@@ -2089,7 +2089,7 @@ export class WAStartupService {
             },
           ],
         },
-        lastMessage.keyRemoteJid,
+        this.asString(lastMessage.keyRemoteJid),
       );
 
       return { deletedAt: new Date(), chatId: lastMessage.keyRemoteJid };
@@ -2178,7 +2178,7 @@ export class WAStartupService {
         );
       }
 
-      await this.client.sendMessage(message.keyRemoteJid, {
+      await this.client.sendMessage(this.asString(message.keyRemoteJid), {
         delete: {
           id: message.keyId,
           fromMe: message.keyFromMe,
