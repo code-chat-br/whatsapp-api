@@ -129,9 +129,16 @@ export class WAMonitoringService {
 
   private clearListeners(instanceName: string) {
     try {
-      this.waInstances
-        .get(instanceName)
-        ?.client?.ev.removeAllListeners('connection.update');
+      const ev = this.waInstances.get(instanceName)?.client?.ev;
+      if (ev) {
+        ev.removeAllListeners('connection.update');
+        ev.removeAllListeners('messages.upsert');
+        ev.removeAllListeners('messages.update');
+        ev.removeAllListeners('messaging-history.set');
+        ev.removeAllListeners('contacts.upsert');
+        ev.removeAllListeners('chats.upsert');
+        ev.removeAllListeners('creds.update');
+      }
       this.waInstances.get(instanceName)?.client?.ev.flush();
       this.waInstances.delete(instanceName);
     } catch {
