@@ -41,7 +41,6 @@ import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
   BufferedEventData,
-  BufferJSON,
   CacheStore,
   Chat,
   ConnectionState,
@@ -127,7 +126,6 @@ import {
   GroupPictureDto,
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
-import Long from 'long';
 import NodeCache from 'node-cache';
 import {
   AuthState,
@@ -1317,7 +1315,7 @@ export class WAStartupService {
     message: T,
     options?: Options,
   ) {
-    let quoted: PrismType.Message;
+    let quoted: PrismType.Message = options?.quotedMessage;
     if (options?.quotedMessageId) {
       if (!this.databaseOptions?.DB_OPTIONS?.NEW_MESSAGE) {
         throw new BadRequestException(
@@ -1761,7 +1759,9 @@ export class WAStartupService {
       { ...generate.message },
       {
         presence: isNotEmpty(data?.presence) ? data.presence : undefined,
-        delay: data?.delay,
+        delay: data?.options?.delay,
+        quotedMessage: data?.options?.quotedMessage,
+        quotedMessageId: data?.options?.quotedMessageId,
       },
     );
   }
@@ -1777,7 +1777,12 @@ export class WAStartupService {
     return this.sendMessageWithTyping(
       data.number,
       { ...generate.message },
-      { presence: 'recording', delay: data?.options?.delay },
+      {
+        presence: 'recording',
+        delay: data?.options?.delay,
+        quotedMessage: data?.options?.quotedMessage,
+        quotedMessageId: data?.options?.quotedMessageId,
+      },
     );
   }
 
@@ -1795,7 +1800,12 @@ export class WAStartupService {
     return this.sendMessageWithTyping(
       data.number,
       { ...generate.message },
-      { presence: 'recording', delay: data?.delay },
+      {
+        presence: 'recording',
+        delay: data?.options?.delay,
+        quotedMessage: data?.options?.quotedMessage,
+        quotedMessageId: data?.options?.quotedMessageId,
+      },
     );
   }
 

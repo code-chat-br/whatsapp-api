@@ -45,6 +45,7 @@ export class Options {
   delay?: number;
   presence?: WAPresence;
   quotedMessageId?: number;
+  quotedMessage?: any;
   messageId?: string;
   externalAttributes?: any;
   convertAudio?: boolean;

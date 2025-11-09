@@ -99,6 +99,7 @@ const optionsSchema: JSONSchema7 = {
       enum: ['unavailable', 'available', 'composing', 'recording', 'paused'],
     },
     quotedMessageId: { type: 'integer', description: 'Enter the message id' },
+    quotedMessage: { type: 'object', description: 'Enter the message object' },
     messageId: { type: 'string', description: 'Set your own id for the message.' },
     convertAudio: { type: 'boolean', description: 'Convert audio to ogg' },
   },
