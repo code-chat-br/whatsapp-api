@@ -41,6 +41,7 @@ import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
   BufferedEventData,
+  BufferJSON,
   CacheStore,
   Chat,
   ConnectionState,
@@ -885,13 +886,22 @@ export class WAStartupService {
 
         this.client.sendPresenceUpdate('unavailable');
 
-		let timestamp = received?.messageTimestamp;
+        let timestamp = received?.messageTimestamp;
 
-        if (timestamp && typeof timestamp === 'object' && typeof timestamp.toNumber === 'function') {
+        if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          typeof timestamp.toNumber === 'function'
+        ) {
           timestamp = timestamp.toNumber();
-        }else if (timestamp && typeof timestamp === 'object' && 'low' in timestamp && 'high' in timestamp) {
+        } else if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          'low' in timestamp &&
+          'high' in timestamp
+        ) {
           timestamp = Number(timestamp.low) || 0;
-        }else if (typeof timestamp !== 'number') {
+        } else if (typeof timestamp !== 'number') {
           timestamp = 0;
         }
 
@@ -924,7 +934,9 @@ export class WAStartupService {
           keyParticipant:
             received?.participant || this.normalizeParticipant(received.key),
           messageType,
-          content: JSON.parse(JSON.stringify(received.message[messageType])) as PrismType.Prisma.JsonValue,
+          content: JSON.parse(
+            JSON.stringify(received.message[messageType]),
+          ) as PrismType.Prisma.JsonValue,
           messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: (() => {
@@ -1074,11 +1086,11 @@ export class WAStartupService {
     },
 
     'group-participants.update': (participantsUpdate: {
-      id: string
-	  author: string
-	  authorPn?: string
-	  participants: GroupParticipant[]
-	  action: ParticipantAction
+      id: string;
+      author: string;
+      authorPn?: string;
+      participants: GroupParticipant[];
+      action: ParticipantAction;
     }) => {
       this.ws.send(this.instance.name, 'group-participants.update', participantsUpdate);
       this.sendDataWebhook('groupsParticipantsUpdated', participantsUpdate);
@@ -1349,23 +1361,33 @@ export class WAStartupService {
       const messageSent: Partial<PrismType.Message> = await (async () => {
         let q: WAMessage;
         if (quoted) {
+          if (quoted.messageType === 'conversation') {
+            quoted.messageType = 'extendedTextMessage';
+          }
+
           q = {
             key: {
-              remoteJid: quoted.keyRemoteJid,
-              fromMe: quoted.keyFromMe,
               id: quoted.keyId,
+              fromMe: quoted.keyFromMe,
+              remoteJid: quoted.keyRemoteJid,
             },
             message: {
-              [quoted.messageType]: quoted.content,
+              [quoted.messageType]: {
+                contextInfo: {},
+                ...(quoted.content as any),
+              },
             },
+            messageTimestamp: quoted.messageTimestamp,
           };
+
+          q.message = proto.Message.decode(proto.Message.encode(q.message).finish());
         }
 
         let m: proto.IWebMessageInfo;
 
         const messageId = options?.messageId || ulid(Date.now());
 
-        if (message?.['react'] || message?.['edit']) {
+        if (message?.['react'] || message?.['edit'] || message?.['text']) {
           m = await this.client.sendMessage(recipient, message as AnyMessageContent, {
             quoted: q,
             messageId,
@@ -1393,14 +1415,23 @@ export class WAStartupService {
             }
           }
         }
-		
-		let timestamp = m?.messageTimestamp;
 
-        if (timestamp && typeof timestamp === 'object' && typeof timestamp.toNumber === 'function') {
+        let timestamp = m?.messageTimestamp;
+
+        if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          typeof timestamp.toNumber === 'function'
+        ) {
           timestamp = timestamp.toNumber();
-        }else if (timestamp && typeof timestamp === 'object' && 'low' in timestamp && 'high' in timestamp) {
+        } else if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          'low' in timestamp &&
+          'high' in timestamp
+        ) {
           timestamp = Number(timestamp.low) || 0;
-        }else if (typeof timestamp !== 'number') {
+        } else if (typeof timestamp !== 'number') {
           timestamp = 0;
         }
 
@@ -1411,7 +1442,9 @@ export class WAStartupService {
           keyParticipant: m?.participant,
           pushName: m?.pushName,
           messageType: getContentType(m.message),
-          content: JSON.parse(JSON.stringify(m.message[getContentType(m.message)])) as PrismType.Prisma.JsonValue,
+          content: JSON.parse(
+            JSON.stringify(m.message[getContentType(m.message)]),
+          ) as PrismType.Prisma.JsonValue,
           messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: 'web',
@@ -1455,13 +1488,9 @@ export class WAStartupService {
 
   // Send Message Controller
   public async textMessage(data: SendTextDto) {
-    return await this.sendMessageWithTyping(
+    return await this.sendMessageWithTyping<AnyMessageContent>(
       data.number,
-      {
-        extendedTextMessage: {
-          text: data.textMessage.text,
-        },
-      },
+      { text: data.textMessage.text },
       data?.options,
     );
   }
@@ -2559,5 +2588,4 @@ export class WAStartupService {
       throw new BadRequestException('Unable to leave the group', error.toString());
     }
   }
-  
 }
