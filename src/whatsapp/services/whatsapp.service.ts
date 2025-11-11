@@ -153,6 +153,7 @@ import {
   writeFileSync,
 } from 'fs';
 import { createProxyAgents } from '../../utils/proxy';
+import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
 
 type InstanceQrCode = {
   count: number;
@@ -517,7 +518,7 @@ export class WAStartupService {
 
     this.authState = await this.defineAuthState();
 
-    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
+    const { version } = await fetchLatestBaileysVersionV2();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
@@ -538,7 +539,6 @@ export class WAStartupService {
       agent: agents?.wsAgent,
       fetchAgent: agents?.fetchAgent,
       logger: P({ level: 'silent' }) as any,
-      printQRInTerminal: false,
       browser,
       version,
       connectTimeoutMs: CONNECTION_TIMEOUT * 1000,
@@ -2487,7 +2487,10 @@ export class WAStartupService {
       throw new BadRequestException('Empty or invalid array');
     }
     try {
-      await this.client.assertSessions(chats.map((c) => this.createJid(c)));
+      await this.client.assertSessions(
+        chats.map((c) => this.createJid(c)),
+        true,
+      );
       return { message: 'Session asserted' };
     } catch (error) {
       throw new InternalServerErrorException('Error asserting session', error.toString());
