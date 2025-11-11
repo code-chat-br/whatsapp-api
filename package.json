@@ -45,9 +45,9 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
-    "@prisma/client": "^6.14.0",
-    "@whiskeysockets/baileys": "^7.0.0-rc.6",
-    "axios": "^1.11.0",
+    "@prisma/client": "^6.19.0",
+    "@whiskeysockets/baileys": "^6.7.21",
+    "axios": "^1.13.2",
     "class-validator": "^0.14.0",
     "cross-env": "^10.0.0",
     "dayjs": "^1.11.13",
@@ -72,7 +72,7 @@
     "pino-pretty": "^13.0.0",
     "qrcode": "^1.5.1",
     "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.34.4",
+    "sharp": "^0.34.5",
     "socks-proxy-agent": "^8.0.5",
     "swagger-ui-express": "^5.0.1",
     "ulid": "^3.0.1",
@@ -96,16 +96,16 @@
     "@types/swagger-ui-express": "^4.1.6",
     "@types/ws": "^8.5.10",
     "@types/yamljs": "^0.2.34",
-    "@typescript-eslint/eslint-plugin": "8.45.0",
-    "@typescript-eslint/parser": "8.45.0",
+    "@typescript-eslint/eslint-plugin": "8.46.4",
+    "@typescript-eslint/parser": "8.46.4",
     "copy-webpack-plugin": "^13.0.1",
-    "eslint": "9.37.0",
+    "eslint": "9.39.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.6.2",
-    "prisma": "^6.14.0",
+    "prisma": "^6.19.0",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.2",
-    "typescript-eslint": "^8.45.0"
+    "typescript-eslint": "^8.46.4"
   }
 }
