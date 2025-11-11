@@ -69,7 +69,6 @@ import makeWASocket, {
   WAMessage,
   WAMessageUpdate,
   WASocket,
-  WAVersion,
 } from '@whiskeysockets/baileys';
 import {
   ConfigService,
@@ -847,10 +846,12 @@ export class WAStartupService {
 
           messagesRaw.push({
             keyId: m.key.id,
-            keyRemoteJid: this.normalizeJid(m.key),
             keyFromMe: m.key.fromMe,
             pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-            keyParticipant: m?.participant || this.normalizeParticipant(m.key),
+            keyRemoteJid: m.key?.remoteJid,
+            keyLid: m.key?.['senderLid'] || m.key?.['senderPn'],
+            keyParticipant: m?.participant || m.key?.participant,
+            keyParticipantLid: m.key?.['participantLid'] || m.key?.['participantPn'],
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
             messageTimestamp: timestamp,
@@ -926,11 +927,13 @@ export class WAStartupService {
 
         const messageRaw = {
           keyId: received.key.id,
-          keyRemoteJid: this.normalizeJid(received.key),
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          keyParticipant:
-            received?.participant || this.normalizeParticipant(received.key),
+          keyRemoteJid: received.key?.remoteJid,
+          keyLid: received.key?.['senderLid'] || received.key?.['senderPn'],
+          keyParticipant: received?.participant || received.key?.participant,
+          keyParticipantLid:
+            received.key?.['participantLid'] || received.key?.['participantPn'],
           messageType,
           content: JSON.parse(
             JSON.stringify(received.message[messageType]),
@@ -1236,14 +1239,6 @@ export class WAStartupService {
     } else {
       return jid;
     }
-  }
-
-  private normalizeJid(key: proto.IMessageKey) {
-    return key?.remoteJid || key?.['remoteJidAlt'] || key?.['lid'];
-  }
-
-  private normalizeParticipant(key: proto.IMessageKey) {
-    return key?.participant || key?.['participantAlt'];
   }
 
   private createJid(number: string): string {
@@ -2078,7 +2073,7 @@ export class WAStartupService {
     for await (const number of data.numbers) {
       const jid = this.createJid(number);
       if (isLidUser(jid)) {
-        onWhatsapp.push(new OnWhatsAppDto(jid, !!true, jid));
+        onWhatsapp.push(new OnWhatsAppDto(jid, true, jid));
       }
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
