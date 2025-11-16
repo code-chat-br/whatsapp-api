@@ -153,6 +153,7 @@ import {
 } from 'fs';
 import { createProxyAgents } from '../../utils/proxy';
 import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
+import { getJidUser, getUserGroup } from '../../utils/extract-id';
 
 type InstanceQrCode = {
   count: number;
@@ -844,14 +845,17 @@ export class WAStartupService {
             continue;
           }
 
+          const user = getJidUser(m.key);
+          const group = getUserGroup(m.key, m?.participant);
+
           messagesRaw.push({
             keyId: m.key.id,
             keyFromMe: m.key.fromMe,
             pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-            keyRemoteJid: m.key?.remoteJid,
-            keyLid: m.key?.['senderLid'] || m.key?.['senderPn'],
-            keyParticipant: m?.participant || m.key?.participant,
-            keyParticipantLid: m.key?.['participantLid'] || m.key?.['participantPn'],
+            keyRemoteJid: user?.jid,
+            keyLid: user?.lid,
+            keyParticipant: group?.jid,
+            keyParticipantLid: group?.lid,
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
             messageTimestamp: timestamp,
@@ -874,7 +878,7 @@ export class WAStartupService {
       messages,
       type,
     }: {
-      messages: proto.IWebMessageInfo[];
+      messages: WAMessage[];
       type: MessageUpsertType;
     }) => {
       for (const received of messages) {
@@ -925,15 +929,17 @@ export class WAStartupService {
           }
         }
 
+        const user = getJidUser(received.key);
+        const group = getUserGroup(received.key, received?.participant);
+
         const messageRaw = {
           keyId: received.key.id,
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          keyRemoteJid: received.key?.remoteJid,
-          keyLid: received.key?.['senderLid'] || received.key?.['senderPn'],
-          keyParticipant: received?.participant || received.key?.participant,
-          keyParticipantLid:
-            received.key?.['participantLid'] || received.key?.['participantPn'],
+          keyRemoteJid: user?.jid,
+          keyLid: user?.lid,
+          keyParticipant: group?.jid,
+          keyParticipantLid: group?.lid,
           messageType,
           content: JSON.parse(
             JSON.stringify(received.message[messageType]),
@@ -1242,11 +1248,8 @@ export class WAStartupService {
   }
 
   private createJid(number: string): string {
-    if (
-      number.includes('@g.us') ||
-      number.includes('@s.whatsapp.net') ||
-      number.includes('@lid')
-    ) {
+    const regexp = new RegExp(/^\d+@(s.whatsapp.net|g.us|lid|broadcast|newsletter)$/i);
+    if (regexp.test(number)) {
       return number;
     }
 
