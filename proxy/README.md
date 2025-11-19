@@ -22,26 +22,26 @@ traefik --help
 
 ## Configuração dos provedores
 
-Acesse o arquivo de configuração do [traefik](./traefik.toml)
+Acesse o arquivo de configuração do [traefik](./traefik.yml)
 
 ## Configuração dos roteadores
 
-Acesse o arquivo de [configuração dinâmica](./dynamic/conf.toml).
+Acesse o arquivo de [configuração dinâmica](./dynamic/conf.yml).
 
 1. Iniciando o serviço do `traefik` na pasta atual
 
-  * Copie [traefik.toml](./traefik.toml) para `/etc/traefik/`
+  * Copie [traefik.yml](./traefik.yml) para `/etc/traefik/`
   ```sh
-  cp ./traefik.toml /etc/traefik
+  cp ./traefik.yml /etc/traefik
   ```
 
 ```sh
-traefik --configfile=/etc/traefik/traefik.toml
+traefik --configfile=/etc/traefik/traefik.yml
 ```
 
 2. Iniciando o serviço do `traefik` em background
 ```sh
-nohup traefik --configfile=traefik.toml &
+nohup traefik --configfile=traefik.yml &
 ```
 
 3. Obtendo dados detalhados do serviço
@@ -49,7 +49,7 @@ nohup traefik --configfile=traefik.toml &
 ps -f $(pgrep -d, -x traefik)
 
 # UID          PID    PPID  C STIME TTY      STAT   TIME CMD
-# root       66459       1  0 May15 ?        Sl     1:12 traefik --configFile=conf.toml
+# root       66459       1  0 May15 ?        Sl     1:12 traefik --configFile=conf.yml
 ```
 
 4. Parando o serviço

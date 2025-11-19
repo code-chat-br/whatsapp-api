@@ -37,6 +37,8 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
+import { Boom } from '@hapi/boom';
+import PrismType, { Instance, Webhook } from '@prisma/client';
 import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
@@ -52,8 +54,8 @@ import makeWASocket, {
   getContentType,
   getDevice,
   GroupMetadata,
+  GroupParticipant,
   isJidGroup,
-  isJidUser,
   isLidUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
@@ -66,28 +68,74 @@ import makeWASocket, {
   WACallEvent,
   WAConnectionState,
   WAMediaUpload,
+  WAMessage,
   WAMessageUpdate,
   WASocket,
-  WAVersion,
 } from '@whiskeysockets/baileys';
+import axios, { AxiosError, AxiosInstance } from 'axios';
+import { isArray, isBase64, isInt, isNotEmpty, isURL } from 'class-validator';
+import EventEmitter2 from 'eventemitter2';
+import ffmpeg from 'fluent-ffmpeg';
+import {
+  accessSync,
+  constants,
+  existsSync,
+  readFileSync,
+  unlinkSync,
+  writeFileSync,
+} from 'fs';
+import http from 'http';
+import mime from 'mime-types';
+import NodeCache from 'node-cache';
+import { release } from 'os';
+import { join, normalize } from 'path';
+import P from 'pino';
+import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
+import qrcodeTerminal from 'qrcode-terminal';
+import sharp from 'sharp';
+import { PassThrough } from 'stream';
+import { ulid } from 'ulid';
 import {
   ConfigService,
   ConfigSessionPhone,
   Database,
+  EnvProxy,
   GlobalWebhook,
-  QrCode,
   ProviderSession,
+  QrCode,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
-import { join, normalize } from 'path';
-import axios, { AxiosError, AxiosInstance } from 'axios';
-import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
-import qrcodeTerminal from 'qrcode-terminal';
-import { Boom } from '@hapi/boom';
-import EventEmitter2 from 'eventemitter2';
-import { release } from 'os';
-import P from 'pino';
+import { BadRequestException, InternalServerErrorException } from '../../exceptions';
+import * as s3Service from '../../integrations/minio/minio.utils';
+import { ProviderFiles } from '../../provider/sessions';
+import { Query, Repository } from '../../repository/repository.service';
+import { getJidUser, getUserGroup } from '../../utils/extract-id';
+import { createProxyAgents } from '../../utils/proxy';
+import {
+  AuthState,
+  AuthStateProvider,
+} from '../../utils/use-multi-file-auth-state-provider-files';
+import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
+import { isValidUlid } from '../../validate/ulid';
+import { Websocket } from '../../websocket/server';
+import {
+  ArchiveChatDto,
+  DeleteMessage,
+  EditMessage,
+  OnWhatsAppDto,
+  ReadMessageDto,
+  ReadMessageIdDto,
+  RejectCallDto,
+  UpdatePresenceDto,
+  WhatsAppNumberDto,
+} from '../dto/chat.dto';
+import {
+  CreateGroupDto,
+  GroupJid,
+  GroupPictureDto,
+  GroupUpdateParticipantDto,
+} from '../dto/group.dto';
 import {
   AudioMessageFileDto,
   ContactMessage,
@@ -105,53 +153,7 @@ import {
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
-import { isArray, isBase64, isInt, isNotEmpty, isURL } from 'class-validator';
-import {
-  ArchiveChatDto,
-  DeleteMessage,
-  EditMessage,
-  OnWhatsAppDto,
-  ReadMessageDto,
-  ReadMessageIdDto,
-  RejectCallDto,
-  UpdatePresenceDto,
-  WhatsAppNumberDto,
-} from '../dto/chat.dto';
-import { BadRequestException, InternalServerErrorException } from '../../exceptions';
-import {
-  CreateGroupDto,
-  GroupJid,
-  GroupPictureDto,
-  GroupUpdateParticipantDto,
-} from '../dto/group.dto';
-import Long from 'long';
-import NodeCache from 'node-cache';
-import {
-  AuthState,
-  AuthStateProvider,
-} from '../../utils/use-multi-file-auth-state-provider-files';
-import mime from 'mime-types';
-import { Instance, Webhook } from '@prisma/client';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
-import { Query, Repository } from '../../repository/repository.service';
-import PrismType from '@prisma/client';
-import * as s3Service from '../../integrations/minio/minio.utils';
-import { ProviderFiles } from '../../provider/sessions';
-import { Websocket } from '../../websocket/server';
-import { ulid } from 'ulid';
-import { isValidUlid } from '../../validate/ulid';
-import sharp from 'sharp';
-import ffmpeg from 'fluent-ffmpeg';
-import { PassThrough } from 'stream';
-import {
-  accessSync,
-  constants,
-  existsSync,
-  readFileSync,
-  unlinkSync,
-  writeFileSync,
-} from 'fs';
-import http from 'http';
 
 type InstanceQrCode = {
   count: number;
@@ -181,12 +183,12 @@ export class WAStartupService {
       keepAlive: true,
       maxSockets: 100,
       maxFreeSockets: 10,
-      timeout: 60000
+      timeout: 60000,
     });
 
     this.axiosInstance = axios.create({
       httpAgent,
-      timeout: 60000
+      timeout: 60000,
     });
   }
 
@@ -366,6 +368,8 @@ export class WAStartupService {
         description: 'Error on send data to webhook',
       });
     }
+
+    data = undefined;
   }
 
   private async connectionUpdate({
@@ -446,8 +450,7 @@ export class WAStartupService {
     }
 
     if (connection === 'close') {
-      const shouldReconnect =
-        (lastDisconnect.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+      const shouldReconnect = (lastDisconnect.error as Boom)?.output?.statusCode !== 401;
       if (shouldReconnect) {
         await this.connectToWhatsapp();
       } else {
@@ -526,14 +529,17 @@ export class WAStartupService {
   private async setSocket() {
     this.endSession = false;
 
-    this.authState = (await this.defineAuthState()) as AuthState;
+    this.authState = await this.defineAuthState();
 
-    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
+    const { version } = await fetchLatestBaileysVersionV2();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
     const { EXPIRATION_TIME } = this.configService.get<QrCode>('QRCODE');
     const CONNECTION_TIMEOUT = this.configService.get<number>('CONNECTION_TIMEOUT');
+
+    const proxy = this.configService.get<EnvProxy>('PROXY');
+    const agents = createProxyAgents(proxy?.WS, proxy?.FETCH);
 
     const socketConfig: UserFacingSocketConfig = {
       auth: {
@@ -543,8 +549,9 @@ export class WAStartupService {
           P({ level: 'silent' }) as any,
         ),
       },
+      agent: agents?.wsAgent,
+      fetchAgent: agents?.fetchAgent,
       logger: P({ level: 'silent' }) as any,
-      printQRInTerminal: false,
       browser,
       version,
       connectTimeoutMs: CONNECTION_TIMEOUT * 1000,
@@ -565,7 +572,13 @@ export class WAStartupService {
 
   public async reloadConnection(): Promise<WASocket> {
     try {
-      this.client = await this.setSocket();
+      await new Promise((resolve) => {
+        this.client.ws?.once('close', resolve);
+        this.client.ws?.['socket']?.['terminate']?.();
+      });
+      this.client.ws['socket'] = null;
+      await this.client.ws.connect();
+
       return this.client;
     } catch (error) {
       this.logger.error(error);
@@ -589,7 +602,7 @@ export class WAStartupService {
 
   private readonly chatHandle = {
     'chats.upsert': async (chats: Chat[]) => {
-      chats.forEach(async (chat) => {
+      for (const chat of chats) {
         try {
           const item = { ...chat };
           delete item.id;
@@ -627,7 +640,7 @@ export class WAStartupService {
         } catch (error) {
           this.logger.error(error);
         }
-      });
+      }
     },
 
     'chats.update': async (
@@ -659,7 +672,7 @@ export class WAStartupService {
             },
           })
           .then((result) => {
-            if (result && result.id) {
+            if (result?.id) {
               this.repository.chat
                 .update({
                   where: {
@@ -670,7 +683,7 @@ export class WAStartupService {
                     updatedAt: new Date(),
                   },
                 })
-                .catch((err) => this.logger.error(err));
+                .catch((err) => null);
             } else {
               this.repository.chat
                 .create({
@@ -690,7 +703,7 @@ export class WAStartupService {
 
     'chats.delete': async (chats: string[]) => {
       await this.sendDataWebhook('chatsDeleted', [...chats]);
-      for await (const chat of chats) {
+      for (const chat of chats) {
         const c = await this.repository.chat.findFirst({
           where: {
             remoteJid: chat,
@@ -708,8 +721,8 @@ export class WAStartupService {
   };
 
   private readonly contactHandle = {
-    'contacts.upsert': (contacts: Contact[]) => {
-      contacts.forEach(async (contact) => {
+    'contacts.upsert': async (contacts: Contact[]) => {
+      for (const contact of contacts) {
         const list: PrismType.Contact[] = [];
         try {
           const find = await this.repository.contact.findFirst({
@@ -737,11 +750,11 @@ export class WAStartupService {
         } catch (error) {
           this.logger.error(error);
         }
-      });
+      }
     },
 
     'contacts.update': async (contacts: Partial<Contact>[]) => {
-      contacts.forEach(async (contact) => {
+      for (const contact of contacts) {
         const list: PrismType.Contact[] = [];
         try {
           const find = await this.repository.contact.findFirst({
@@ -769,7 +782,7 @@ export class WAStartupService {
         } catch (error) {
           this.logger.error(error);
         }
-      });
+      }
     },
   };
 
@@ -779,13 +792,17 @@ export class WAStartupService {
     });
 
     for await (const message of messages) {
-      if (messagesRepository.find((mr) => mr.keyId === message.keyId)) {
-        continue;
-      }
+      try {
+        if (messagesRepository.find((mr) => mr.keyId === message.keyId)) {
+          continue;
+        }
 
-      await this.repository.message.create({
-        data: message,
-      });
+        await this.repository.message.create({
+          data: message,
+        });
+      } catch {
+        //
+      }
     }
   }
 
@@ -807,7 +824,7 @@ export class WAStartupService {
 
       if (messages && messages?.length > 0) {
         const messagesRaw: PrismType.Message[] = [];
-        for await (const [, m] of Object.entries(messages)) {
+        for (const [, m] of Object.entries(messages)) {
           if (
             m.message?.protocolMessage ||
             m.message?.senderKeyDistributionMessage ||
@@ -816,8 +833,23 @@ export class WAStartupService {
             continue;
           }
 
-          if (Long.isLong(m?.messageTimestamp)) {
-            m.messageTimestamp = m.messageTimestamp?.toNumber();
+          let timestamp = m?.messageTimestamp;
+
+          if (
+            timestamp &&
+            typeof timestamp === 'object' &&
+            typeof timestamp.toNumber === 'function'
+          ) {
+            timestamp = timestamp.toNumber();
+          } else if (
+            timestamp &&
+            typeof timestamp === 'object' &&
+            'low' in timestamp &&
+            'high' in timestamp
+          ) {
+            timestamp = Number(timestamp.low) || 0;
+          } else if (typeof timestamp !== 'number') {
+            timestamp = 0;
           }
 
           const messageType = getContentType(m.message);
@@ -826,21 +858,26 @@ export class WAStartupService {
             continue;
           }
 
+          const user = getJidUser(m.key);
+          const group = getUserGroup(m.key, m?.participant);
+
           messagesRaw.push({
             keyId: m.key.id,
-            keyRemoteJid: m.key?.remoteJid || m.key?.['lid'],
             keyFromMe: m.key.fromMe,
             pushName: m?.pushName || m.key.remoteJid.split('@')[0],
-            keyParticipant: m?.participant || m.key?.participant,
+            keyRemoteJid: user?.jid,
+            keyLid: user?.lid,
+            keyParticipant: group?.jid,
+            keyParticipantLid: group?.lid,
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
-            messageTimestamp: m.messageTimestamp as number,
+            messageTimestamp: timestamp,
             instanceId: this.instance.id,
             device: getDevice(m.key.id),
           } as PrismType.Message);
         }
 
-        this.sendDataWebhook('messagesSet', [...messagesRaw]);
+        this.sendDataWebhook('messagesSet', messagesRaw);
 
         if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
           await this.syncMessage(messagesRaw);
@@ -854,7 +891,7 @@ export class WAStartupService {
       messages,
       type,
     }: {
-      messages: proto.IWebMessageInfo[];
+      messages: WAMessage[];
       type: MessageUpsertType;
     }) => {
       for (const received of messages) {
@@ -865,11 +902,29 @@ export class WAStartupService {
 
         this.client.sendPresenceUpdate('unavailable');
 
-        if (Long.isLong(received?.messageTimestamp)) {
-          received.messageTimestamp = received.messageTimestamp.toNumber();
+        let timestamp = received?.messageTimestamp;
+
+        if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          typeof timestamp.toNumber === 'function'
+        ) {
+          timestamp = timestamp.toNumber();
+        } else if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          'low' in timestamp &&
+          'high' in timestamp
+        ) {
+          timestamp = Number(timestamp.low) || 0;
+        } else if (typeof timestamp !== 'number') {
+          timestamp = 0;
         }
 
         const messageType = getContentType(received.message);
+        if (!messageType) {
+          return;
+        }
 
         if (typeof received.message[messageType] === 'string') {
           received.message[messageType] = {
@@ -877,15 +932,32 @@ export class WAStartupService {
           } as any;
         }
 
+        if (received.message?.protocolMessage) {
+          const m = received.message.protocolMessage;
+          if (typeof m?.type === 'number') {
+            const typeName =
+              proto.Message.ProtocolMessage.Type[m.type as any] ?? 'UNKNOWN_TYPE';
+            m.type = typeName as any;
+            received.message.protocolMessage = m;
+          }
+        }
+
+        const user = getJidUser(received.key);
+        const group = getUserGroup(received.key, received?.participant);
+
         const messageRaw = {
           keyId: received.key.id,
-          keyRemoteJid: received.key?.remoteJid || received?.key?.['lid'],
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
-          keyParticipant: received?.participant || received.key?.participant,
+          keyRemoteJid: user?.jid,
+          keyLid: user?.lid,
+          keyParticipant: group?.jid,
+          keyParticipantLid: group?.lid,
           messageType,
-          content: received.message[messageType] as PrismType.Prisma.JsonValue,
-          messageTimestamp: received.messageTimestamp as number,
+          content: JSON.parse(
+            JSON.stringify(received.message[messageType]),
+          ) as PrismType.Prisma.JsonValue,
+          messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: (() => {
             if (isValidUlid(received.key.id)) {
@@ -981,7 +1053,7 @@ export class WAStartupService {
         5: 'PLAYED',
       };
       for await (const { key, update } of args) {
-        if (update.status === 4 && key?.remoteJid) {
+        if (update.status === proto.WebMessageInfo.Status.READ && key?.remoteJid) {
           key.remoteJid = key.remoteJid.replace(/:\d+(?=@)/, '');
         }
 
@@ -1035,7 +1107,9 @@ export class WAStartupService {
 
     'group-participants.update': (participantsUpdate: {
       id: string;
-      participants: string[];
+      author: string;
+      authorPn?: string;
+      participants: GroupParticipant[];
       action: ParticipantAction;
     }) => {
       this.ws.send(this.instance.name, 'group-participants.update', participantsUpdate);
@@ -1105,7 +1179,7 @@ export class WAStartupService {
 
         if (events?.['group-participants.update']) {
           const payload = events['group-participants.update'];
-          this.groupHandler['group-participants.update'](payload);
+          this.groupHandler['group-participants.update'](payload as any);
         }
 
         if (events?.['chats.upsert']) {
@@ -1187,11 +1261,8 @@ export class WAStartupService {
   }
 
   private createJid(number: string): string {
-    if (
-      number.includes('@g.us') ||
-      number.includes('@s.whatsapp.net') ||
-      number.includes('@lid')
-    ) {
+    const regexp = new RegExp(/^\d+@(s.whatsapp.net|g.us|lid|broadcast|newsletter)$/i);
+    if (regexp.test(number)) {
       return number;
     }
 
@@ -1255,7 +1326,7 @@ export class WAStartupService {
     message: T,
     options?: Options,
   ) {
-    let quoted: PrismType.Message;
+    let quoted: PrismType.Message = options?.quotedMessage;
     if (options?.quotedMessageId) {
       if (!this.databaseOptions?.DB_OPTIONS?.NEW_MESSAGE) {
         throw new BadRequestException(
@@ -1297,25 +1368,35 @@ export class WAStartupService {
       }
 
       const messageSent: Partial<PrismType.Message> = await (async () => {
-        let q: proto.IWebMessageInfo;
+        let q: WAMessage;
         if (quoted) {
+          if (quoted.messageType === 'conversation') {
+            quoted.messageType = 'extendedTextMessage';
+          }
+
           q = {
             key: {
-              remoteJid: quoted.keyRemoteJid,
-              fromMe: quoted.keyFromMe,
               id: quoted.keyId,
+              fromMe: quoted.keyFromMe,
+              remoteJid: quoted.keyRemoteJid,
             },
             message: {
-              [quoted.messageType]: quoted.content,
+              [quoted.messageType]: {
+                contextInfo: {},
+                ...(quoted.content as any),
+              },
             },
+            messageTimestamp: quoted.messageTimestamp,
           };
+
+          q.message = proto.Message.decode(proto.Message.encode(q.message).finish());
         }
 
         let m: proto.IWebMessageInfo;
 
         const messageId = options?.messageId || ulid(Date.now());
 
-        if (message?.['react'] || message?.['edit']) {
+        if (message?.['react'] || message?.['edit'] || message?.['text']) {
           m = await this.client.sendMessage(recipient, message as AnyMessageContent, {
             quoted: q,
             messageId,
@@ -1333,7 +1414,7 @@ export class WAStartupService {
           m.key = {
             id: id,
             remoteJid: jid,
-            participant: isJidUser(jid) ? jid : undefined,
+            participant: isLidUser(jid) ? jid : undefined,
             fromMe: true,
           };
 
@@ -1344,6 +1425,25 @@ export class WAStartupService {
           }
         }
 
+        let timestamp = m?.messageTimestamp;
+
+        if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          typeof timestamp.toNumber === 'function'
+        ) {
+          timestamp = timestamp.toNumber();
+        } else if (
+          timestamp &&
+          typeof timestamp === 'object' &&
+          'low' in timestamp &&
+          'high' in timestamp
+        ) {
+          timestamp = Number(timestamp.low) || 0;
+        } else if (typeof timestamp !== 'number') {
+          timestamp = 0;
+        }
+
         return {
           keyId: m.key.id,
           keyFromMe: m.key.fromMe,
@@ -1351,13 +1451,10 @@ export class WAStartupService {
           keyParticipant: m?.participant,
           pushName: m?.pushName,
           messageType: getContentType(m.message),
-          content: m.message[getContentType(m.message)] as PrismType.Prisma.JsonValue,
-          messageTimestamp: (() => {
-            if (Long.isLong(m.messageTimestamp)) {
-              return m.messageTimestamp.toNumber();
-            }
-            return m.messageTimestamp as number;
-          })(),
+          content: JSON.parse(
+            JSON.stringify(m.message[getContentType(m.message)]),
+          ) as PrismType.Prisma.JsonValue,
+          messageTimestamp: timestamp,
           instanceId: this.instance.id,
           device: 'web',
           isGroup: isJidGroup(m.key.remoteJid),
@@ -1400,13 +1497,9 @@ export class WAStartupService {
 
   // Send Message Controller
   public async textMessage(data: SendTextDto) {
-    return await this.sendMessageWithTyping(
+    return await this.sendMessageWithTyping<AnyMessageContent>(
       data.number,
-      {
-        extendedTextMessage: {
-          text: data.textMessage.text,
-        },
-      },
+      { text: data.textMessage.text },
       data?.options,
     );
   }
@@ -1423,7 +1516,7 @@ export class WAStartupService {
 
       if (Buffer.isBuffer(video)) {
         input = new PassThrough();
-        (input as PassThrough).end(video);
+        input.end(video);
       }
 
       ffmpeg(input as any)
@@ -1464,12 +1557,11 @@ export class WAStartupService {
       const audioStream = new PassThrough();
       const normalizedPath = normalize(inputPath);
 
-      const inputFormat =
-        format.input === 'mpga' || 'bin'
-          ? 'mp3'
-          : format.input === 'oga'
-            ? 'ogg'
-            : format.input;
+      const inputFormat = ['mpga', 'bin'].includes(format?.input)
+        ? 'mp3'
+        : format.input === 'oga'
+          ? 'ogg'
+          : format.input;
       const audioCodec = format.to === 'ogg' ? 'libvorbis' : 'aac';
       const outputFormat = format.to === 'ogg' ? 'ogg' : 'adts';
 
@@ -1575,7 +1667,7 @@ export class WAStartupService {
           media = readFileSync(fileName);
         } else {
           media = await this.convertAudioToWH(fileName, {
-            input: ext as string,
+            input: ext,
             to: 'ogg',
           });
         }
@@ -1600,7 +1692,7 @@ export class WAStartupService {
 
       if (mediaMessage?.fileName) {
         mimetype = mime.lookup(mediaMessage.fileName) as string;
-        if(mimetype === 'application/mp4') {
+        if (mimetype === 'application/mp4') {
           mimetype = 'video/mp4';
         }
       }
@@ -1678,7 +1770,9 @@ export class WAStartupService {
       { ...generate.message },
       {
         presence: isNotEmpty(data?.presence) ? data.presence : undefined,
-        delay: data?.delay,
+        delay: data?.options?.delay,
+        quotedMessage: data?.options?.quotedMessage,
+        quotedMessageId: data?.options?.quotedMessageId,
       },
     );
   }
@@ -1694,7 +1788,12 @@ export class WAStartupService {
     return this.sendMessageWithTyping(
       data.number,
       { ...generate.message },
-      { presence: 'recording', delay: data?.options?.delay },
+      {
+        presence: 'recording',
+        delay: data?.options?.delay,
+        quotedMessage: data?.options?.quotedMessage,
+        quotedMessageId: data?.options?.quotedMessageId,
+      },
     );
   }
 
@@ -1712,7 +1811,12 @@ export class WAStartupService {
     return this.sendMessageWithTyping(
       data.number,
       { ...generate.message },
-      { presence: 'recording', delay: data?.delay },
+      {
+        presence: 'recording',
+        delay: data?.options?.delay,
+        quotedMessage: data?.options?.quotedMessage,
+        quotedMessageId: data?.options?.quotedMessageId,
+      },
     );
   }
 
@@ -1936,11 +2040,16 @@ export class WAStartupService {
         jpegThumbnail: await (async () => {
           if (data.linkMessage?.thumbnailUrl) {
             try {
-              const response = await this.axiosInstance.get(data.linkMessage.thumbnailUrl, {
-                responseType: 'arraybuffer',
-              });
+              const response = await this.axiosInstance.get(
+                data.linkMessage.thumbnailUrl,
+                {
+                  responseType: 'arraybuffer',
+                },
+              );
               return new Uint8Array(response.data);
-            } catch {}
+            } catch (error) {
+              //
+            }
           }
         })(),
       },
@@ -1983,7 +2092,7 @@ export class WAStartupService {
     for await (const number of data.numbers) {
       const jid = this.createJid(number);
       if (isLidUser(jid)) {
-        onWhatsapp.push(new OnWhatsAppDto(jid, !!true, jid as string));
+        onWhatsapp.push(new OnWhatsAppDto(jid, true, jid));
       }
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
@@ -2012,7 +2121,7 @@ export class WAStartupService {
     try {
       const keys: proto.IMessageKey[] = [];
       data.readMessages.forEach((read) => {
-        if (isJidGroup(read.remoteJid) || isJidUser(read.remoteJid)) {
+        if (isJidGroup(read.remoteJid) || isLidUser(read.remoteJid)) {
           keys.push({
             remoteJid: read.remoteJid,
             fromMe: read.fromMe,
@@ -2202,7 +2311,7 @@ export class WAStartupService {
       let mediaType: string;
 
       for (const type of TypeMediaMessage) {
-        mediaMessage = msg.message[type];
+        mediaMessage = msg?.message?.[type];
         if (mediaMessage) {
           mediaType = type;
           break;
@@ -2328,7 +2437,7 @@ export class WAStartupService {
       orderBy: {
         messageTimestamp: 'desc',
       },
-      skip: query.offset * (query?.page === 1 ? 0 : (query?.page as number) - 1),
+      skip: query.offset * (query?.page === 1 ? 0 : query?.page - 1),
       take: query.offset,
       select: {
         id: true,
@@ -2424,7 +2533,9 @@ export class WAStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
-        pic = (await this.axiosInstance.get(picture.image, { responseType: 'arraybuffer' })).data;
+        pic = (
+          await this.axiosInstance.get(picture.image, { responseType: 'arraybuffer' })
+        ).data;
       } else if (isBase64(picture.image)) {
         pic = Buffer.from(picture.image, 'base64');
       } else {

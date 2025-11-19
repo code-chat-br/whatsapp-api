@@ -108,7 +108,7 @@ export class ProviderFiles {
       const response = await this._client.post('', { instance });
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
-      return [, error];
+      return [null, error];
     }
   }
 
@@ -117,7 +117,7 @@ export class ProviderFiles {
       const response = await this._client.post(`/${instance}/${key}`, data);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
-      return [, error];
+      return [null, error];
     }
   }
 
@@ -126,7 +126,7 @@ export class ProviderFiles {
       const response = await this._client.get(`/${instance}/${key}`);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
-      return [, error];
+      return [null, error];
     }
   }
 
@@ -135,7 +135,7 @@ export class ProviderFiles {
       const response = await this._client.delete(`/${instance}/${key}`);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
-      return [, error];
+      return [null, error];
     }
   }
 
@@ -144,7 +144,7 @@ export class ProviderFiles {
       const response = await this._client.get(`/list-instances`);
       return [{ status: response.status, data: response?.data as string[] }];
     } catch (error) {
-      return [, error];
+      return [null, error];
     }
   }
 
@@ -153,7 +153,7 @@ export class ProviderFiles {
       const response = await this._client.delete(`/${instance}`);
       return [{ status: response.status, data: response?.data }];
     } catch (error) {
-      return [, error];
+      return [null, error];
     }
   }
 }

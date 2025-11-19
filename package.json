@@ -1,15 +1,16 @@
 {
   "name": "whatsapp-api",
-  "version": "1.3.5",
+  "version": "1.3.6",
   "description": "Rest api for communication with WhatsApp",
   "main": "./dist/src/main.js",
   "scripts": {
     "build": "tsc",
     "start": "cross-env NODE_ENV=dev ts-node --files --transpile-only ./src/main.ts",
+    "start:pm2": "pm2 start ecosystem.config.mjs",
     "start:prod": "cross-env NODE_ENV=prod bash start.sh",
     "start:dev": "cross-env NODE_ENV=dev tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
-    "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
+    "test": "cls && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
   },
   "repository": {
     "type": "git",
@@ -44,9 +45,9 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
-    "@prisma/client": "^6.14.0",
-    "@whiskeysockets/baileys": "^6.7.18",
-    "axios": "^1.11.0",
+    "@prisma/client": "^6.19.0",
+    "@whiskeysockets/baileys": "^6.7.21",
+    "axios": "^1.13.2",
     "class-validator": "^0.14.0",
     "cross-env": "^10.0.0",
     "dayjs": "^1.11.13",
@@ -57,6 +58,7 @@
     "fluent-ffmpeg": "^2.1.3",
     "form-data": "^4.0.4",
     "hbs": "^4.2.0",
+    "https-proxy-agent": "^7.0.6",
     "js-yaml": "^4.1.0",
     "jsonschema": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
@@ -66,13 +68,15 @@
     "multer": "^2.0.1",
     "node-cache": "^5.1.2",
     "npm": "^11.4.2",
-    "pino": "^9.9.0",
+    "pino": "^10.0.0",
     "pino-pretty": "^13.0.0",
     "qrcode": "^1.5.1",
     "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.34.2",
+    "sharp": "^0.34.5",
+    "socks-proxy-agent": "^8.0.5",
     "swagger-ui-express": "^5.0.1",
     "ulid": "^3.0.1",
+    "undici": "^7.16.0",
     "ws": "^8.18.3",
     "yamljs": "^0.3.0"
   },
@@ -92,15 +96,16 @@
     "@types/swagger-ui-express": "^4.1.6",
     "@types/ws": "^8.5.10",
     "@types/yamljs": "^0.2.34",
-    "@typescript-eslint/eslint-plugin": "8.39.1",
-    "@typescript-eslint/parser": "8.39.1",
+    "@typescript-eslint/eslint-plugin": "8.46.4",
+    "@typescript-eslint/parser": "8.46.4",
     "copy-webpack-plugin": "^13.0.1",
-    "eslint": "9.33.0",
+    "eslint": "9.39.1",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.4",
     "prettier": "^3.6.2",
-    "prisma": "^6.14.0",
+    "prisma": "^6.19.0",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.46.4"
   }
 }
