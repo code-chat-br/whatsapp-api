@@ -27,14 +27,9 @@ const extractUser = (...values: (string | undefined)[]) => {
 };
 
 export const getJidUser = (key: WAMessageKey) => {
-  return extractUser(key?.remoteJid, key?.senderPn, key?.senderLid);
+  return extractUser(key?.remoteJid, key?.remoteJid, key?.remoteJidAlt);
 };
 
 export const getUserGroup = (key: WAMessageKey, participant?: string) => {
-  return extractUser(
-    key?.participant,
-    key?.participantLid,
-    key?.participantPn,
-    participant,
-  );
+  return extractUser(key?.participant, key?.participantAlt, participant);
 };

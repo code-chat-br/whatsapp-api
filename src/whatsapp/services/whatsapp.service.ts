@@ -864,7 +864,7 @@ export class WAStartupService {
           } as PrismType.Message);
         }
 
-        this.sendDataWebhook('messagesSet', messagesRaw);
+        this.sendDataWebhook('messagesSet', messagesRaw).catch(() => null);
 
         if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
           await this.syncMessage(messagesRaw);
