@@ -1248,7 +1248,7 @@ export class WAStartupService {
   }
 
   private createJid(number: string): string {
-    const regexp = new RegExp(/^\d+@(s.whatsapp.net|g.us|lid|broadcast|newsletter)$/i);
+    const regexp = new RegExp(/^\w+@(s.whatsapp.net|g.us|lid|broadcast|newsletter)$/i);
     if (regexp.test(number)) {
       return number;
     }

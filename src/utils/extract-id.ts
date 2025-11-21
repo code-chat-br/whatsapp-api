@@ -1,7 +1,7 @@
 import { WAMessageKey } from '@whiskeysockets/baileys';
 
 const isJid = (v: string) => {
-  const regexp = new RegExp(/^\d+@(s.whatsapp.net|g.us|broadcast|newsletter)$/i);
+  const regexp = new RegExp(/^\w+@(s.whatsapp.net|g.us|broadcast|newsletter)$/i);
   return regexp.test(v);
 };
 
