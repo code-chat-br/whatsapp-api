@@ -40,6 +40,7 @@
 import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
+  Browsers,
   BufferedEventData,
   CacheStore,
   Chat,
@@ -148,6 +149,7 @@ import {
   constants,
   existsSync,
   readFileSync,
+  rmSync,
   unlinkSync,
   writeFileSync,
 } from 'fs';
@@ -162,7 +164,7 @@ type InstanceQrCode = {
 };
 
 type InstanceStateConnection = {
-  state: 'open' | 'close' | 'refused' | WAConnectionState;
+  state: 'refused' | WAConnectionState;
   statusReason?: number;
 };
 
@@ -194,6 +196,20 @@ export class WAStartupService {
   public client: WASocket;
   private authState: Partial<AuthState> = {};
   private authStateProvider: AuthStateProvider;
+  private phoneNumber: string;
+
+  public async setPhoneNumber(v: string) {
+    this.phoneNumber = v;
+    try {
+      if (this.configService.get<ProviderSession>('PROVIDER')?.ENABLED) {
+        await this.providerFiles.removeSession(this.instance.name);
+      } else {
+        rmSync(join(INSTANCE_DIR, this.instance.name));
+      }
+    } catch {
+      //
+    }
+  }
 
   public async setInstanceName(name: string) {
     const i = await this.repository.instance.findUnique({
@@ -399,6 +415,13 @@ export class WAStartupService {
         color: { light: qrCodeOptions.LIGHT_COLOR, dark: qrCodeOptions.DARK_COLOR },
       };
 
+      let code: string;
+
+      if (this.phoneNumber && !this.client?.authState?.creds?.registered) {
+        code = await this.client.requestPairingCode(this.phoneNumber);
+        this.eventEmitter.emit('code.connection', { code });
+      }
+
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
         if (error) {
           this.logger.error('Qrcode generate failed:' + error.toString());
@@ -406,7 +429,7 @@ export class WAStartupService {
         }
 
         this.instanceQr.base64 = base64;
-        this.instanceQr.code = qr;
+        this.instanceQr.code = code ?? qr;
 
         this.ws.send(this.instance.name, 'qrcode.updated', { code: qr, base64 });
 
@@ -417,8 +440,15 @@ export class WAStartupService {
 
       qrcodeTerminal.generate(qr, { small: true }, (qrcode) =>
         this.logger.log(
-          `\n{ instance: ${this.instance.name}, qrcodeCount: ${this.instanceQr.count} }\n` +
-            qrcode,
+          `\n${JSON.stringify(
+            {
+              instanceName: this.instance.name,
+              qrCount: this.instanceQr.count,
+              code: this.instanceQr.code ?? code,
+            },
+            null,
+            2,
+          )}\n` + qrcode,
         ),
       );
     }
@@ -504,9 +534,7 @@ export class WAStartupService {
   }
 
   private async defineAuthState() {
-    const provider = this.configService.get<ProviderSession>('PROVIDER');
-
-    if (provider?.ENABLED) {
+    if (this.configService.get<ProviderSession>('PROVIDER')?.ENABLED) {
       return await this.authStateProvider.authStateProvider(this.instance.name);
     }
 
@@ -520,10 +548,16 @@ export class WAStartupService {
 
     const { version } = await fetchLatestBaileysVersionV2();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
-    const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
+    const browser: WABrowserDescription = !this.phoneNumber
+      ? [session.CLIENT, session.NAME, release()]
+      : Browsers.macOS('Chrome');
 
-    const { EXPIRATION_TIME } = this.configService.get<QrCode>('QRCODE');
+    let { EXPIRATION_TIME } = this.configService.get<QrCode>('QRCODE');
     const CONNECTION_TIMEOUT = this.configService.get<number>('CONNECTION_TIMEOUT');
+
+    if (this.phoneNumber) {
+      EXPIRATION_TIME = CONNECTION_TIMEOUT;
+    }
 
     const proxy = this.configService.get<EnvProxy>('PROXY');
     const agents = createProxyAgents(proxy?.WS, proxy?.FETCH);
@@ -1872,140 +1906,6 @@ export class WAStartupService {
         },
       },
     );
-  }
-
-  public async buttonsMessage(data: SendButtonsDto) {
-    const generate = await (async () => {
-      if (data.buttonsMessage?.thumbnailUrl) {
-        return await this.prepareMediaMessage({
-          mediatype: 'image',
-          media: data.buttonsMessage.thumbnailUrl,
-        });
-      }
-    })();
-
-    const message: proto.IMessage = {
-      viewOnceMessageV2: {
-        message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2,
-          },
-          interactiveMessage: {
-            body: {
-              text: (() => {
-                let t = '*' + data.buttonsMessage.title + '*';
-                if (data.buttonsMessage?.description) {
-                  t += '\n\n';
-                  t += data.buttonsMessage.description;
-                  t += '\n';
-                }
-                return t;
-              })(),
-            },
-            footer: {
-              text: data.buttonsMessage?.footer,
-            },
-            header: (() => {
-              if (generate?.message?.imageMessage) {
-                return {
-                  hasMediaAttachment: !!generate.message.imageMessage,
-                  imageMessage: generate.message.imageMessage,
-                };
-              }
-            })(),
-            nativeFlowMessage: {
-              buttons: data.buttonsMessage.buttons.map((value) => {
-                return {
-                  name: value.typeButton,
-                  buttonParamsJson: value.toJSONString(),
-                };
-              }),
-              messageParamsJson: JSON.stringify({
-                from: 'api',
-                templateId: ulid(Date.now()),
-              }),
-            },
-          },
-        },
-      },
-    };
-
-    return await this.sendMessageWithTyping(data.number, message, data?.options);
-  }
-
-  public async listButtons(data: SendListDto) {
-    const generate = await (async () => {
-      if (data.listMessage?.thumbnailUrl) {
-        return await this.prepareMediaMessage({
-          mediatype: 'image',
-          media: data.listMessage.thumbnailUrl,
-        });
-      }
-    })();
-
-    const message: proto.IMessage = {
-      viewOnceMessageV2: {
-        message: {
-          messageContextInfo: {
-            deviceListMetadata: {},
-            deviceListMetadataVersion: 2,
-          },
-          interactiveMessage: {
-            body: {
-              text: (() => {
-                let t = '*' + data.listMessage.title + '*';
-                if (data.listMessage?.description) {
-                  t += '\n\n';
-                  t += data.listMessage.description;
-                  t += '\n';
-                }
-                return t;
-              })(),
-            },
-            footer: {
-              text: data.listMessage?.footer,
-            },
-            header: (() => {
-              if (generate?.message?.imageMessage) {
-                return {
-                  hasMediaAttachment: !!generate.message.imageMessage,
-                  imageMessage: generate.message.imageMessage,
-                };
-              }
-            })(),
-            nativeFlowMessage: {
-              buttons: data.listMessage.sections.map((value) => {
-                return {
-                  name: 'single_select',
-                  buttonParamsJson: value.toSectionsString(),
-                };
-              }),
-            },
-          },
-        },
-      },
-    };
-
-    return await this.sendMessageWithTyping(data.number, message, data?.options);
-  }
-
-  public async listLegacy(data: SendListLegacyDto) {
-    const msg = data.listMessage;
-    return await this.sendMessageWithTyping(data.number, {
-      viewOnceMessageV2: {
-        message: {
-          listMessage: {
-            title: msg.title,
-            description: msg?.description,
-            footerText: msg?.footer,
-            buttonText: msg.buttonText,
-            sections: msg.sections,
-            listType: proto.Message.ListMessage.ListType.SINGLE_SELECT,
-          },
-        },
-      },
-    });
   }
 
   public async linkMessage(data: SendLinkDto) {

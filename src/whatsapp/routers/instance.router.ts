@@ -65,6 +65,14 @@ export function InstanceRouter(
 
       res.status(HttpStatus.OK).json(response);
     })
+    .get(routerPath('connect') + '/code/:phoneNumber', async (req, res) => {
+      await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) =>
+          instanceController.connectToWhatsappWitchCode(instance, res),
+      });
+    })
     .get(routerPath('connectionState'), ...guards, async (req, res) => {
       const response = await dataValidate<InstanceDto>({
         request: req,

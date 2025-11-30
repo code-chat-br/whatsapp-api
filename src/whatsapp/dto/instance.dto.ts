@@ -36,4 +36,5 @@ export class InstanceDto {
   instanceName: string;
   description?: string;
   externalAttributes?: any;
+  phoneNumber?: string;
 }

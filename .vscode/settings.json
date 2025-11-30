@@ -8,5 +8,6 @@
     "source.fixAll.eslint": "explicit",
     "source.fixAll": "explicit"
   },
-  "postman.settings.dotenv-detection-notification-visibility": false
+  "postman.settings.dotenv-detection-notification-visibility": false,
+  "prisma.pinToPrisma6": true
 }

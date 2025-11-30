@@ -99,7 +99,6 @@ export async function dataValidate<T>(args: DataValidate<T>) {
         message,
       };
     });
-    logger.error([...message]);
     throw new BadRequestException(...message);
   }
 

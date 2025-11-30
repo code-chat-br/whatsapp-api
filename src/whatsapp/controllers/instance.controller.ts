@@ -49,13 +49,14 @@ import {
 import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
 import { Logger } from '../../config/logger.config';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { Repository } from '../../repository/repository.service';
 import { InstanceService, OldToken } from '../services/instance.service';
 import { WAStartupService } from '../services/whatsapp.service';
 import { isString } from 'class-validator';
 import { ProviderFiles } from '../../provider/sessions';
 import { Websocket } from '../../websocket/server';
+import { HttpStatus } from '../../app.module';
 
 export class InstanceController {
   constructor(
@@ -141,6 +142,64 @@ export class InstanceController {
           return instance.qrCode;
         default:
           return info?.status;
+      }
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadRequestException(error?.message);
+    }
+  }
+
+  public async connectToWhatsappWitchCode(
+    { instanceName, phoneNumber }: InstanceDto,
+    res: Response,
+  ) {
+    if (!phoneNumber) {
+      throw new BadRequestException('phoneNumber required');
+    }
+
+    const find = await this.repository.instance.findUnique({
+      where: { name: instanceName },
+    });
+
+    if (!find) {
+      throw new NotFoundException('Instance not found');
+    }
+
+    try {
+      let instance: WAStartupService;
+      instance = this.waMonitor.waInstances.get(instanceName);
+      const info = instance?.getInstance();
+      if (info?.status.state === 'open') {
+        throw new Error('Instance already connected');
+      }
+
+      const state = info?.status.state || 'close';
+
+      if (!instance || !info?.status || info?.status?.state === 'refused') {
+        instance = new WAStartupService(
+          this.configService,
+          this.eventEmitter,
+          this.repository,
+          this.providerFiles,
+          this.ws,
+        );
+        await instance.setInstanceName(instanceName);
+        this.waMonitor.addInstance(instanceName, instance);
+      }
+
+      switch (state) {
+        case 'close':
+          await instance.setPhoneNumber(phoneNumber);
+          await instance.connectToWhatsapp();
+          this.eventEmitter.once('code.connection', (data: { code: string }) => {
+            res.status(HttpStatus.OK).json(data);
+          });
+          break;
+        case 'connecting':
+          res.status(HttpStatus.OK).json(instance.qrCode);
+          break;
+        default:
+          res.status(HttpStatus.OK).json(info?.status || {});
       }
     } catch (error) {
       this.logger.error(error);
