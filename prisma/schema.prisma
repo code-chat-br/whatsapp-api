@@ -88,23 +88,25 @@ enum DeviceMessage {
 }
 
 model Message {
-  id               Int             @id @default(autoincrement())
-  keyId            String          @db.VarChar(100)
-  keyRemoteJid     String          @db.VarChar(100)
-  keyFromMe        Boolean         @db.TinyInt
-  keyParticipant   String?         @db.VarChar(100)
-  pushName         String?         @db.VarChar(100)
-  messageType      String          @db.VarChar(100)
-  content          Json            @db.Json
-  messageTimestamp Int             @db.Int
-  device           DeviceMessage
-  isGroup          Boolean?        @db.TinyInt
-  Instance         Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  instanceId       Int
-  MessageUpdate    MessageUpdate[]
-  Media            Media?
+  id                Int             @id @default(autoincrement())
+  keyId             String?         @db.VarChar(100)
+  keyLid            String?         @db.VarChar(100)
+  keyRemoteJid      String?         @db.VarChar(100)
+  keyFromMe         Boolean         @db.TinyInt
+  keyParticipant    String?         @db.VarChar(100)
+  keyParticipantLid String?         @db.VarChar(100)
+  pushName          String?         @db.VarChar(100)
+  messageType       String          @db.VarChar(100)
+  content           Json            @db.Json
+  messageTimestamp  Int             @db.Int
+  device            DeviceMessage
+  isGroup           Boolean?        @db.TinyInt
+  Instance          Instance        @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  instanceId        Int
+  MessageUpdate     MessageUpdate[]
+  Media             Media?
 
-  @@index([keyId], name: "keyId")
+  @@index([instanceId, keyRemoteJid, id(sort: Desc)], name: "idx_message_instance_jid_id")
 }
 
 model Media {

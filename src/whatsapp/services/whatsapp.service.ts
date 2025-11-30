@@ -41,7 +41,6 @@ import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
   BufferedEventData,
-  CacheStore,
   Chat,
   ConnectionState,
   Contact,
@@ -53,7 +52,7 @@ import makeWASocket, {
   getDevice,
   GroupMetadata,
   isJidGroup,
-  isJidUser,
+  isPnUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
   ParticipantAction,
@@ -65,9 +64,9 @@ import makeWASocket, {
   WACallEvent,
   WAConnectionState,
   WAMediaUpload,
+  WAMessage,
   WAMessageUpdate,
   WASocket,
-  WAVersion,
 } from '@whiskeysockets/baileys';
 import {
   ConfigService,
@@ -150,6 +149,7 @@ import {
   unlinkSync,
   writeFileSync,
 } from 'fs';
+import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
 
 type InstanceQrCode = {
   count: number;
@@ -179,8 +179,8 @@ export class WAStartupService {
   private readonly logger = new Logger(this.configService, WAStartupService.name);
   private readonly instance: Partial<Instance> = {};
   private readonly webhook: Partial<Webhook> & { events?: WebhookEvents } = {};
-  private readonly msgRetryCounterCache: CacheStore = new NodeCache();
-  private readonly userDevicesCache: CacheStore = new NodeCache();
+  // private readonly msgRetryCounterCache: CacheStore = new NodeCache();
+  // private readonly userDevicesCache: CacheStore = new NodeCache();
   private readonly instanceQr: InstanceQrCode = { count: 0 };
   private readonly stateConnection: InstanceStateConnection = { state: 'close' };
   private readonly databaseOptions: Database =
@@ -513,7 +513,7 @@ export class WAStartupService {
 
     this.authState = (await this.defineAuthState()) as AuthState;
 
-    const version = JSON.parse(this.configService.get<string>('WA_VERSION')) as WAVersion;
+    const { version } = await fetchLatestBaileysVersionV2();
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = [session.CLIENT, session.NAME, release()];
 
@@ -535,13 +535,10 @@ export class WAStartupService {
       connectTimeoutMs: CONNECTION_TIMEOUT * 1000,
       qrTimeout: EXPIRATION_TIME * 1000,
       emitOwnEvents: true,
-      msgRetryCounterCache: this.msgRetryCounterCache,
       retryRequestDelayMs: 5 * 1000,
-      maxMsgRetryCount: 1000,
       getMessage: this.getMessage as any,
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
-      userDevicesCache: this.userDevicesCache,
       transactionOpts: { maxCommitRetries: 5, delayBetweenTriesMs: 50 },
     };
 
@@ -574,11 +571,11 @@ export class WAStartupService {
 
   private readonly chatHandle = {
     'chats.upsert': async (chats: Chat[]) => {
-      chats.forEach(async (chat) => {
+      const list: PrismType.Chat[] = [];
+      for (const chat of chats) {
         try {
           const item = { ...chat };
           delete item.id;
-          const list: PrismType.Chat[] = [];
           const find = await this.repository.chat.findFirst({
             where: {
               remoteJid: chat.id,
@@ -612,7 +609,7 @@ export class WAStartupService {
         } catch (error) {
           this.logger.error(error);
         }
-      });
+      }
     },
 
     'chats.update': async (
@@ -693,9 +690,9 @@ export class WAStartupService {
   };
 
   private readonly contactHandle = {
-    'contacts.upsert': (contacts: Contact[]) => {
-      contacts.forEach(async (contact) => {
-        const list: PrismType.Contact[] = [];
+    'contacts.upsert': async (contacts: Contact[]) => {
+      const list: PrismType.Contact[] = [];
+      for (const contact of contacts) {
         try {
           const find = await this.repository.contact.findFirst({
             where: {
@@ -722,12 +719,12 @@ export class WAStartupService {
         } catch (error) {
           this.logger.error(error);
         }
-      });
+      }
     },
 
     'contacts.update': async (contacts: Partial<Contact>[]) => {
-      contacts.forEach(async (contact) => {
-        const list: PrismType.Contact[] = [];
+      const list: PrismType.Contact[] = [];
+      for (const contact of contacts) {
         try {
           const find = await this.repository.contact.findFirst({
             where: {
@@ -754,7 +751,7 @@ export class WAStartupService {
         } catch (error) {
           this.logger.error(error);
         }
-      });
+      }
     },
   };
 
@@ -813,10 +810,12 @@ export class WAStartupService {
 
           messagesRaw.push({
             keyId: m.key.id,
-            keyRemoteJid: m.key.remoteJid,
+            keyRemoteJid: m.key?.remoteJid,
+            keyLid: m.key?.remoteJidAlt,
             keyFromMe: m.key.fromMe,
             pushName: m?.pushName || m.key.remoteJid.split('@')[0],
             keyParticipant: m?.participant || m.key?.participant,
+            keyParticipantLid: m.key?.participantAlt,
             messageType,
             content: m.message[messageType] as PrismType.Prisma.JsonValue,
             messageTimestamp: m.messageTimestamp as number,
@@ -839,7 +838,7 @@ export class WAStartupService {
       messages,
       type,
     }: {
-      messages: proto.IWebMessageInfo[];
+      messages: WAMessage[];
       type: MessageUpsertType;
     }) => {
       for (const received of messages) {
@@ -861,12 +860,19 @@ export class WAStartupService {
           } as any;
         }
 
+        const r = /^(image|document|video|ptv|audio|sticker)Message$/i;
+        if (r.test(messageType)) {
+          delete received.message?.[messageType]?.['jpegThumbnail'];
+        }
+
         const messageRaw = {
           keyId: received.key.id,
-          keyRemoteJid: received.key.remoteJid,
+          keyRemoteJid: received.key?.remoteJid,
+          keyLid: received.key?.remoteJidAlt,
           keyFromMe: received.key.fromMe,
           pushName: received.pushName,
           keyParticipant: received?.participant || received.key?.participant,
+          keyParticipantLid: received.key?.participantAlt,
           messageType,
           content: received.message[messageType] as PrismType.Prisma.JsonValue,
           messageTimestamp: received.messageTimestamp as number,
@@ -881,7 +887,9 @@ export class WAStartupService {
         } as PrismType.Message;
 
         if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
-          const { id } = await this.repository.message.create({ data: messageRaw });
+          const { id } = await this.repository.message.create({
+            data: JSON.parse(JSON.stringify(messageRaw) as any),
+          });
           messageRaw.id = id;
         }
 
@@ -1036,14 +1044,14 @@ export class WAStartupService {
     },
   };
 
-  private readonly onLabel = {
-    'labels.association': async (args: BaileysEventMap['labels.association']) => {
-      this.sendDataWebhook('labelsAssociation', args);
-    },
-    'labels.edit': async (args: BaileysEventMap['labels.edit']) => {
-      this.sendDataWebhook('labelsEdit', args);
-    },
-  };
+  // private readonly onLabel = {
+  //   'labels.association': async (args: BaileysEventMap['labels.association']) => {
+  //     this.sendDataWebhook('labelsAssociation', args);
+  //   },
+  //   'labels.edit': async (args: BaileysEventMap['labels.edit']) => {
+  //     this.sendDataWebhook('labelsEdit', args);
+  //   },
+  // };
 
   private eventHandler() {
     this.client.ev.process((events) => {
@@ -1089,7 +1097,7 @@ export class WAStartupService {
 
         if (events?.['group-participants.update']) {
           const payload = events['group-participants.update'];
-          this.groupHandler['group-participants.update'](payload);
+          this.groupHandler['group-participants.update'](payload as any);
         }
 
         if (events?.['chats.upsert']) {
@@ -1122,15 +1130,15 @@ export class WAStartupService {
           this.callHandler['call.upsert'](payload);
         }
 
-        if (events?.['labels.association']) {
-          const payload = events['labels.association'];
-          this.onLabel['labels.association'](payload);
-        }
+        // if (events?.['labels.association']) {
+        //   const payload = events['labels.association'];
+        //   this.onLabel['labels.association'](payload);
+        // }
 
-        if (events?.['labels.edit']) {
-          const payload = events['labels.edit'];
-          this.onLabel['labels.edit'](payload);
-        }
+        // if (events?.['labels.edit']) {
+        //   const payload = events['labels.edit'];
+        //   this.onLabel['labels.edit'](payload);
+        // }
       }
     });
   }
@@ -1230,7 +1238,7 @@ export class WAStartupService {
     return { message: 'success' };
   }
 
-  private async sendMessageWithTyping<T = proto.IMessage>(
+  private async sendMessageWithTyping<T = WAMessage>(
     number: string,
     message: T,
     options?: Options,
@@ -1277,7 +1285,7 @@ export class WAStartupService {
       }
 
       const messageSent: Partial<PrismType.Message> = await (async () => {
-        let q: proto.IWebMessageInfo;
+        let q: WAMessage;
         if (quoted) {
           q = {
             key: {
@@ -1291,7 +1299,7 @@ export class WAStartupService {
           };
         }
 
-        let m: proto.IWebMessageInfo;
+        let m: WAMessage;
 
         const messageId = options?.messageId || ulid(Date.now());
 
@@ -1313,7 +1321,7 @@ export class WAStartupService {
           m.key = {
             id: id,
             remoteJid: jid,
-            participant: isJidUser(jid) ? jid : undefined,
+            participant: isPnUser(jid) ? jid : undefined,
             fromMe: true,
           };
 
@@ -1347,7 +1355,7 @@ export class WAStartupService {
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
         const { id } = await this.repository.message.create({
-          data: messageSent as PrismType.Message,
+          data: JSON.parse(JSON.stringify(messageSent)) as any,
         });
         messageSent.id = id;
       }
@@ -1914,7 +1922,9 @@ export class WAStartupService {
                 responseType: 'arraybuffer',
               });
               return new Uint8Array(response.data);
-            } catch {}
+            } catch {
+              //
+            }
           }
         })(),
       },
@@ -1981,7 +1991,7 @@ export class WAStartupService {
     try {
       const keys: proto.IMessageKey[] = [];
       data.readMessages.forEach((read) => {
-        if (isJidGroup(read.remoteJid) || isJidUser(read.remoteJid)) {
+        if (isJidGroup(read.remoteJid) || isPnUser(read.remoteJid)) {
           keys.push({
             remoteJid: read.remoteJid,
             fromMe: read.fromMe,

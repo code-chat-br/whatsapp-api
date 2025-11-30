@@ -8,7 +8,7 @@
     "start": "ts-node --files --transpile-only ./src/main.ts",
     "start:prod": "bash start.sh",
     "start:dev": "tsnd --files --transpile-only --respawn --ignore-watch node_modules ./src/main.ts",
-    "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/all.test.ts"
+    "test": "clear && tsnd --files --transpile-only --respawn --ignore-watch node_modules ./test/test.ts"
   },
   "repository": {
     "type": "git",
@@ -44,7 +44,7 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
     "@prisma/client": "^5.19.1",
-    "@whiskeysockets/baileys": "^6.7.16",
+    "@whiskeysockets/baileys": "7.0.0-rc.8",
     "axios": "^1.7.7",
     "class-validator": "^0.14.0",
     "cross-env": "^7.0.3",
