@@ -157,11 +157,11 @@ export class ConfigService {
       }
     }
 
-    if (isEmpty(this.env.WA_VERSION)) {
-      throw new Error(
-        'The WhatsApp version must be specified in the environment variables.\n\nDefault variable [file: .env]: WA_VERSION=[ 2, 3000, 1015901307 ]\n',
-      );
-    }
+    // if (isEmpty(this.env.WA_VERSION)) {
+    //   throw new Error(
+    //     'The WhatsApp version must be specified in the environment variables.\n\nDefault variable [file: .env]: WA_VERSION=[ 2, 3000, 1015901307 ]\n',
+    //   );
+    // }
   }
 
   private envProcess(): Env {
