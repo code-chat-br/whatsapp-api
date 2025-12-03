@@ -133,17 +133,17 @@ export class SendMessageController {
     return await this.waMonitor.waInstances.get(instanceName).reactionMessage(data);
   }
 
-  public async sendButtons({ instanceName }: InstanceDto, data: SendButtonsDto) {
-    return await this.waMonitor.waInstances.get(instanceName).buttonsMessage(data);
-  }
+  // public async sendButtons({ instanceName }: InstanceDto, data: SendButtonsDto) {
+  //   return await this.waMonitor.waInstances.get(instanceName).buttonsMessage(data);
+  // }
 
-  public async sendList({ instanceName }: InstanceDto, data: SendListDto) {
-    return await this.waMonitor.waInstances.get(instanceName).listButtons(data);
-  }
+  // public async sendList({ instanceName }: InstanceDto, data: SendListDto) {
+  //   return await this.waMonitor.waInstances.get(instanceName).listButtons(data);
+  // }
 
-  public async sendListLegacy({ instanceName }: InstanceDto, data: SendListLegacyDto) {
-    return await this.waMonitor.waInstances.get(instanceName).listLegacy(data);
-  }
+  // public async sendListLegacy({ instanceName }: InstanceDto, data: SendListLegacyDto) {
+  //   return await this.waMonitor.waInstances.get(instanceName).listLegacy(data);
+  // }
 
   public async sendLinkPreview({ instanceName }: InstanceDto, data: SendLinkDto) {
     return await this.waMonitor.waInstances.get(instanceName).linkMessage(data);
