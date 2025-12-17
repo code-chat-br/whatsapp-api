@@ -41,6 +41,7 @@ import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
   BufferedEventData,
+  BufferJSON,
   Chat,
   ConnectionState,
   Contact,
@@ -123,7 +124,6 @@ import {
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
 import Long from 'long';
-import NodeCache from 'node-cache';
 import {
   AuthState,
   AuthStateProvider,
@@ -150,6 +150,7 @@ import {
   writeFileSync,
 } from 'fs';
 import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
+import { toBase64 } from '../../utils/to-base64';
 
 type InstanceQrCode = {
   count: number;
@@ -475,7 +476,7 @@ export class WAStartupService {
 
   private async getMessage(key: PrismType.Message, full = false) {
     try {
-      key.instanceId = this.instance.id;
+      // key.instanceId = this.instance.id;
       const message = await this.repository.message.findFirst({
         where: key as any,
       });
@@ -489,6 +490,13 @@ export class WAStartupService {
           [message.messageType]: message.content,
         },
       };
+
+      if (webMessageInfo.message[message.messageType]?.mediaKey) {
+        webMessageInfo.message[message.messageType].mediaKey = toBase64(
+          webMessageInfo.message?.[message.messageType]?.mediaKey as any,
+        );
+      }
+
       if (full) {
         return webMessageInfo;
       }
@@ -888,7 +896,7 @@ export class WAStartupService {
 
         if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
           const { id } = await this.repository.message.create({
-            data: JSON.parse(JSON.stringify(messageRaw) as any),
+            data: JSON.parse(JSON.stringify(messageRaw, BufferJSON.replacer) as any),
           });
           messageRaw.id = id;
         }
@@ -1355,7 +1363,7 @@ export class WAStartupService {
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
         const { id } = await this.repository.message.create({
-          data: JSON.parse(JSON.stringify(messageSent)) as any,
+          data: JSON.parse(JSON.stringify(messageSent, BufferJSON.replacer)) as any,
         });
         messageSent.id = id;
       }
@@ -2195,10 +2203,6 @@ export class WAStartupService {
         throw 'The message is not of the media type';
       }
 
-      if (typeof mediaMessage['mediaKey'] === 'object') {
-        msg.message = JSON.parse(JSON.stringify(msg.message));
-      }
-
       const stream = await downloadMediaMessage(
         { key: msg?.key, message: msg?.message },
         'stream',
@@ -2244,7 +2248,8 @@ export class WAStartupService {
       if (inner) {
         return;
       }
-      throw new BadRequestException(error.toString());
+      const boom = error as Boom;
+      throw new BadRequestException(error.toString(), boom?.output);
     }
   }
 
