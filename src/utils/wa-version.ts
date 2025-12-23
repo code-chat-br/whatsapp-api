@@ -1,10 +1,11 @@
 import { WAVersion } from '@whiskeysockets/baileys';
+import axios from 'axios';
 
 export const fetchLatestBaileysVersionV2 = async () => {
   try {
-    const resp = await fetch('https://web.whatsapp.com/sw.js');
+    const resp = await axios.get<string>('https://web.whatsapp.com/sw.js');
     const re = /JSON\.parse\(\s*(?:\/\*[^]*?\*\/\s*)?("(?:(?:\\.|[^"\\])*)")\s*\)/;
-    const data = await resp.json();
+    const data = resp.data;
     const m = re.exec(data);
     if (!m) {
       return undefined;
