@@ -150,7 +150,7 @@ import {
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
-  SendTextDto
+  SendTextDto,
 } from '../dto/sendMessage.dto';
 import { WebhookEvents, WebhookEventsEnum, WebhookEventsType } from '../dto/webhook.dto';
 
@@ -182,12 +182,12 @@ export class WAStartupService {
       keepAlive: true,
       maxSockets: 100,
       maxFreeSockets: 10,
-      timeout: 60000
+      timeout: 60000,
     });
 
     this.axiosInstance = axios.create({
       httpAgent,
-      timeout: 60000
+      timeout: 60000,
     });
   }
 
