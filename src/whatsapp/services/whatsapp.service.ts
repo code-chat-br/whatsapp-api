@@ -1941,12 +1941,9 @@ export class WAStartupService {
         jpegThumbnail: await (async () => {
           if (data.linkMessage?.thumbnailUrl) {
             try {
-              const response = await this.axiosInstance.get(
-                data.linkMessage.thumbnailUrl,
-                {
-                  responseType: 'arraybuffer',
-                },
-              );
+              const response = await this.axiosInstance.get(data.linkMessage.thumbnailUrl, {
+                responseType: 'arraybuffer',
+              });
               return new Uint8Array(response.data);
             } catch (error) {
               //
@@ -2434,9 +2431,7 @@ export class WAStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
-        pic = (
-          await this.axiosInstance.get(picture.image, { responseType: 'arraybuffer' })
-        ).data;
+        pic = (await this.axiosInstance.get(picture.image, { responseType: 'arraybuffer' })).data;
       } else if (isBase64(picture.image)) {
         pic = Buffer.from(picture.image, 'base64');
       } else {
