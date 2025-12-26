@@ -83,7 +83,7 @@ import {
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
 import { join, normalize } from 'path';
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 import qrcode, { QRCodeToDataURLOptions } from 'qrcode';
 import qrcodeTerminal from 'qrcode-terminal';
 import { Boom } from '@hapi/boom';
@@ -156,6 +156,7 @@ import {
 import { createProxyAgents } from '../../utils/proxy';
 import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
 import { getJidUser, getUserGroup } from '../../utils/extract-id';
+import http from 'http';
 
 type InstanceQrCode = {
   count: number;
@@ -180,6 +181,18 @@ export class WAStartupService {
       this.configService,
       this.providerFiles,
     );
+
+    const httpAgent = new http.Agent({
+      keepAlive: true,
+      maxSockets: 100,
+      maxFreeSockets: 10,
+      timeout: 60000,
+    });
+
+    this.axiosInstance = axios.create({
+      httpAgent,
+      timeout: 60000,
+    });
   }
 
   private readonly logger = new Logger(this.configService, WAStartupService.name);
@@ -191,6 +204,7 @@ export class WAStartupService {
   private readonly stateConnection: InstanceStateConnection = { state: 'close' };
   private readonly databaseOptions: Database =
     this.configService.get<Database>('DATABASE');
+  private readonly axiosInstance: AxiosInstance;
 
   private endSession = false;
   public client: WASocket;
@@ -297,7 +311,7 @@ export class WAStartupService {
     try {
       if (this.webhook?.enabled) {
         if (this.webhook?.events && this.webhook?.events[event]) {
-          await axios.post(
+          await this.axiosInstance.post(
             this.webhook.url,
             {
               event: eventDesc,
@@ -308,7 +322,7 @@ export class WAStartupService {
           );
         }
         if (!this.webhook?.events) {
-          await axios.post(
+          await this.axiosInstance.post(
             this.webhook.url,
             {
               event: eventDesc,
@@ -342,7 +356,7 @@ export class WAStartupService {
     try {
       const globalWebhook = this.configService.get<GlobalWebhook>('GLOBAL_WEBHOOK');
       if (globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
-        await axios.post(
+        await this.axiosInstance.post(
           globalWebhook.URL,
           {
             event: eventDesc,
@@ -1654,7 +1668,7 @@ export class WAStartupService {
       const isURL = /http(s?):\/\//.test(mediaMessage.media as string);
 
       if (isURL) {
-        const response = await axios.get(mediaMessage.media as string, {
+        const response = await this.axiosInstance.get(mediaMessage.media as string, {
           responseType: 'arraybuffer',
         });
 
@@ -1927,7 +1941,7 @@ export class WAStartupService {
         jpegThumbnail: await (async () => {
           if (data.linkMessage?.thumbnailUrl) {
             try {
-              const response = await axios.get(data.linkMessage.thumbnailUrl, {
+              const response = await this.axiosInstance.get(data.linkMessage.thumbnailUrl, {
                 responseType: 'arraybuffer',
               });
               return new Uint8Array(response.data);
@@ -2417,7 +2431,7 @@ export class WAStartupService {
     try {
       let pic: WAMediaUpload;
       if (isURL(picture.image)) {
-        pic = (await axios.get(picture.image, { responseType: 'arraybuffer' })).data;
+        pic = (await this.axiosInstance.get(picture.image, { responseType: 'arraybuffer' })).data;
       } else if (isBase64(picture.image)) {
         pic = Buffer.from(picture.image, 'base64');
       } else {
