@@ -86,7 +86,7 @@ export function GroupRouter(
     .get(routerPath('findAllGroups'), ...guards, async (req, res) => {
       const params = req.params;
       const response = await groupController.allGroups({
-        instanceName: params?.instanceName,
+        instanceName: params?.instanceName as unknown as string,
       });
       res.status(HttpStatus.OK).json(response);
     })
