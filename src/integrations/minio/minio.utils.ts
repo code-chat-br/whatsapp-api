@@ -104,18 +104,13 @@ const uploadFile = async (
       metadata['custom-header-application'] = 'codechat-api-v1';
       const o = await minioClient.putObject(bucketName, objectName, file, size, metadata);
 
-      await minioClient.setObjectTagging(
-        bucketName,
-        objectName,
-        {
-          mediaType: metadata['custom-header-mediaType'],
-          application: metadata['custom-header-application'],
-          sender: metadata['custom-header-keyRemoteJid'],
-          contentType: metadata['Content-Type'],
-          fromMe: metadata['custom-header-fromMe'],
-        },
-        { versionId: '_1""' },
-      );
+      await minioClient.setObjectTagging(bucketName, objectName, {
+        mediaType: metadata['custom-header-mediaType'],
+        application: metadata['custom-header-application'],
+        sender: metadata['custom-header-keyRemoteJid'],
+        contentType: metadata['Content-Type'],
+        fromMe: metadata['custom-header-fromMe'],
+      });
       return o;
     } catch (error) {
       console.log('ERROR: ', error);
