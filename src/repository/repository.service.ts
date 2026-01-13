@@ -43,9 +43,14 @@ export class Query<T> {
 
 import { Prisma, PrismaClient, Webhook } from '@prisma/client';
 import { WebhookEvents } from '../whatsapp/dto/webhook.dto';
-import { BadRequestException, NotFoundException } from '../exceptions';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '../exceptions';
 import { Logger } from '../config/logger.config';
 import { ConfigService, Database } from '../config/env.config';
+import { PrismaPg } from '@prisma/adapter-pg';
 
 type CreateLogs = {
   context: string;
@@ -56,7 +61,16 @@ type CreateLogs = {
 
 export class Repository extends PrismaClient {
   constructor(private readonly configService: ConfigService) {
-    super();
+    super({
+      adapter: new PrismaPg(
+        { connectionString: process.env.DATABASE_URL },
+        {
+          onConnectionError(err) {
+            throw new InternalServerErrorException(err);
+          },
+        },
+      ),
+    });
   }
 
   private readonly logger = new Logger(this.configService, Repository.name);
@@ -94,7 +108,7 @@ export class Repository extends PrismaClient {
         }
 
         const k = `ARRAY['${key}']`;
-        const v = `to_jsonb(${value}::boolean)`;
+        const v = `to_jsonb(${value as string}::boolean)`;
 
         await this.$queryRaw(
           Prisma.sql`UPDATE "Webhook" SET events = jsonb_set(events, ${Prisma.raw(

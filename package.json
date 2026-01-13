@@ -45,6 +45,7 @@
   "dependencies": {
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^10.0.1",
+    "@prisma/adapter-pg": "^7.2.0",
     "@prisma/client": "^7.2.0",
     "@whiskeysockets/baileys": "7.0.0-rc.9",
     "axios": "^1.13.2",
