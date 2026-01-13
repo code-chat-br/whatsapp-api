@@ -90,7 +90,7 @@ const createBucket = async () => {
   }
 };
 
-createBucket();
+createBucket().catch((err) => console.error(err));
 
 const uploadFile = async (
   fileName: string,

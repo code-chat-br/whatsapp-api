@@ -156,6 +156,7 @@ import {
 import { createProxyAgents } from '../../utils/proxy';
 import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
 import { getJidUser, getUserGroup } from '../../utils/extract-id';
+import { getObjectUrl } from '../../integrations/minio/minio.utils';
 
 type InstanceQrCode = {
   count: number;
@@ -1009,13 +1010,6 @@ export class WAStartupService {
 
         messageRaw['info'] = { type };
 
-        this.logger.log('Type: ' + type);
-        console.log(messageRaw);
-
-        this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
-
-        await this.sendDataWebhook('messagesUpsert', messageRaw);
-
         if (s3Service.BUCKET?.ENABLE) {
           try {
             const media = await this.getMediaMessage(messageRaw, true);
@@ -1038,7 +1032,7 @@ export class WAStartupService {
                 'custom-header-messageId': messageRaw.keyId,
               });
 
-              await this.repository.media.create({
+              const created = await this.repository.media.create({
                 data: {
                   messageId: messageRaw.id,
                   type: mediaType,
@@ -1046,6 +1040,7 @@ export class WAStartupService {
                   mimetype,
                 },
               });
+              messageRaw.content['mediaUrl'] = await getObjectUrl(created.fileName);
             }
           } catch (error) {
             this.logger.error([
@@ -1061,6 +1056,12 @@ export class WAStartupService {
             });
           }
         }
+
+        this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
+        await this.sendDataWebhook('messagesUpsert', messageRaw);
+
+        this.logger.log('Type: ' + type);
+        console.log(messageRaw);
       }
     },
 
