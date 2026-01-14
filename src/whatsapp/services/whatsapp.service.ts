@@ -160,6 +160,7 @@ import { getObjectUrl } from '../../integrations/minio/minio.utils';
 
 type InstanceQrCode = {
   count: number;
+  paringCode?: string;
   code?: string;
   base64?: string;
 };
@@ -416,11 +417,10 @@ export class WAStartupService {
         color: { light: qrCodeOptions.LIGHT_COLOR, dark: qrCodeOptions.DARK_COLOR },
       };
 
-      let code: string;
-
       if (this.phoneNumber && !this.client?.authState?.creds?.registered) {
-        code = await this.client.requestPairingCode(this.phoneNumber);
-        this.eventEmitter.emit('code.connection', { code });
+        this.instanceQr.paringCode = await this.client.requestPairingCode(
+          this.phoneNumber,
+        );
       }
 
       qrcode.toDataURL(qr, optsQrcode, (error, base64) => {
@@ -430,12 +430,12 @@ export class WAStartupService {
         }
 
         this.instanceQr.base64 = base64;
-        this.instanceQr.code = code ?? qr;
+        this.instanceQr.code = qr;
 
-        this.ws.send(this.instance.name, 'qrcode.updated', { code: qr, base64 });
+        this.ws.send(this.instance.name, 'qrcode.updated', this.instanceQr);
 
         this.sendDataWebhook('qrcodeUpdated', {
-          qrcode: { instance: this.instance.name, code: qr, base64 },
+          qrcode: { instance: this.instance.name, ...this.instanceQr },
         });
       });
 
@@ -444,8 +444,7 @@ export class WAStartupService {
           `\n${JSON.stringify(
             {
               instanceName: this.instance.name,
-              qrCount: this.instanceQr.count,
-              code: this.instanceQr.code ?? code,
+              ...this.instanceQr,
             },
             null,
             2,

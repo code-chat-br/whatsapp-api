@@ -1,142 +1,227 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-
 <head>
-   <meta charset="UTF-8">
-   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" 'unsafe-inline'
-      crossorigin="anonymous">
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-      integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-      crossorigin="anonymous"></script>
-   <link rel="shortcut icon" href="/images/logo.png" type="image/x-icon">
-   <style>
-      code {
-         padding: 10px;
-         background-color: whitesmoke;
-         color: rgb(104, 104, 104);
-      }
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-      pre {
-         font-size: 1em;
-      }
+    <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+            integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+            crossorigin="anonymous"
+    />
+    <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+            crossorigin="anonymous"
+    ></script>
 
-      .card-code {
-         background-color: #f5f5f5;
-         border-radius: 8px;
-         padding: 20px;
-         margin: 10px 0;
-         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-         display: block;
-         white-space: pre-wrap;
-         word-wrap: break-word;
-         font-family: 'Courier New', Courier, monospace;
-         color: #333;
-         font-size: 14px;
-      }
-   </style>
-   <title>Generate QRCode</title>
+    <link rel="shortcut icon" href="/images/logo.png" type="image/x-icon" />
+
+    <style>
+        code {
+            padding: 5px;
+            background-color: whitesmoke;
+            color: rgb(104, 104, 104);
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.95em !important;
+            display: block;
+        }
+        pre { margin: 0; }
+    </style>
+
+    <title>Generate QRCode</title>
 </head>
 
 <body>
+<div id="root" class="container mt-5 mb-5" style="max-width: 720px">
+    <div id="display-qrcode">
+        <h2 class="mb-3 text-secondary">Connect to WhatsApp</h2>
 
-   <div id="root" class="container mt-5 mb-5 w-50">
+        <div class="input-group mb-3">
+            <span class="input-group-text">Instance name</span>
+            <input
+                    id="input-session"
+                    type="text"
+                    class="form-control"
+                    disabled
+                    value="{{instanceName}}"
+            />
+            <button id="gen-qrcode" class="btn btn-success" type="button">
+                Generate qrcode
+            </button>
+        </div>
 
-      <div id="display-qrcode">
-         <h2 class="mb-3 text-secondary">Connect to whatsapp</h2>
-         <div class="input-group mb-3">
-            <span class="input-group-text" id="basic-addon1">Instance name</span>
-            <input id="input-session" type="text" class="form-control" aria-describedby="btn-qr-g" disabled
-               value="{{instanceName}}">
-            <button id="gen-qrcode" class="btn btn-success" type="submit">Generate qrcode</button>
-         </div>
+        <div class="d-flex gap-2 align-items-center mb-3">
+            <span class="badge bg-secondary" id="ws-status">WS: disconnected</span>
+            <span class="badge bg-light text-dark" id="qr-status">QR: waiting</span>
+        </div>
 
-         <hr />
+        <hr />
 
-         <div id="qrcode-img"></div>
-      </div>
-   </div>
+        <div id="qrcode-img"></div>
+    </div>
+</div>
 
-   <script src="/js/pixel.js?isDocker={{isDocker}}&env={{env}}&version={{version}}"></script>
-   <script src="https://code.jquery.com/jquery-3.6.0.min.js"
-      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
-   <script type="module">
+<script src="/js/pixel.js?isDocker={{isDocker}}&env={{env}}&version={{version}}"></script>
 
-      const log = (...data) => console.log(data);
+<script
+        src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+        crossorigin="anonymous"
+></script>
 
-      $('#gen-qrcode').click(() => {
-         const headers = { authorization: 'Bearer {{auth.token}}' }
-         $.ajax({
-            url: `/instance/connect/{{instanceName}}`,
-            headers,
-            type: 'GET',
-            success: (qrcode, status) => {
-               
+<!-- ✅ tudo que depende do QR fica em module e importa o QR -->
+<script type="module">
+    import QRCode from "https://cdn.jsdelivr.net/npm/qrcode@1.5.4/+esm";
+
+    const instanceName = "{{instanceName}}";
+    const token = "{{auth.token}}";
+
+    const $ = window.$; // jQuery global
+
+    function setWsStatus(text, kind) {
+        const el = document.getElementById("ws-status");
+        el.textContent = text;
+        el.className = `badge ${kind}`;
+    }
+
+    function setQrStatus(text, kind) {
+        const el = document.getElementById("qr-status");
+        el.textContent = text;
+        el.className = `badge ${kind}`;
+    }
+
+    function ensureCard() {
+        const container = document.getElementById("qrcode-img");
+        let card = document.getElementById("update-qrcode");
+        if (card) return card;
+
+        container.innerHTML = `
+        <div id="update-qrcode" class="card mb-2">
+          <h5 class="card-title text-center text-secondary mt-3">${instanceName}</h5>
+          <div class="card-body container d-flex justify-content-center">
+            <canvas id="qr-canvas" width="260" height="260" class="border rounded"></canvas>
+          </div>
+          <div class="card-body">
+            <pre><code id="qr-code-text"></code></pre>
+            <h6 class="text-center text-warning mt-3" id="connecting-text">Waiting...</h6>
+          </div>
+        </div>
+      `;
+        return document.getElementById("update-qrcode");
+    }
+
+    function renderQrFromCode(qrCodeString) {
+        if (!qrCodeString) return;
+
+        ensureCard();
+
+        const canvas = document.getElementById("qr-canvas");
+        const codeEl = document.getElementById("qr-code-text");
+
+        const size = 260;
+        canvas.width = size;
+        canvas.height = size;
+
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        codeEl.textContent = JSON.stringify({ code: qrCodeString }, null, 2);
+
+        setQrStatus("QR: rendering...", "bg-info");
+
+        try {
+            QRCode.toCanvas(
+                    canvas,
+                    qrCodeString,
+                    {
+                        errorCorrectionLevel: "L",
+                        width: size,
+                        margin: 2,
+                        color: { dark: "#198754", light: "#ffffff" },
+                    },
+                    (err) => {
+                        if (err) {
+                            console.error("QR callback err:", err);
+                            setQrStatus("QR: render failed", "bg-danger");
+                            return;
+                        }
+                        setQrStatus("QR: rendered", "bg-success");
+                        document.getElementById("connecting-text").textContent = "Waiting...";
+                    }
+            );
+        } catch (e) {
+            console.error("QR threw:", e);
+            setQrStatus("QR: exception (see console)", "bg-danger");
+        }
+    }
+
+    // botão: só solicita o connect; QR chega pelo WS
+    $("#gen-qrcode").click(() => {
+        setQrStatus("QR: requesting...", "bg-info");
+        $.ajax({
+            url: `/instance/connect/${encodeURIComponent(instanceName)}`,
+            headers: { authorization: `Bearer ${token}` },
+            type: "GET",
+            success: () => console.log("connect requested"),
+            error: (err) => {
+                console.log(err);
+                setQrStatus("QR: request failed", "bg-danger");
             },
-            error: (error) => console.log(error),
-         });
-      });
-      
-      //Conexão websocket
+        });
+    });
 
-      const url = 'ws://localhost:8084/ws/events';
-      const reconnectInterval = 5000; // 5 segundos
+    // WebSocket
+    const wsBaseUrl = "ws://localhost:8084/ws/events";
+    const reconnectInterval = 2000;
 
-      function socket(eventName, callback) {
-         const ws = new WebSocket(`${url}?event=${encodeURIComponent(eventName)}&token=${encodeURIComponent("{{auth.token}}")}`);
+    function connectSocket(eventName, callback) {
+        const ws = new WebSocket(
+                `${wsBaseUrl}?event=${encodeURIComponent(eventName)}&token=${encodeURIComponent(token)}`
+        );
 
-         ws.onopen = () => {
-            console.log('Connected to the server');
-         };
+        ws.onopen = () => {
+            setWsStatus("WS: connected", "bg-success");
+            console.log("WS connected:", eventName);
+        };
 
-         ws.onmessage = (event) => {
-            if (callback) {
-               const data = JSON.parse(event.data)
-               callback(data, event)
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                callback?.(data, event);
+            } catch (e) {
+                console.log("WS message parse error:", e);
             }
-         };
+        };
 
-         ws.onerror = (error) => {
-            console.log('Error:', error);
-         };
+        ws.onerror = (error) => {
+            console.log("WS error:", error);
+            setWsStatus("WS: error", "bg-danger");
+        };
 
-         ws.onclose = (event) => {
-            console.log(`Connection closed with code ${event.code} and reason ${event.reason}, attempting to reconnect...`);
-            setTimeout(() => socket(event, callback), reconnectInterval);
-         };
-      }
+        ws.onclose = (ev) => {
+            setWsStatus("WS: reconnecting...", "bg-warning text-dark");
+            console.log(`WS closed (${eventName}) code=${ev.code} reason=${ev.reason}`);
+            setTimeout(() => connectSocket(eventName, callback), reconnectInterval);
+        };
 
-      // Será criado uma instância da função para cada evento
-      // Os eventos são os mesmos disparados pela webhook
-      socket("qrcode.updated", (msg, event) => {
-         console.log("QRCODE: ", msg)
-         $(`#update-qrcode`).remove();
-               $('#qrcode-img')
-                  .append(
-                     `<div id="update-qrcode" class="card mb-2">
-                        <h5 class="card-title text-center text-secondary mt-3">{{name}}</h5>
-                        <div class="card-body container d-flex justify-content-center">
-                           <img class="img-thumbnail mt-2 w-50" alt="qrcode.png"
-                              src="${msg.base64}">
-                        </div>
-                        <div class="card-body">
-                           <code class="text-card d-block">${JSON.stringify({ code: msg.code }, null, 2)}</code>
-                           <h5 class="card-title text-center text-warning mt-3">Connecting...</h5>
-                        </div>
-                     </div>`
-                  );
-      })
+        return ws;
+    }
 
-      socket("connection.update", (msg, event) => {
-         console.log(msg)
-      })
+    connectSocket("qrcode.updated", (msg) => {
+        console.log("QRCODE:", msg);
+        if (msg?.code) renderQrFromCode(msg.code);
+    });
 
-      socket("messages.upsert", (msg, event) => {
-         console.log(msg)
-      })
-   </script>
+    connectSocket("connection.update", (msg) => {
+        console.log("connection.update:", msg);
+        if (msg?.state === "open") setQrStatus("Connected ✅", "bg-success");
+    });
+
+    connectSocket("messages.upsert", (msg) => console.log("messages.upsert:", msg));
+</script>
 </body>
-
 </html>
