@@ -832,6 +832,20 @@ export class WAStartupService {
       messages,
       chats,
     }: BaileysEventMap['messaging-history.set']) => {
+      if(contacts && contacts.length > 0){
+          const contactsRaw: PrismType.Contact[] = contacts.filter(contact => !!contact.name).map((contact) => {
+              return {
+                  remoteJid: contact.id,
+                  pushName: contact?.name,
+                  profilePicUrl: null,
+                  instanceId: this.instance.id,
+              } as PrismType.Contact;
+          });
+          
+          this.sendDataWebhook('contactsSet', contactsRaw);
+          this.repository.contact.createMany({ data: contactsRaw });
+      }
+	  
       if (chats && chats.length > 0) {
         const chatsRaw: PrismType.Chat[] = chats.map((chat) => {
           return {
@@ -839,8 +853,8 @@ export class WAStartupService {
             instanceId: this.instance.id,
           } as PrismType.Chat;
         });
-        await this.sendDataWebhook('chatsSet', chatsRaw);
-        await this.repository.chat.createMany({ data: chatsRaw });
+        this.sendDataWebhook('chatsSet', chatsRaw);
+        this.repository.chat.createMany({ data: chatsRaw });
       }
 
       if (messages && messages?.length > 0) {
