@@ -49,6 +49,11 @@ import { InstanceDto } from '../dto/instance.dto';
 import { WAMonitoringService } from '../services/monitor.service';
 import { Query } from '../../repository/repository.service';
 import { Contact, Message } from '@prisma/client';
+import { BadRequestException } from '../../exceptions';
+import { downloadContentFromMessage, MediaType } from '@whiskeysockets/baileys';
+import { decodeProps } from '../../utils/encode.props';
+import { TypeMediaMessage } from '../services/whatsapp.service';
+import mime from 'mime-types';
 
 export class ChatController {
   constructor(private readonly waMonitor: WAMonitoringService) {}
@@ -90,6 +95,32 @@ export class ChatController {
 
   public async updatePresence({ instanceName }: InstanceDto, data: UpdatePresenceDto) {
     return await this.waMonitor.waInstances.get(instanceName).updatePresence(data);
+  }
+
+  public async getBinaryMedia(mediaType: string, query: string) {
+    if (!mediaType || !query) {
+      throw new BadRequestException('Media type not provided');
+    }
+
+    if (!TypeMediaMessage().includes(mediaType + 'Message')) {
+      throw new BadRequestException('Media type not supported');
+    }
+
+    const decode = decodeProps(query);
+
+    if (!decode?.url && !decode?.mediaKey && !decode?.directPath && !decode?.mimetype) {
+      throw new BadRequestException('Media props not supported');
+    }
+
+    try {
+      return {
+        stream: await downloadContentFromMessage(decode, mediaType as MediaType),
+        mimetype: decode.mimetype,
+        ext: mime.extension(decode?.mimetype),
+      };
+    } catch (error) {
+      throw new BadRequestException(error?.message);
+    }
   }
 
   public async getBinaryMediaFromMessage(

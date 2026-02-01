@@ -97,11 +97,8 @@ import {
   MediaMessage,
   Options,
   SendAudioDto,
-  SendButtonsDto,
   SendContactDto,
   SendLinkDto,
-  SendListDto,
-  SendListLegacyDto,
   SendLocationDto,
   SendMediaDto,
   SendReactionDto,
@@ -157,6 +154,23 @@ import { createProxyAgents } from '../../utils/proxy';
 import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
 import { getJidUser, getUserGroup } from '../../utils/extract-id';
 import { getObjectUrl } from '../../integrations/minio/minio.utils';
+import { encodeProps } from '../../utils/encode.props';
+
+export const MessageSubtype = () => [
+  'ephemeralMessage',
+  'documentWithCaptionMessage',
+  'viewOnceMessage',
+  'viewOnceMessageV2',
+];
+
+export const TypeMediaMessage = () => [
+  'imageMessage',
+  'documentMessage',
+  'audioMessage',
+  'videoMessage',
+  'stickerMessage',
+  'ptvMessage',
+];
 
 type InstanceQrCode = {
   count: number;
@@ -704,7 +718,7 @@ export class WAStartupService {
                     updatedAt: new Date(),
                   },
                 })
-                .catch((err) => null);
+                .catch(null);
             } else {
               this.repository.chat
                 .create({
@@ -921,7 +935,7 @@ export class WAStartupService {
           continue;
         }
 
-        this.client.sendPresenceUpdate('unavailable');
+        await this.client.sendPresenceUpdate('unavailable');
 
         let timestamp = received?.messageTimestamp;
 
@@ -1048,12 +1062,29 @@ export class WAStartupService {
               error?.stack,
             ]);
             this.repository.createLogs(this.instance.name, {
-              content: [error?.toString(), JSON.stringify(error?.stack)],
+              content: [error?.message, JSON.stringify(error?.stack ?? {})],
               type: 'error',
               context: WAStartupService.name,
               description: 'Error on upload file to s3',
             });
           }
+        }
+
+        const media = await this.isMediaMessage(messageRaw);
+        if (media?.mediaMessage) {
+          const q = encodeProps({
+            mediaKey: messageRaw.content['mediaKey'],
+            directPath: messageRaw.content['directPath'],
+            url: messageRaw.content['url'],
+            mimetype: messageRaw.content['mimetype'],
+          });
+
+          /**
+           * Add this path to your application's URL for media download
+           */
+          messageRaw['media'] = {
+            path: `/public/${messageType.replace('Message', '')}/download?q=${q}`,
+          };
         }
 
         this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
@@ -2151,20 +2182,9 @@ export class WAStartupService {
     }
   }
 
-  public async getMediaMessage(m: PrismType.Message, inner = false) {
-    const MessageSubtype = [
-      'ephemeralMessage',
-      'documentWithCaptionMessage',
-      'viewOnceMessage',
-      'viewOnceMessageV2',
-    ];
-    const TypeMediaMessage = [
-      'imageMessage',
-      'documentMessage',
-      'audioMessage',
-      'videoMessage',
-      'stickerMessage',
-    ];
+  public async isMediaMessage(m: PrismType.Message) {
+    let mediaMessage: any;
+    let mediaType: string;
 
     try {
       const msg: proto.IWebMessageInfo = m?.content
@@ -2185,16 +2205,13 @@ export class WAStartupService {
           msg.message.documentWithCaptionMessage?.message?.documentMessage;
       }
 
-      for (const subtype of MessageSubtype) {
+      for (const subtype of MessageSubtype()) {
         if (msg?.message?.[subtype]) {
           msg.message = msg.message[subtype].message;
         }
       }
 
-      let mediaMessage: any;
-      let mediaType: string;
-
-      for (const type of TypeMediaMessage) {
+      for (const type of TypeMediaMessage()) {
         mediaMessage = msg?.message?.[type];
         if (mediaMessage) {
           mediaType = type;
@@ -2203,10 +2220,24 @@ export class WAStartupService {
       }
 
       if (!mediaMessage) {
+        return {};
+      }
+
+      return { mediaMessage, mediaType, msg };
+    } catch {
+      return {};
+    }
+  }
+
+  public async getMediaMessage(m: PrismType.Message, inner = false) {
+    try {
+      const { mediaMessage, mediaType, msg } = await this.isMediaMessage(m);
+
+      if (!mediaMessage) {
         if (inner) {
           return;
         }
-        throw 'The message is not of the media type';
+        throw new Error('The message is not of the media type');
       }
 
       if (typeof mediaMessage['mediaKey'] === 'object') {
@@ -2249,7 +2280,7 @@ export class WAStartupService {
               type: 'error',
               context: WAStartupService.name,
               description: 'Error on get media message',
-              content: [error?.toString(), JSON.stringify(error?.stack)],
+              content: [error?.message, JSON.stringify(error?.stack)],
               instanceId: this.instance.id,
             },
           })
@@ -2258,7 +2289,7 @@ export class WAStartupService {
       if (inner) {
         return;
       }
-      throw new BadRequestException(error.toString());
+      throw new BadRequestException(error.message);
     }
   }
 

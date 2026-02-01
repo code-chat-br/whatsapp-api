@@ -67,6 +67,11 @@ import { HttpStatus } from '../../app.module';
 import { ChatController } from '../controllers/chat.controller';
 import { routerPath, dataValidate } from '../../validate/router.validate';
 import FormData from 'form-data';
+import { ulid } from 'ulid';
+import { promisify } from 'node:util';
+import { pipeline } from 'node:stream';
+
+const pipelineAsync = promisify(pipeline);
 
 export function ChatRouter(chatController: ChatController, ...guards: RequestHandler[]) {
   const router = Router()
@@ -245,6 +250,28 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         console.error(err);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
       });
+    })
+    .get('/public/:type/download', async (req, res) => {
+      try {
+        const { type } = req.params as Record<string, string>;
+        const q = String((req.query as any)?.q ?? '');
+
+        const response = await chatController.getBinaryMedia(type, q);
+
+        res.setHeader('Content-Type', response.mimetype);
+        res.setHeader(
+          'Content-Disposition',
+          `inline; filename="${ulid()}.${response.ext}"`,
+        );
+
+        await pipelineAsync(response.stream, res);
+      } catch (err: any) {
+        if (res.headersSent) {
+          res.destroy(err);
+          return;
+        }
+        res.status(500).json({ message: err?.message ?? 'internal error' });
+      }
     })
     .post(routerPath('findMessages'), ...guards, async (req, res) => {
       const response = await dataValidate<Query<Message>>({
