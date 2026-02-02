@@ -1083,7 +1083,7 @@ export class WAStartupService {
            * Add this path to your application's URL for media download
            */
           messageRaw['media'] = {
-            path: `/public/${messageType.replace('Message', '')}/download?q=${q}`,
+            path: `/chat/public/${messageType.replace('Message', '')}/download?q=${q}`,
           };
         }
 
