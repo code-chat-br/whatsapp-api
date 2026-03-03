@@ -38,9 +38,9 @@ generator client {
 
 datasource db {
   provider          = "postgresql"
-  // url               = env("DATABASE_URL")
-  // directUrl         = env("DIRECT_DATABASE_URL") // para executar as migration
-  // shadowDatabaseUrl = env("SHADOWN_DATABASE_URL")
+  url               = env("DATABASE_URL")
+  directUrl         = env("DIRECT_DATABASE_URL") // para executar as migration
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
 }
 
 enum InstanceConnectionStatus {
@@ -148,6 +148,8 @@ model Contact {
   updatedAt     DateTime? @updatedAt
   Instance      Instance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
   instanceId    Int
+
+  @@index([instanceId, remoteJid], name: "Contact_instanceId_remoteJid_idx")
 }
 
 model Webhook {
