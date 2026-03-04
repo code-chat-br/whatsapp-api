@@ -213,7 +213,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
           .setHeader('Content-type', response.mimetype)
           .setHeader(
             'Content-Disposition',
-            'inline; filename="' + response.fileName + '"',
+            'inline; filename="' + encodeURIComponent(response.fileName) + '"',
           );
 
         const transform: Transform = response.stream;
@@ -231,7 +231,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       const form = new FormData();
 
       form.append('mediaType', response.mediaType);
-      form.append('fileName', response.fileName);
+      form.append('fileName', encodeURIComponent(response.fileName));
       form.append('size', JSON.stringify(response.size));
       form.append('mimetype', response.mimetype);
 
@@ -240,7 +240,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       }
 
       form.append('file', response.stream, {
-        filename: response.filename,
+        filename: encodeURIComponent(response.fileName),
         contentType: response.mimetype,
       });
 
