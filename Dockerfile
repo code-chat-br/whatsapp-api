@@ -21,6 +21,7 @@ COPY ./docs ./docs
 COPY ./prisma ./prisma
 COPY ./views ./views
 COPY .env.dev .env
+COPY prisma.config.mjs .
 
 # Definir variável de ambiente para a construção
 ENV DATABASE_URL=postgres://postgres:pass@localhost/db_test
@@ -45,6 +46,7 @@ COPY --from=builder /codechat/views ./views
 COPY --from=builder /codechat/node_modules ./node_modules
 COPY --from=builder /codechat/package*.json ./
 COPY --from=builder /codechat/.env ./
+COPY --from=builder /codechat/prisma.config.mjs ./
 COPY --from=builder /codechat/public ./public
 COPY ./deploy_db.sh ./
 
