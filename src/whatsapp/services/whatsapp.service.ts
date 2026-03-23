@@ -23,12 +23,7 @@
  * │ See the License for the specific language governing permissions and          │
  * │ limitations under the License.                                               │
  * │                                                                              │
- * │ @class                                                                       │
- * │ @constructs WAStartupService                                                 │
- * │ @param {ConfigService} configService                                         │
- * | @param {EventEmitter2} eventEmitter                                          │
- * │ @param {RepositoryBroker} repository                                         │
- * │ @param {RedisCache} cache                                                    │
+ * │ @function onUnexpectedError                                                  │
  * ├──────────────────────────────────────────────────────────────────────────────┤
  * │ @important                                                                   │
  * │ For any future changes to the code in this file, it is recommended to        │
@@ -1390,6 +1385,7 @@ export class WAStartupService {
         where: { id: options.quotedMessageId },
       });
 
+
       if (!quoted) {
         throw new BadRequestException('Quoted message not found');
       }
@@ -2017,8 +2013,18 @@ export class WAStartupService {
       } else {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
+          // In Baileys v7, onWhatsApp() no longer returns lid directly.
+          // Fetch it from the signal repository's LID mapping.
+          let lid: string | undefined = result?.['lid'] as string;
+          if (!lid && result?.jid) {
+            try {
+              lid = await this.client.signalRepository?.lidMapping?.getLIDForPN(result.jid);
+            } catch {
+              // LID mapping may not be available; ignore
+            }
+          }
           onWhatsapp.push(
-            new OnWhatsAppDto(result.jid, !!result.exists, result?.['lid'] as string),
+            new OnWhatsAppDto(result.jid, !!result.exists, lid),
           );
         } catch (error) {
           onWhatsapp.push(new OnWhatsAppDto(number, false));
@@ -2189,15 +2195,15 @@ export class WAStartupService {
     try {
       const msg: proto.IWebMessageInfo = m?.content
         ? {
-            key: {
-              id: m.keyId,
-              fromMe: m.keyFromMe,
-              remoteJid: m.keyRemoteJid,
-            },
-            message: {
-              [m.messageType]: m.content,
-            },
-          }
+          key: {
+            id: m.keyId,
+            fromMe: m.keyFromMe,
+            remoteJid: m.keyRemoteJid,
+          },
+          message: {
+            [m.messageType]: m.content,
+          },
+        }
         : ((await this.getMessage(m, true)) as proto.IWebMessageInfo);
 
       if (msg?.message?.documentWithCaptionMessage) {
@@ -2531,3 +2537,4 @@ export class WAStartupService {
     }
   }
 }
+
