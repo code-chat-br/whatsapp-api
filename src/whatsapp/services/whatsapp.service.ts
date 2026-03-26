@@ -560,7 +560,8 @@ export class WAStartupService {
 
     this.authState = await this.defineAuthState();
 
-    const { version } = await fetchLatestBaileysVersionV2();
+    const { version } = fetchLatestBaileysVersionV2();
+    console.log({ version });
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = !this.phoneNumber
       ? [session.CLIENT, session.NAME, release()]

@@ -1,34 +1,39 @@
 import { WAVersion } from '@whiskeysockets/baileys';
 import axios from 'axios';
 
-export const fetchLatestBaileysVersionV2 = async () => {
+const v = {
+  version: [] as unknown as WAVersion,
+  isLatest: false,
+};
+
+(async () => {
+  const resp = await axios.get<string>(
+    'https://raw.githubusercontent.com/code-chat-br/whatsapp-api/main/_v/version',
+  );
+  v.isLatest = true;
+  v.version = [2, 3000, +resp.data];
+
+  setInterval(
+    async () => {
+      const resp = await axios.get<string>(
+        'https://raw.githubusercontent.com/code-chat-br/whatsapp-api/main/_v/version',
+      );
+
+      v.isLatest = true;
+      v.version = [2, 3000, +resp.data];
+
+      console.log('VERSION: ', v);
+    },
+    60 * 60 * 1000 * 27 * 3,
+  );
+})();
+
+export const fetchLatestBaileysVersionV2 = () => {
   try {
-    const resp = await axios.get<string>('https://web.whatsapp.com/sw.js');
-    const re = /JSON\.parse\(\s*(?:\/\*[^]*?\*\/\s*)?("(?:(?:\\.|[^"\\])*)")\s*\)/;
-    const data = resp.data;
-    const m = re.exec(data);
-    if (!m) {
-      return undefined;
-    }
-
-    const escaped = m[1];
-    const jsonText = JSON.parse(escaped);
-    const obj = JSON.parse(jsonText);
-
-    const v = obj?.dynamic_data?.dynamic_modules?.SiteData?.client_revision as number;
-    if (v) {
-      return {
-        version: [2, 3000, v] as WAVersion,
-        isLatest: true,
-        error: null as unknown,
-      };
-    } else {
-      throw new Error('Could not parse version from Defaults/index.ts');
-    }
+    return v;
   } catch (error) {
-    const waVersion = JSON.parse(process.env?.WA_VERSION || '[]') as number[];
     return {
-      version: [2, 3000, waVersion?.[2] ?? 1029707447] as WAVersion,
+      version: JSON.parse(process.env.WA_VERSION ?? '[]') as WAVersion,
       isLatest: false,
       error,
     };
