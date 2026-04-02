@@ -357,7 +357,11 @@ export class WAStartupService {
 
     try {
       const globalWebhook = this.configService.get<GlobalWebhook>('GLOBAL_WEBHOOK');
-      if (globalWebhook?.ENABLED && isURL(globalWebhook.URL)) {
+      if (
+        globalWebhook?.ENABLED &&
+        (isURL(globalWebhook.URL) || globalWebhook?.IS_LOCAL)
+      ) {
+        this.logger.debug(`GlobalWebhook: ${eventDesc}`);
         await axios.post(
           globalWebhook.URL,
           {
@@ -387,8 +391,6 @@ export class WAStartupService {
         description: 'Error on send data to webhook',
       });
     }
-
-    data = undefined;
   }
 
   private async connectionUpdate({
@@ -561,7 +563,7 @@ export class WAStartupService {
     this.authState = await this.defineAuthState();
 
     const { version } = fetchLatestBaileysVersionV2();
-    console.log({ version });
+    this.logger.debug({ version });
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = !this.phoneNumber
       ? [session.CLIENT, session.NAME, release()]
@@ -918,8 +920,6 @@ export class WAStartupService {
         if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
           await this.syncMessage(messagesRaw);
         }
-
-        messages = undefined;
       }
     },
 
@@ -1091,8 +1091,7 @@ export class WAStartupService {
         this.ws.send(this.instance.name, 'messages.upsert', messageRaw);
         await this.sendDataWebhook('messagesUpsert', messageRaw);
 
-        this.logger.log('Type: ' + type);
-        console.log(messageRaw);
+        this.logger.debug('messages.upsert type: ' + type);
       }
     },
 
@@ -1625,26 +1624,26 @@ export class WAStartupService {
 
       command
         .on('start', (commandLine) => {
-          console.log('FFmpeg started with command:', commandLine);
+          this.logger.debug('FFmpeg started with command: ' + commandLine);
           audioStream.on('data', (chunk) => chunks.push(chunk));
         })
-        .on('error', (err, stdout, stderr) => {
-          console.error('FFmpeg error:', err.message);
-          console.error('FFmpeg stderr:', stderr);
+        .on('error', (err, _stdout, stderr) => {
+          this.logger.error('FFmpeg error: ' + err.message);
+          this.logger.error('FFmpeg stderr: ' + stderr);
 
           ffmpeg(normalizedPath)
             .inputFormat(inputFormat)
             .outputFormat('wav')
             .on('end', () => {
-              console.log('Converted to WAV, retrying final conversion...');
+              this.logger.debug('Converted to WAV, retrying final conversion...');
               const intermediatePath = normalizedPath.replace(/\.[^/.]+$/, '.wav');
               const secondCommand = ffmpeg(intermediatePath)
                 .audioCodec(audioCodec)
                 .outputFormat(outputFormat);
 
               secondCommand
-                .on('error', (err2, stdout2, stderr2) => {
-                  console.error('Second FFmpeg error:', err2.message);
+                .on('error', (err2, _stdout2, stderr2) => {
+                  this.logger.error('Second FFmpeg error: ' + err2.message);
                   reject(
                     new Error(
                       `Final conversion failed: ${err2.message}\nFFmpeg stderr: ${stderr2}`,
@@ -1652,7 +1651,7 @@ export class WAStartupService {
                   );
                 })
                 .on('end', () => {
-                  console.log('Final conversion to target format successful');
+                  this.logger.debug('Final conversion to target format successful');
                   resolve(Buffer.concat(chunks));
                 })
                 .pipe(audioStream, { end: true });
@@ -1663,7 +1662,7 @@ export class WAStartupService {
             .pipe(audioStream, { end: true });
         })
         .on('end', () => {
-          console.log('FFmpeg processing finished');
+          this.logger.debug('FFmpeg processing finished');
           resolve(Buffer.concat(chunks));
         })
         .pipe(audioStream, { end: true });

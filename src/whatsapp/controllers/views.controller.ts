@@ -43,6 +43,10 @@ import { Repository } from '../../repository/repository.service';
 import { Auth } from '@prisma/client';
 import { HttpStatus } from '../../app.module';
 import pkg from '../../../package.json';
+import { ConfigService } from '../../config/env.config';
+import { Logger } from '../../config/logger.config';
+
+const logger = new Logger(new ConfigService(), 'ViewsController');
 
 export class ViewsController {
   constructor(
@@ -79,7 +83,7 @@ export class ViewsController {
         version: pkg.version,
       });
     } catch (error) {
-      console.log('ERROR: ', error);
+      logger.error(['ViewsController error', error?.message || error]);
     }
   }
 }

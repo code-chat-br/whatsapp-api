@@ -107,7 +107,7 @@ export type Auth = { GLOBAL_AUTH_TOKEN: string; JWT: Jwt };
 
 export type InstanceExpirationTime = number | boolean;
 
-export type GlobalWebhook = { URL: string; ENABLED: boolean };
+export type GlobalWebhook = { URL: string; ENABLED: boolean; IS_LOCAL?: boolean };
 export type ConfigSessionPhone = { CLIENT: string; NAME: string };
 export type QrCodLimit = number;
 
@@ -210,6 +210,7 @@ export class ConfigService {
       GLOBAL_WEBHOOK: {
         URL: process.env?.WEBHOOK_GLOBAL_URL,
         ENABLED: process.env?.WEBHOOK_GLOBAL_ENABLED === 'true',
+        IS_LOCAL: process.env?.WEBHOOK_GLOBAL_IS_LOCAL === 'true',
       },
       CONFIG_SESSION_PHONE: {
         CLIENT: process.env?.CONFIG_SESSION_PHONE_CLIENT,

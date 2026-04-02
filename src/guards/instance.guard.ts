@@ -44,11 +44,15 @@
 import { NextFunction, Request, Response } from 'express';
 import { existsSync } from 'fs';
 import { join } from 'path';
+import { ConfigService } from '../config/env.config';
+import { Logger } from '../config/logger.config';
 import { INSTANCE_DIR } from '../config/path.config';
 import { BadRequestException, ForbiddenException } from '../exceptions';
 import { InstanceDto } from '../whatsapp/dto/instance.dto';
 import { WAMonitoringService } from '../whatsapp/services/monitor.service';
 import { ProviderFiles } from '../provider/sessions';
+
+const logger = new Logger(new ConfigService(), 'InstanceGuard');
 
 async function fetchInstanceFromCache(
   instanceName: string,
@@ -67,7 +71,7 @@ async function fetchInstanceFromCache(
 
     return existsSync(join(INSTANCE_DIR, instanceName));
   } catch (error) {
-    console.log('Error fetching instance from cache', error);
+    logger.warn(`Error fetching instance from cache: ${error?.message}`);
     return false;
   }
 }
