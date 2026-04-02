@@ -39,6 +39,7 @@ import { join } from 'path';
 import { Readable, Transform } from 'stream';
 import { BadRequestException } from '../../exceptions';
 import { Bucket, ConfigService } from '../../config/env.config';
+import { Logger } from '../../config/logger.config';
 
 const BUCKET = new ConfigService().get<Bucket>('S3');
 
@@ -62,6 +63,8 @@ const minioClient = (() => {
     });
   }
 })();
+
+const logger = new Logger(new ConfigService(), 'MinioUtils');
 
 const bucketName = process.env.S3_BUCKET;
 
@@ -90,7 +93,7 @@ const createBucket = async () => {
   }
 };
 
-createBucket().catch((err) => console.error(err));
+createBucket().catch((err) => logger.error(err));
 
 const uploadFile = async (
   fileName: string,
@@ -113,7 +116,7 @@ const uploadFile = async (
       });
       return o;
     } catch (error) {
-      console.log('ERROR: ', error);
+      logger.error(['Minio upload error', error?.message || error]);
       return error;
     }
   }

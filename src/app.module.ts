@@ -173,7 +173,7 @@ export async function AppModule(context: Map<string, any>) {
 
   const chatController = new ChatController(waMonitor);
   logger.info('ChatController - ON');
-  const chatRouter = ChatRouter(chatController, ...middlewares);
+  const chatRouter = ChatRouter(chatController, logger, ...middlewares);
   logger.info('ChatRouter - ON');
 
   const groupController = new GroupController(waMonitor);

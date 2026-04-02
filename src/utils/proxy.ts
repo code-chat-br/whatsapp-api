@@ -33,6 +33,10 @@
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { ProxyAgent as UndiciProxyAgent } from 'undici';
+import { ConfigService } from '../config/env.config';
+import { Logger } from '../config/logger.config';
+
+const logger = new Logger(new ConfigService(), 'ProxyService');
 
 export interface ProxyAgents {
   wsAgent?: any;
@@ -61,7 +65,7 @@ export function createProxyAgents(
         agents.wsAgent = new SocksProxyAgent(wsProxyUrl);
         break;
       default:
-        console.warn(`[Proxy] Protocolo desconhecido para WS: ${proto}`);
+        logger.warn(`[Proxy] Protocolo desconhecido para WS: ${proto}`);
         break;
     }
   }
@@ -78,7 +82,7 @@ export function createProxyAgents(
         agents.fetchAgent = new UndiciProxyAgent(fetchProxyUrl);
         break;
       default:
-        console.warn(`[Proxy] Protocolo desconhecido para Fetch: ${proto}`);
+        logger.warn(`[Proxy] Protocolo desconhecido para Fetch: ${proto}`);
         break;
     }
   }

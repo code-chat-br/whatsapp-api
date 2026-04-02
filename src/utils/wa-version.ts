@@ -1,5 +1,9 @@
 import { WAVersion } from '@whiskeysockets/baileys';
 import axios from 'axios';
+import { ConfigService } from '../config/env.config';
+import { Logger } from '../config/logger.config';
+
+const logger = new Logger(new ConfigService(), 'WA_VERSION');
 
 const v = {
   version: [] as unknown as WAVersion,
@@ -22,7 +26,7 @@ const v = {
       v.isLatest = true;
       v.version = [2, 3000, +resp.data];
 
-      console.log('VERSION: ', v);
+      logger.debug(`VERSION: { v }`);
     },
     60 * 60 * 1000 * 27 * 3,
   );

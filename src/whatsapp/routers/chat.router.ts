@@ -70,10 +70,15 @@ import FormData from 'form-data';
 import { ulid } from 'ulid';
 import { promisify } from 'node:util';
 import { pipeline } from 'node:stream';
+import { Logger } from '../../config/logger.config';
 
 const pipelineAsync = promisify(pipeline);
 
-export function ChatRouter(chatController: ChatController, ...guards: RequestHandler[]) {
+export function ChatRouter(
+  chatController: ChatController,
+  logger: Logger,
+  ...guards: RequestHandler[]
+) {
   const router = Router()
     .post(routerPath('whatsappNumbers'), ...guards, async (req, res) => {
       const response = await dataValidate<WhatsAppNumberDto>({
@@ -193,7 +198,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       transform.pipe(res);
       transform.on('error', (err) => {
         if (err) {
-          console.error(err);
+          logger.error('ChatRouter transform error: ' + err?.message);
           res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
         }
       });
@@ -221,7 +226,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         transform.pipe(res);
         transform.on('error', (err) => {
           if (err) {
-            console.error(err);
+            logger.error('ChatRouter transform error: ' + err?.message);
             res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
           }
         });
@@ -247,7 +252,7 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       form.pipe(res);
 
       form.on('error', (err) => {
-        console.error(err);
+        logger.error('ChatRouter form error: ' + err?.message);
         res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
       });
     })
