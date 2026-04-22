@@ -1690,7 +1690,7 @@ export class WAStartupService {
           responseType: 'arraybuffer',
         });
 
-        mimetype = response.headers['content-type'];
+        mimetype = response.headers['content-type'] as string;
         if (!ext) {
           ext = mime.extension(mimetype) as string;
         }
