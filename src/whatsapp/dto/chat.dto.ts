@@ -41,8 +41,8 @@ import { WAPresence } from '@whiskeysockets/baileys';
 
 export class OnWhatsAppDto {
   constructor(
-    public readonly jid: string,
     public readonly exists: boolean,
+    public readonly jid: string,
     public readonly lid?: string,
     public readonly name?: string,
   ) {}

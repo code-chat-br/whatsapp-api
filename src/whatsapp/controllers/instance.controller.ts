@@ -191,8 +191,8 @@ export class InstanceController {
         case 'close':
           await instance.setPhoneNumber(phoneNumber);
           await instance.connectToWhatsapp();
-          this.eventEmitter.once('code.connection', (data: { code: string }) => {
-            res.status(HttpStatus.OK).json(data);
+          this.eventEmitter.once('qrcode.updated', (data: { code: string }) => {
+            res.status(HttpStatus.OK).json({ code: data?.code });
           });
           break;
         case 'connecting':

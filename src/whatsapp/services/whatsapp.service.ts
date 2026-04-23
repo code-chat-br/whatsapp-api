@@ -63,6 +63,8 @@ import makeWASocket, {
   proto,
   useMultiFileAuthState,
   UserFacingSocketConfig,
+  USyncQuery,
+  USyncUser,
   WABrowserDescription,
   WACallEvent,
   WAConnectionState,
@@ -443,8 +445,8 @@ export class WAStartupService {
           return;
         }
 
-        this.instanceQr.base64 = base64;
         this.instanceQr.code = qr;
+        this.instanceQr.base64 = base64;
 
         this.ws.send(this.instance.name, 'qrcode.updated', this.instanceQr);
 
@@ -561,7 +563,6 @@ export class WAStartupService {
     this.authState = await this.defineAuthState();
 
     const { version } = fetchLatestBaileysVersionV2();
-    console.log({ version });
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = !this.phoneNumber
       ? [session.CLIENT, session.NAME, release()]
@@ -2008,26 +2009,57 @@ export class WAStartupService {
     for await (const number of data.numbers) {
       const jid = this.createJid(number);
       if (isLidUser(jid)) {
-        onWhatsapp.push(new OnWhatsAppDto(jid, true, jid));
+        onWhatsapp.push(new OnWhatsAppDto(true, '', jid));
       }
       if (isJidGroup(jid)) {
         const group = await this.findGroup({ groupJid: jid }, 'inner');
-        onWhatsapp.push(new OnWhatsAppDto(group.id, !!group?.id, '', group?.subject));
+        onWhatsapp.push(new OnWhatsAppDto(!!group?.id, group.id, '', group?.subject));
       } else if (jid.includes('@broadcast')) {
-        onWhatsapp.push(new OnWhatsAppDto(jid, true));
+        onWhatsapp.push(new OnWhatsAppDto(true, jid));
       } else {
         try {
           const result = (await this.client.onWhatsApp(jid))[0];
+          
+          let lid: string | undefined;
+          if (result?.exists) {
+            const item = (await this.getLid(result.jid))[0]
+            lid = item?.lid
+          }
           onWhatsapp.push(
-            new OnWhatsAppDto(result.jid, !!result.exists, result?.['lid'] as string),
+            new OnWhatsAppDto(!!result.exists, result.jid, lid),
           );
         } catch (error) {
-          onWhatsapp.push(new OnWhatsAppDto(number, false));
+          onWhatsapp.push(new OnWhatsAppDto(false, number));
         }
       }
     }
 
     return onWhatsapp;
+  }
+
+  public async getLid(...jids: string[]): Promise<{ id: string, lid: string }[]> {
+    const q = new USyncQuery().withLIDProtocol().withContext('background');
+    
+    for (const jid of jids) {
+      if (isLidUser(jid)){
+        continue;
+      }
+
+      q.withUser(new USyncUser().withId(jid));
+    }
+
+    if (q.users.length === 0) {
+      return [];
+    }
+
+    const results = await this.client.executeUSyncQuery(q);
+    if (results) {
+      return results.list.
+        filter(i => !!i?.lid)
+        .map(({ lid, id }) => ({ lid, id }) as { id: string, lid: string });
+    }
+
+    return [];
   }
 
   /**
