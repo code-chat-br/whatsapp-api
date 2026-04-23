@@ -1403,7 +1403,7 @@ export class WAStartupService {
       throw new BadRequestException(isWA);
     }
 
-    const recipient = isJidGroup(jid) ? jid : isWA.jid;
+    const recipient = isJidGroup(jid) ? jid : isLidUser(jid) ? jid : isWA.jid;
 
     if (isJidGroup(recipient)) {
       try {
