@@ -47,7 +47,7 @@
     "@hapi/boom": "^10.0.1",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "@whiskeysockets/baileys": "^7.0.0-rc.9",
+    "@whiskeysockets/baileys": "^7.0.0-rc10",
     "axios": "^1.15.2",
     "class-validator": "^0.15.1",
     "cross-env": "^10.1.0",

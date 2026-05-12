@@ -6,23 +6,43 @@ const v = {
   isLatest: false,
 };
 
-(async () => {
-  const resp = await axios.get<string>(
-    'https://raw.githubusercontent.com/code-chat-br/whatsapp-api/main/_v/version',
-  );
-  v.isLatest = true;
-  v.version = [2, 3000, +resp.data];
+const extract = async () => {
+  const resp = await axios.get<string>('https://web.whatsapp.com/sw.js');
+  if (resp) {
+    const re = /JSON\.parse\(\s*(?:\/\*[^]*?\*\/\s*)?("(?:(?:\\.|[^"\\])*)")\s*\)/;
+    const m = re.exec(resp.data);
+    if (m) {
+      const escaped = m[1];
+      const jsonText = JSON.parse(escaped);
+      const obj = JSON.parse(jsonText);
+      const v = obj?.dynamic_data?.dynamic_modules?.SiteData?.client_revision as number;
 
-  setInterval(
-    async () => {
+      if (v) {
+        return +v;
+      }
+
       const resp = await axios.get<string>(
         'https://raw.githubusercontent.com/code-chat-br/whatsapp-api/main/_v/version',
       );
 
-      v.isLatest = true;
-      v.version = [2, 3000, +resp.data];
+      return +resp.data;
+    }
+  }
+};
 
-      console.log('VERSION: ', v);
+(async () => {
+  const version = await extract();
+  v.isLatest = true;
+  v.version = [2, 3000, version];
+
+  console.log('VERSION: ', v);
+
+  setInterval(
+    async () => {
+      const version = await extract();
+
+      v.isLatest = true;
+      v.version = [2, 3000, version];
     },
     60 * 60 * 1000 * 27 * 3,
   );
