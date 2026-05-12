@@ -35,8 +35,6 @@ const extract = async () => {
   v.isLatest = true;
   v.version = [2, 3000, version];
 
-  console.log('VERSION: ', v);
-
   setInterval(
     async () => {
       const version = await extract();
