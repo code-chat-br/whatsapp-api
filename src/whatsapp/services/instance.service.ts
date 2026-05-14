@@ -297,9 +297,8 @@ export class InstanceService {
 
       return newAuth;
     } catch (error) {
-      this.logger.error({
+      this.logger.error(error, {
         localError: InstanceService.name + '.refreshToken',
-        error,
       });
       throw new BadRequestException('Invalid "oldToken"');
     }

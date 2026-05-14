@@ -60,11 +60,7 @@ export class AuthStateProvider {
   public async authStateProvider(instance: string): Promise<AuthState> {
     const [, error] = await this.providerFiles.create(instance);
     if (error) {
-      this.logger.error([
-        'Failed to create folder on file server',
-        error?.message,
-        error?.stack,
-      ]);
+      this.logger.error('Failed to create folder on file server', error);
       return;
     }
 

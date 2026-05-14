@@ -72,6 +72,7 @@ import { docsRouter } from './config/swagger.config';
 import { ProviderFiles } from './provider/sessions';
 import { Websocket } from './websocket/server';
 import { createServer } from 'http';
+import { RequestIdMiddleware } from './middle/req-id.middle';
 
 export function describeRoutes(
   rootPath: string,
@@ -81,10 +82,8 @@ export function describeRoutes(
   for (const r of router.stack) {
     if (r.route) {
       const { path } = r.route;
-      const authType = r.route.stack[0].method.toUpperCase();
-      logger.subContext('ROUTE');
-      logger.info(`[${authType}] ${rootPath}${path}`);
-      logger.subContext();
+      const verb = r.route.stack[0].method.toUpperCase();
+      logger.trace('route', { [verb]: path });
     }
   }
 
@@ -108,19 +107,19 @@ export async function AppModule(context: Map<string, any>) {
 
   const configService = new ConfigService();
 
-  const logger = new Logger(configService, 'APP MODULE');
+  const logger = new Logger(configService, 'app-module');
 
   const providerFiles = new ProviderFiles(configService);
   await providerFiles.onModuleInit();
-  logger.info('Provider:Files - ON');
+  logger.info('provider-files:on');
 
   const repository = new Repository(configService);
   await repository.onModuleInit();
-  logger.info('Repository - ON');
+  logger.info('repository:on');
 
   const wss = new Websocket(configService);
   wss.server(server);
-  logger.info('WebSocket Server - ON');
+  logger.info('ws-server:on');
 
   const waMonitor = new WAMonitoringService(
     eventEmitter,
@@ -128,27 +127,32 @@ export async function AppModule(context: Map<string, any>) {
     repository,
     providerFiles,
     wss,
+    logger,
   );
 
-  logger.info('WAMonitoringService - ON');
-  await waMonitor.loadInstance();
-  logger.info('Load Instances - ON');
+  logger.info('wa-monitoring-service:on');
+  waMonitor.loadInstance().then(() => logger.info('wa-instances:loaded'));
 
   const middlewares = [
-    async (req: Request, res: Response, next: NextFunction) =>
-      await new LoggerMiddleware(repository, configService).use(req, res, next),
+    (req: Request, res: Response, next: NextFunction) =>
+      new LoggerMiddleware(new Logger(configService, 'request completed')).use(
+        req,
+        res,
+        next,
+      ),
     async (req: Request, res: Response, next: NextFunction) =>
       await new JwtGuard(configService).canActivate(req, res, next),
     async (req: Request, res: Response, next: NextFunction) =>
       await new InstanceGuard(waMonitor, providerFiles).canActivate(req, res, next),
   ];
-  logger.info('Middlewares - ON');
+  logger.info('middlewares:on');
 
   const webhookService = new WebhookService(waMonitor, repository);
-  logger.info('WebhookService - ON');
+  logger.info('webhook-service:on');
 
   const instanceService = new InstanceService(configService, waMonitor, repository);
-  logger.info('InstanceService - ON');
+  logger.info('instance-service:on');
+
   const instanceController = new InstanceController(
     waMonitor,
     configService,
@@ -158,37 +162,35 @@ export async function AppModule(context: Map<string, any>) {
     providerFiles,
     wss,
   );
-  logger.info('InstanceController - ON');
+
+  app.use(RequestIdMiddleware.use);
 
   const instanceRouter = InstanceRouter(instanceController, ...middlewares);
-  logger.info('InstanceRouter - ON');
+  logger.info('instance-router:on');
 
   const viewsController = new ViewsController(waMonitor, repository);
-  logger.info('ViewsController - ON');
   const viewsRouter = ViewsRouter(viewsController, ...middlewares);
+  logger.info('view-router:on');
 
   const sendMessageController = new SendMessageController(waMonitor);
-  logger.info('SendMessageController - ON');
   const messageRouter = MessageRouter(sendMessageController, ...middlewares);
+  logger.info('send-message-router:on');
 
   const chatController = new ChatController(waMonitor);
-  logger.info('ChatController - ON');
   const chatRouter = ChatRouter(chatController, ...middlewares);
-  logger.info('ChatRouter - ON');
+  logger.info('chat-router:on');
 
   const groupController = new GroupController(waMonitor);
-  logger.info('GroupController - ON');
   const groupRouter = GroupRouter(groupController, ...middlewares);
-  logger.info('GroupRouter - ON');
+  logger.info('group-router:on');
 
   const webhookController = new WebhookController(webhookService);
-  logger.info('WebhookController - ON');
   const webhookRouter = WebhookRouter(webhookController, ...middlewares);
-  logger.info('WebhookRouter - ON');
+  logger.info('webhook-router:on');
 
   const s3Service = new S3Service(repository);
   const s3Router = S3Router(s3Service, ...middlewares);
-  logger.info('Integration:S3Service - ON');
+  logger.info('integration-s3-service:on');
 
   const router = Router();
   router.use(...describeRoutes('/instance', instanceRouter, logger));

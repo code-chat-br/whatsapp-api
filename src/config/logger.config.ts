@@ -36,155 +36,73 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { LoggerMiddleware } from '../middle/logger.middle';
+import pino from 'pino';
 import { ConfigService, Log } from './env.config';
-import dayjs from 'dayjs';
-
-const formatDateLog = (timestamp: number) =>
-  dayjs(timestamp)
-    .toDate()
-    .toString()
-    .replace(/\sGMT.+/, '');
-
-enum Color {
-  LOG = '\x1b[32m',
-  INFO = '\x1b[34m',
-  WARN = '\x1b[33m',
-  ERROR = '\x1b[31m',
-  DEBUG = '\x1b[36m',
-  VERBOSE = '\x1b[37m',
-  DARK = '\x1b[30m',
-}
-
-enum Command {
-  RESET = '\x1b[0m',
-  BRIGHT = '\x1b[1m',
-  UNDERSCORE = '\x1b[4m',
-}
-
-enum Level {
-  LOG = Color.LOG + '%s' + Command.RESET,
-  DARK = Color.DARK + '%s' + Command.RESET,
-  INFO = Color.INFO + '%s' + Command.RESET,
-  WARN = Color.WARN + '%s' + Command.RESET,
-  ERROR = Color.ERROR + '%s' + Command.RESET,
-  DEBUG = Color.DEBUG + '%s' + Command.RESET,
-  VERBOSE = Color.VERBOSE + '%s' + Command.RESET,
-}
-
-enum Type {
-  LOG = 'LOG',
-  WARN = 'WARN',
-  INFO = 'INFO',
-  DARK = 'DARK',
-  ERROR = 'ERROR',
-  DEBUG = 'DEBUG',
-  VERBOSE = 'VERBOSE',
-}
-
-enum Background {
-  LOG = '\x1b[42m',
-  INFO = '\x1b[44m',
-  WARN = '\x1b[43m',
-  DARK = '\x1b[40m',
-  ERROR = '\x1b[41m',
-  DEBUG = '\x1b[46m',
-  VERBOSE = '\x1b[47m',
-}
+import { join } from 'node:path';
 
 export class Logger {
   constructor(
     private readonly configService: ConfigService,
-    private context = 'Logger',
-  ) {}
-
-  private subCtx: string;
-
-  public setContext(value: string) {
-    this.context = value;
+    private readonly context = 'Logger',
+  ) {
+    this.logger = pino({
+      level: configService.get<Log>('LOG').LEVEL,
+      timestamp: pino.stdTimeFunctions.isoTime,
+      transport:
+        configService.get<boolean>('PRODUCTION')
+          ? {
+              target: 'pino/file',
+              options: {
+                destination: join(process.cwd(), 'logs', 'record'),
+                mkdir: true,
+                append: true,
+                sync: false,
+              },
+            }
+          : {
+              target: 'pino-pretty',
+              options: {
+                colorize: configService.get<Log>('LOG').COLOR,
+                translateTime: 'SYS:standard',
+                levelFirst: true,
+                singleLine: true,
+                ignore: 'pid,hostname',
+              },
+            },
+    });
   }
 
-  public subContext(value?: string) {
-    if (!value) return (this.subCtx = undefined);
-    this.subCtx = value;
+  private readonly logger: pino.Logger;
+
+  setCtx(ctx: string) {
+    return new Logger(this.configService, ctx);
   }
 
-  private console(value: any, type: Type) {
-    const types: Type[] = [];
-
-    this.configService.get<Log>('LOG').LEVEL.forEach((level) => types.push(Type[level]));
-
-    const typeValue = typeof value;
-    const isObject = typeValue === 'object';
-
-    if (types.includes(type)) {
-      if (this.configService.get<Log>('LOG').COLOR) {
-        console.log(
-          /*Command.UNDERSCORE +*/ Command.BRIGHT + Level[type],
-          '[CodeChat]',
-          Command.BRIGHT + Color[type],
-          process.pid.toString(),
-          Command.RESET,
-          Command.BRIGHT + Color[type],
-          '-',
-          Command.BRIGHT + Color.VERBOSE,
-          `${formatDateLog(Date.now())}  `,
-          Command.RESET,
-          Color[type] + Background[type] + Command.BRIGHT,
-          `${type} ` + Command.RESET,
-          Color.WARN + Command.BRIGHT,
-          `[${this.context}]` + Command.RESET,
-          Color[type] + Command.BRIGHT,
-          `[${this.subCtx || typeValue}]` + Command.RESET,
-          Color[type],
-          !isObject ? value : '',
-          Command.RESET,
-        );
-        if (isObject) {
-          console.log(value, '\n');
-        }
-      } else {
-        console.log(
-          '[CodeChat]',
-          process.pid.toString(),
-          '-',
-          `${formatDateLog(Date.now())}  `,
-          `${type} `,
-          `[${this.context}]`,
-          `[${typeValue}]`,
-          value,
-        );
-      }
-    }
-
-    return value;
+  get log() {
+    return this.logger;
   }
 
-  public log<T>(value: T): T {
-    return this.console(value, Type.LOG);
+  info(msg: string, props?: Record<string, any>) {
+    this.logger.child({ context: this.context, ...props }).info(msg);
   }
 
-  public info<T>(value: T): T {
-    return this.console(value, Type.INFO);
+  warn(msg: string, props?: Record<string, any>) {
+    this.logger.child({ context: this.context, ...props }).warn(msg);
   }
 
-  public warn<T>(value: T): T {
-    return this.console(value, Type.WARN);
+  debug(msg: string, props?: Record<string, any>) {
+    this.logger.child({ context: this.context, ...props }).debug(msg);
   }
 
-  public error<T>(value: T): T {
-    return this.console(value, Type.ERROR);
+  error(msg: string, props?: Record<string, any>) {
+    this.logger.child({ context: this.context, ...props }).error(msg);
   }
 
-  public verbose<T>(value: T): T {
-    return this.console(value, Type.VERBOSE);
+  fatal(msg: string, props?: Record<string, any>) {
+    this.logger.child({ context: this.context, ...props }).fatal(msg);
   }
 
-  public debug<T>(value: T): T {
-    return this.console(value, Type.DEBUG);
-  }
-
-  public dark<T>(value: T): T {
-    return this.console(value, Type.DARK);
+  trace(msg: string, props?: Record<string, any>) {
+    this.logger.child({ context: this.context, ...props }).trace(msg);
   }
 }

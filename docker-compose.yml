@@ -13,6 +13,7 @@ services:
       - 8084:8084
     volumes:
       - instances_connecteds:/codechat/instances
+      - /var/logs/codechat-api:/codechat/logs
     environment:
       - SERVER_PORT=8084
       - SESSION_SECRET=W0NvZGVDaGF0XTpbU2Vzc

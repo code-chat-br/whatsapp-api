@@ -38,8 +38,7 @@ import { Logger } from './logger.config';
 export function onUnexpectedError(configService: ConfigService) {
   const logger = new Logger(configService);
   process.on('uncaughtException', (error, origin) => {
-    logger.setContext('uncaughtException');
-    logger.error({
+    logger.setCtx('uncaught-exception').error(error?.message, {
       origin,
       stderr: process.stderr.fd,
       error,
@@ -47,8 +46,7 @@ export function onUnexpectedError(configService: ConfigService) {
   });
 
   process.on('unhandledRejection', (error, origin) => {
-    logger.setContext('unhandledRejection');
-    logger.error({
+    logger.setCtx('unhandled-rejection').error(error?.['message'] as string, {
       origin,
       stderr: process.stderr.fd,
       error,

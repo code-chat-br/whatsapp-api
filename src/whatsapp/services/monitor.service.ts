@@ -61,16 +61,19 @@ export class WAMonitoringService {
     private readonly repository: Repository,
     private readonly providerFiles: ProviderFiles,
     private readonly ws: Websocket,
+    logger: Logger,
   ) {
     this.removeInstance();
     this.noConnection();
 
     Object.assign(this.db, configService.get<Database>('DATABASE'));
+
+    this.logger = logger.setCtx('wa-monitoring-service');
   }
 
   private readonly db: Partial<Database> = {};
 
-  private readonly logger = new Logger(this.configService, WAMonitoringService.name);
+  private readonly logger: Logger;
   public readonly waInstances = new Map<string, WAStartupService>();
 
   private readonly providerSession = Object.freeze(
@@ -207,9 +210,7 @@ export class WAMonitoringService {
         this.waInstances.get(instance.name)?.client?.ev.flush();
         this.waInstances.delete(instance.name);
       } catch (error) {
-        this.logger.subContext('removeInstance');
-        this.logger.error(error);
-        this.logger.subContext();
+        this.logger.error('remove-instance', { error });
       }
 
       try {
@@ -232,8 +233,7 @@ export class WAMonitoringService {
           try {
             this.cleaningUp(instance);
           } catch (error) {
-            this.logger.error({
-              localError: 'noConnection',
+            this.logger.error('no-connection', {
               warn: 'Error deleting instance from memory.',
               error,
             });

@@ -50,7 +50,7 @@ class DataValidate<T> {
   execute: (instance: InstanceDto, data: T, file?: Express.Multer.File) => Promise<any>;
 }
 
-const logger = new Logger(new ConfigService(), 'Validate');
+const logger = new Logger(new ConfigService(), 'validate');
 
 export function routerPath(path: string, param = true) {
   let route = '/' + path;
@@ -137,7 +137,7 @@ export async function groupValidate<T>(args: DataValidate<T>) {
         message,
       };
     });
-    logger.error([...message]);
+    logger.trace('', message);
     throw new BadRequestException(...message);
   }
 

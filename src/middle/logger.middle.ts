@@ -31,54 +31,82 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { NextFunction, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { Logger } from '../config/logger.config';
-import { Repository } from '../repository/repository.service';
-import { ConfigService, Database } from '../config/env.config';
+import pinoHttp, { HttpLogger } from 'pino-http';
+import { IncomingMessage, ServerResponse } from 'http';
+import { randomUUID } from 'crypto';
 
 export class LoggerMiddleware {
-  constructor(
-    private readonly repository: Repository,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(logger: Logger) {
+    this.log = pinoHttp({
+      logger: logger.log,
+      autoLogging: true,
+      redact: {
+        paths: [
+          'req.headers.authorization',
+          'req.headers.cookie',
+          'req.body.password',
+          'req.body.token',
+        ],
+        censor: '******************',
+      },
 
-  async use(req: Request, res: Response, next: NextFunction) {
-    const logger = new Logger(this.configService, LoggerMiddleware.name);
+      genReqId: (req) => {
+        if (!req.headers?.['x-request-id']) {
+          req.headers['x-request-id'] = randomUUID();
+        }
+        return req.headers['x-request-id'];
+      },
 
-    if (!this.configService.get<boolean>('PRODUCTION')) {
-      logger.log({
-        originalUrl: req.originalUrl,
-        method: req.method.toUpperCase(),
-        headers: JSON.stringify(req.headers),
-        params: JSON.stringify(req?.params || {}),
-        query: JSON.stringify(req?.query || {}),
-        body: JSON.stringify(req?.body || {}),
-      });
-    }
+      serializers: {
+        req: (req: Request) => {
+          return {
+            id: req.id,
+            method: req.method,
+            url: req.url,
+            host: req.host,
+            ips: (req.headers?.['x-forwarded-for'] as string)?.split(',') ?? [
+              req.headers?.['x-real-ip'] ??
+                req.headers['x-request-ip'] ??
+                req?.ip ??
+                req?.['remoteAddress'],
+            ],
+            remoteAddress: req.socket?.remoteAddress,
+            remotePort: req.socket?.remotePort,
+            headers: req.headers,
+            params: req.params ?? {},
+          };
+        },
+        res: (res: Response) => ({ statusCode: res.statusCode }),
+      },
 
-    if (this.configService.get<Database>('DATABASE').DB_OPTIONS.ACTIVITY_LOGS) {
-      this.repository.activityLogs
-        .create({
-          data: {
-            context: 'LoggerMiddleware',
-            type: 'http',
-            content: {
-              originalUrl: req.originalUrl,
-              method: req.method.toUpperCase(),
-              headers: JSON.stringify(req.headers),
-              params: JSON.stringify(req?.params || {}),
-              query: JSON.stringify(req?.query || {}),
-              body: JSON.stringify(req?.body || {}),
-            },
-            description: 'Request received',
-            instanceId: req?.params?.instanceId
-              ? Number(req.params.instanceId)
-              : undefined,
-          },
-        })
-        .catch((error) => logger.error(error));
-    }
+      // customReceivedObject: (req, res, val) => ({
+      //   ...val,
+      //   category: 'application-event',
+      //   eventCode: 'REQUEST_RECEIVED',
+      // }),
+      // customSuccessObject: (req, res, val) => ({
+      //   ...val,
+      //   category: 'application-event',
+      //   eventCode:
+      //     res.statusCode < 300
+      //       ? 'REQUEST_PROCESSED'
+      //       : res.statusCode < 400
+      //         ? 'REQUEST_REDIRECT'
+      //         : 'REQUEST_FAILED',
+      // }),
+      // customErrorObject: (req, res, val) => ({
+      //   ...val,
+      //   category: 'application-event',
+      //   eventCode: 'REQUEST_FAILED',
+      // }),
+    });
+  }
 
-    next();
+  private log: HttpLogger<IncomingMessage, ServerResponse<IncomingMessage>, never>;
+
+  get use() {
+    return this.log;
   }
 }

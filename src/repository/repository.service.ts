@@ -73,16 +73,16 @@ export class Repository extends PrismaClient {
     });
   }
 
-  private readonly logger = new Logger(this.configService, Repository.name);
+  private readonly logger = new Logger(this.configService, 'repository');
 
   public async onModuleInit() {
     await this.$connect();
-    this.logger.info('Repository:Connected - ON');
+    this.logger.info('repository:prisma - ON');
   }
 
   public async onModuleDestroy() {
     await this.$disconnect();
-    this.logger.warn('Repository:Prisma - OFF');
+    this.logger.warn('repository:prisma - OFF');
   }
 
   public async updateWebhook(

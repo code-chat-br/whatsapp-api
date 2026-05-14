@@ -79,11 +79,7 @@ export class ProviderFiles {
           { headers: { apikey: globalApiToken } },
         );
       } catch (error) {
-        this.logger.error([
-          'Failed to connect to the file server',
-          error?.message,
-          error?.stack,
-        ]);
+        this.logger.error('Failed to connect to the file server', error);
         const pid = process.pid;
         execSync(`kill -9 ${pid}`);
       }

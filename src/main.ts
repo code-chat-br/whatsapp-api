@@ -44,16 +44,16 @@ export async function bootstrap() {
 
   const configService = context.get('module:config') as ConfigService;
 
-  const logger = new Logger(configService, 'SERVER');
+  const logger = new Logger(configService, 'server');
 
-  context.get('module:logger').info('INITIALIZER');
+  context.get('module:logger').info('initialized');
   context.set('server:logger', logger);
 
   const httpServer = configService.get<HttpServer>('SERVER');
 
   context.get('app').listen(httpServer.PORT, () => {
-    logger.log('HTTP' + ' - ON: ' + httpServer.PORT);
-    new Logger(configService, 'Swagger Docs').warn(
+    logger.log.info('HTTP' + ' - ON: ' + httpServer.PORT);
+    logger.log.info(
       `
         ..
         .       Swagger Docs

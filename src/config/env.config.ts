@@ -40,7 +40,6 @@
  * └──────────────────────────────────────────────────────────────────────────────┘
  */
 
-import { isEmpty } from 'class-validator';
 import { config } from 'dotenv';
 
 config();
@@ -57,9 +56,9 @@ export type Bucket = {
   USE_SSL?: boolean;
 };
 
-export type LogLevel = 'ERROR' | 'WARN' | 'DEBUG' | 'INFO' | 'LOG' | 'VERBOSE' | 'DARK';
+export type LogLevel = 'fatal' | 'error' | 'warn' | 'info' | 'debug' | 'trace';
 export type Log = {
-  LEVEL: LogLevel[];
+  LEVEL: LogLevel;
   COLOR: boolean;
 };
 
@@ -147,7 +146,6 @@ export class ConfigService {
 
   private loadEnv() {
     this.env = this.envProcess();
-    this.env.PRODUCTION = process.env?.NODE_ENV === 'PROD';
 
     if (this.env.S3.ENABLE === true) {
       if (this.env.DATABASE.DB_OPTIONS.NEW_MESSAGE !== true) {
@@ -200,7 +198,7 @@ export class ConfigService {
         PREFIX: process.env?.PROVIDER_PREFIX,
       },
       LOG: {
-        LEVEL: process.env?.LOG_LEVEL.split('|') as LogLevel[],
+        LEVEL: (process.env?.LOG_LEVEL?.toLowerCase() as LogLevel) ?? 'debug',
         COLOR: process.env?.LOG_COLOR === 'true',
       },
       INSTANCE_EXPIRATION_TIME:
@@ -252,6 +250,7 @@ export class ConfigService {
         WS: process.env?.WS_PROXY_URL || null,
         FETCH: process.env?.FETCH_PROXY_URL || null,
       },
+      PRODUCTION: process.env?.NODE_ENV === 'production',
     };
   }
 }
