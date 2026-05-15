@@ -12,7 +12,7 @@ services:
     ports:
       - 8084:8084
     volumes:
-      - instances_connecteds:/codechat/instances
+      - instances_connected:/codechat/instances
       - /var/logs/codechat-api:/codechat/logs
     environment:
       - SERVER_PORT=8084
@@ -68,7 +68,7 @@ services:
       - public-network
 
 volumes:
-  # In terminal run: docker volume create --name=instances_connecteds
-  instances_connecteds:
+  # In terminal run: docker volume create --name=instances_connected
+  instances_connected:
     external:
-      name: instances_connecteds
+      name: instances_connected
