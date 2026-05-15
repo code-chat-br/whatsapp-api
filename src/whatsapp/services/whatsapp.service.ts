@@ -81,6 +81,7 @@ import {
   QrCode,
   ProviderSession,
   EnvProxy,
+  LogLevel,
 } from '../../config/env.config';
 import { Logger } from '../../config/logger.config';
 import { INSTANCE_DIR, ROOT_DIR } from '../../config/path.config';
@@ -562,8 +563,8 @@ export class WAStartupService {
     const proxy = this.configService.get<EnvProxy>('PROXY');
     const agents = createProxyAgents(proxy?.WS, proxy?.FETCH);
 
-    const log = this.logger.log.child({ baileys: true });
-    log.level = 'error';
+    const log = this.logger.log.child({ context: 'baileys' });
+    log.level = this.configService.get<LogLevel>('BAILEYS_LOG_LEVEL');
 
     const socketConfig: UserFacingSocketConfig = {
       auth: {

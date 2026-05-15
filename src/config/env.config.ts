@@ -129,6 +129,7 @@ export interface Env {
   S3?: Bucket;
   WA_VERSION: string;
   PROXY: EnvProxy;
+  BAILEYS_LOG_LEVEL: LogLevel;
 }
 
 export type Key = keyof Env;
@@ -251,6 +252,7 @@ export class ConfigService {
         FETCH: process.env?.FETCH_PROXY_URL || null,
       },
       PRODUCTION: process.env?.NODE_ENV === 'production',
+      BAILEYS_LOG_LEVEL: (process.env?.BAILEYS_LOG_LEVEL ?? 'error') as LogLevel,
     };
   }
 }
