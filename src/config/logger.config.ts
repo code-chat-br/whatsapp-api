@@ -45,31 +45,39 @@ export class Logger {
     private readonly configService: ConfigService,
     private readonly context = 'Logger',
   ) {
-    this.logger = pino({
+    // In production, log through an in-process destination stream (sonic-boom)
+    // rather than a `transport` target. A transport spawns a pino worker thread
+    // (thread-stream + SharedArrayBuffer), which fails under Electron's
+    // ELECTRON_RUN_AS_NODE with "RangeError: Array buffer allocation failed",
+    // crashing the bundled service the first time anything is logged on an error
+    // path. pino.destination writes from the main thread — no worker.
+    const base = {
       level: configService.get<Log>('LOG').LEVEL,
       timestamp: pino.stdTimeFunctions.isoTime,
-      transport:
-        configService.get<boolean>('PRODUCTION')
-          ? {
-              target: 'pino/file',
-              options: {
-                destination: join(process.cwd(), 'logs', 'record'),
-                mkdir: true,
-                append: true,
-                sync: false,
-              },
-            }
-          : {
-              target: 'pino-pretty',
-              options: {
-                colorize: configService.get<Log>('LOG').COLOR,
-                translateTime: 'SYS:standard',
-                levelFirst: true,
-                singleLine: true,
-                ignore: 'pid,hostname',
-              },
+    };
+    this.logger = configService.get<boolean>('PRODUCTION')
+      ? pino(
+          base,
+          pino.destination({
+            dest: join(process.cwd(), 'logs', 'record'),
+            mkdir: true,
+            append: true,
+            sync: false,
+          }),
+        )
+      : pino({
+          ...base,
+          transport: {
+            target: 'pino-pretty',
+            options: {
+              colorize: configService.get<Log>('LOG').COLOR,
+              translateTime: 'SYS:standard',
+              levelFirst: true,
+              singleLine: true,
+              ignore: 'pid,hostname',
             },
-    });
+          },
+        });
   }
 
   private readonly logger: pino.Logger;
