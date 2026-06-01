@@ -63,7 +63,12 @@ export class Repository extends PrismaClient {
   constructor(private readonly configService: ConfigService) {
     super({
       adapter: new PrismaPg(
-        { connectionString: process.env.DATABASE_URL },
+        // max: 1 — the embedded DB (PGlite, fronted by pglite-socket) is a single
+        // backend that cannot serve concurrent connections; a second one is closed
+        // mid-query (Prisma P1017 ConnectionClosed). The `?connection_limit=1` URL
+        // param is a Prisma-ORM hint that the driver adapter ignores, so the pg.Pool
+        // (default max 10) must be pinned here. All queries serialize on one connection.
+        { connectionString: process.env.DATABASE_URL, max: 1 },
         {
           onConnectionError(err) {
             throw new InternalServerErrorException(err);

@@ -174,8 +174,11 @@
         });
     });
 
-    // WebSocket
-    const wsBaseUrl = "ws://localhost:8084/ws/events";
+    // WebSocket — derive from the page's own origin so it matches whatever
+    // host/port served this page (the bundled desktop service binds a dynamic
+    // loopback port, not the dev default 8084).
+    const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsBaseUrl = `${wsProto}//${window.location.host}/ws/events`;
     const reconnectInterval = 2000;
 
     function connectSocket(eventName, callback) {
