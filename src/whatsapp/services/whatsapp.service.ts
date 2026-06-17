@@ -1595,13 +1595,20 @@ export class WAStartupService {
         : format.input === 'oga'
           ? 'ogg'
           : format.input;
-      const audioCodec = format.to === 'ogg' ? 'libvorbis' : 'aac';
+      const audioCodec = format.to === 'ogg' ? 'libopus' : 'aac';
       const outputFormat = format.to === 'ogg' ? 'ogg' : 'adts';
+      // WhatsApp voice notes (ptt) only play OGG/Opus, mono, 48kHz.
+      const applyOpts = (cmd: ffmpeg.FfmpegCommand): ffmpeg.FfmpegCommand =>
+        audioCodec === 'libopus'
+          ? cmd.audioChannels(1).audioFrequency(48000).audioBitrate('32k')
+          : cmd;
 
-      const command = ffmpeg(normalizedPath)
-        .inputFormat(inputFormat)
-        .audioCodec(audioCodec)
-        .outputFormat(outputFormat);
+      const command = applyOpts(
+        ffmpeg(normalizedPath)
+          .inputFormat(inputFormat)
+          .audioCodec(audioCodec)
+          .outputFormat(outputFormat),
+      );
 
       command
         .on('start', (commandLine) => {
@@ -1618,9 +1625,11 @@ export class WAStartupService {
             .on('end', () => {
               console.log('Converted to WAV, retrying final conversion...');
               const intermediatePath = normalizedPath.replace(/\.[^/.]+$/, '.wav');
-              const secondCommand = ffmpeg(intermediatePath)
-                .audioCodec(audioCodec)
-                .outputFormat(outputFormat);
+              const secondCommand = applyOpts(
+                ffmpeg(intermediatePath)
+                  .audioCodec(audioCodec)
+                  .outputFormat(outputFormat),
+              );
 
               secondCommand
                 .on('error', (err2, stdout2, stderr2) => {
@@ -1813,9 +1822,9 @@ export class WAStartupService {
   public async audioWhatsapp(data: SendAudioDto) {
     const generate = await this.prepareMediaMessage({
       media: data.audioMessage.audio,
-      mimetype: 'audio/aac',
+      mimetype: 'audio/ogg; codecs=opus',
       mediatype: 'audio',
-      convert: data?.options?.convertAudio,
+      convert: data?.options?.convertAudio ?? true,
     });
 
     return this.sendMessageWithTyping(
@@ -1836,8 +1845,8 @@ export class WAStartupService {
       fileName: fileName,
       media: fileName,
       mediatype: 'audio',
-      mimetype: 'audio/aac',
-      convert: data?.convertAudio as boolean,
+      mimetype: 'audio/ogg; codecs=opus',
+      convert: (data?.convertAudio as boolean) ?? true,
       extension: ext,
     });
 
