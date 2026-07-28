@@ -45,6 +45,7 @@ import {
   SendLinkDto,
   SendLocationDto,
   SendMediaDto,
+  SendPollDto,
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
@@ -144,5 +145,17 @@ export class SendMessageController {
 
   public async sendLinkPreview({ instanceName }: InstanceDto, data: SendLinkDto) {
     return await this.waMonitor.waInstances.get(instanceName).linkMessage(data);
+  }
+
+  public async sendPoll({ instanceName }: InstanceDto, data: SendPollDto) {
+    const { values, selectableCount } = data.pollMessage;
+    // Baileys throws a raw Boom for this; check it here so the caller gets a
+    // 400 that names the problem instead of a 500.
+    if (selectableCount !== undefined && selectableCount > values.length) {
+      throw new BadRequestException(
+        `"selectableCount" cannot exceed the number of options (${values.length})`,
+      );
+    }
+    return await this.waMonitor.waInstances.get(instanceName).pollMessage(data);
   }
 }

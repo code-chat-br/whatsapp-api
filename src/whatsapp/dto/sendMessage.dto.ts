@@ -334,3 +334,17 @@ export class LinkMessage {
 export class SendLinkDto extends Metadata {
   linkMessage: LinkMessage;
 }
+
+export class PollMessage {
+  name: string;
+  values: string[];
+  /**
+   * How many options a voter may pick. Baileys requires 0 <= n <= values.length
+   * and picks a different poll proto for 1 (single select) than for n > 1.
+   */
+  selectableCount?: number;
+}
+
+export class SendPollDto extends Metadata {
+  pollMessage: PollMessage;
+}

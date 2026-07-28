@@ -44,6 +44,7 @@ import {
   mediaMessageSchema,
   reactionMessageSchema,
   sendLinkSchema,
+  sendPollSchema,
   textMessageSchema,
 } from '../../validate/validate.schema';
 import {
@@ -54,6 +55,7 @@ import {
   SendLinkDto,
   SendLocationDto,
   SendMediaDto,
+  SendPollDto,
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
@@ -245,6 +247,15 @@ export function MessageRouter(
         schema: sendLinkSchema,
         execute: (instance, data) =>
           sendMessageController.sendLinkPreview(instance, data),
+      });
+
+      res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('sendPoll'), ...guards, async (req, res) => {
+      const response = await dataValidate<SendPollDto>({
+        request: req,
+        schema: sendPollSchema,
+        execute: (instance, data) => sendMessageController.sendPoll(instance, data),
       });
 
       res.status(HttpStatus.CREATED).json(response);

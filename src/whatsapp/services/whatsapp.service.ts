@@ -105,6 +105,7 @@ import {
   SendLinkDto,
   SendLocationDto,
   SendMediaDto,
+  SendPollDto,
   SendReactionDto,
   SendTextDto,
 } from '../dto/sendMessage.dto';
@@ -1127,7 +1128,11 @@ export class WAStartupService {
                   await this.repository.messageUpdate.create({
                     data: {
                       messageId: result.id,
-                      status: status[update?.status || 3],
+                      // `?? 3`, not `|| 3`: ERROR is 0, so `||` fell through to
+                      // the DELIVERY_ACK default and recorded every rejected
+                      // message as delivered — the reason a stanza refused by
+                      // WhatsApp left no trace anywhere.
+                      status: status[update?.status ?? 3],
                       dateTime: new Date(),
                     },
                   });
@@ -1453,7 +1458,16 @@ export class WAStartupService {
 
         const messageId = options?.messageId || ulid(Date.now());
 
-        if (message?.['react'] || message?.['edit'] || message?.['text']) {
+        // `poll` joins these because it is an AnyMessageContent that Baileys
+        // expands into a pollCreationMessage* proto (and attaches the
+        // messageSecret) inside sendMessage — relayMessage below would send the
+        // unexpanded `{ poll }` object as-is and produce an empty message.
+        if (
+          message?.['react'] ||
+          message?.['edit'] ||
+          message?.['text'] ||
+          message?.['poll']
+        ) {
           m = await this.client.sendMessage(recipient, message as AnyMessageContent, {
             quoted: q,
             messageId,
@@ -1683,8 +1697,16 @@ export class WAStartupService {
     });
   }
 
+  /**
+   * @param jid destination, when known. Baileys inspects this: a newsletter
+   *   (WhatsApp Channel) takes a completely different upload path, because
+   *   channel messages are not encrypted. Omitting it makes every upload
+   *   encrypted, which relays without error but leaves followers unable to
+   *   decrypt the media, so the message never renders for them.
+   */
   private async prepareMediaMessage(
     mediaMessage: MediaMessage & { mimetype?: string; convert?: boolean },
+    jid?: string,
   ) {
     const uploadPath = join(ROOT_DIR, 'uploads');
     let fileName = join(uploadPath, mediaMessage?.fileName || '');
@@ -1745,7 +1767,7 @@ export class WAStartupService {
 
       const prepareMedia = await prepareWAMessageMedia(
         { [mediaMessage.mediatype]: media } as any,
-        { upload: this.client.waUploadToServer },
+        { upload: this.client.waUploadToServer, jid },
       );
 
       const mediaType = mediaMessage.mediatype + 'Message';
@@ -1812,7 +1834,10 @@ export class WAStartupService {
     if (data.mediaMessage?.fileName) {
       data.mediaMessage.extension = data.mediaMessage.fileName.split('.').pop();
     }
-    const generate = await this.prepareMediaMessage(data.mediaMessage);
+    const generate = await this.prepareMediaMessage(
+      data.mediaMessage,
+      this.createJid(data.number),
+    );
 
     return await this.sendMessageWithTyping(
       data.number,
@@ -1823,13 +1848,16 @@ export class WAStartupService {
 
   public async mediaFileMessage(data: MediaFileDto, fileName: string) {
     const ext = fileName.split('.').pop();
-    const generate = await this.prepareMediaMessage({
-      fileName: fileName,
-      media: fileName,
-      mediatype: data.mediatype,
-      caption: data?.caption,
-      extension: ext,
-    });
+    const generate = await this.prepareMediaMessage(
+      {
+        fileName: fileName,
+        media: fileName,
+        mediatype: data.mediatype,
+        caption: data?.caption,
+        extension: ext,
+      },
+      this.createJid(data.number),
+    );
 
     return await this.sendMessageWithTyping(
       data.number,
@@ -1844,12 +1872,15 @@ export class WAStartupService {
   }
 
   public async audioWhatsapp(data: SendAudioDto) {
-    const generate = await this.prepareMediaMessage({
-      media: data.audioMessage.audio,
-      mimetype: 'audio/ogg; codecs=opus',
-      mediatype: 'audio',
-      convert: data?.options?.convertAudio ?? true,
-    });
+    const generate = await this.prepareMediaMessage(
+      {
+        media: data.audioMessage.audio,
+        mimetype: 'audio/ogg; codecs=opus',
+        mediatype: 'audio',
+        convert: data?.options?.convertAudio ?? true,
+      },
+      this.createJid(data.number),
+    );
 
     return this.sendMessageWithTyping(
       data.number,
@@ -1865,14 +1896,17 @@ export class WAStartupService {
 
   public async audioWhatsAppFile(data: AudioMessageFileDto, fileName: string) {
     const ext = fileName.split('.').pop();
-    const generate = await this.prepareMediaMessage({
-      fileName: fileName,
-      media: fileName,
-      mediatype: 'audio',
-      mimetype: 'audio/ogg; codecs=opus',
-      convert: (data?.convertAudio as boolean) ?? true,
-      extension: ext,
-    });
+    const generate = await this.prepareMediaMessage(
+      {
+        fileName: fileName,
+        media: fileName,
+        mediatype: 'audio',
+        mimetype: 'audio/ogg; codecs=opus',
+        convert: (data?.convertAudio as boolean) ?? true,
+        extension: ext,
+      },
+      this.createJid(data.number),
+    );
 
     return this.sendMessageWithTyping(
       data.number,
@@ -1983,6 +2017,25 @@ export class WAStartupService {
         })(),
       },
     });
+  }
+
+  public async pollMessage(data: SendPollDto) {
+    // Default to single select: that is what "a poll" means to most callers,
+    // and Baileys maps selectableCount === 1 to the v3 proto WhatsApp expects
+    // for it. 0 would mean "no limit", which renders as multi-select.
+    const selectableCount = data.pollMessage.selectableCount ?? 1;
+
+    return await this.sendMessageWithTyping<AnyMessageContent>(
+      data.number,
+      {
+        poll: {
+          name: data.pollMessage.name,
+          values: data.pollMessage.values,
+          selectableCount,
+        },
+      },
+      data?.options,
+    );
   }
 
   public async editMessage(data: EditMessage) {

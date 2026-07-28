@@ -1,0 +1,77 @@
+# Baileys 7.0.0-rc13 — newsletter media upload path
+#
+# Upstream bug: WhiskeySockets/Baileys#2199. Newsletter media is uploaded to the
+# ordinary /mms/* endpoints, so WhatsApp returns an /o1/ directPath instead of
+# /m1/ and the media never renders in the channel.
+#
+# Source: https://github.com/yonatann/Baileys-1/commit/777a173
+#
+# STATUS: applying this does yield the correct /m1/ directPath — verified — but
+# channel media is STILL rejected by WhatsApp with smax-invalid (479). So this
+# is necessary but not sufficient. Kept so the work is not lost.
+#
+# NOT APPLIED: this repo has no patch-package. To use it, add patch-package with
+# a postinstall hook, or move to a fork that already carries the fix.
+
+--- a/node_modules/@whiskeysockets/baileys/lib/Defaults/index.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Defaults/index.js
+@@ -114,6 +114,14 @@
+     ptv: 'Video',
+     'biz-cover-photo': 'Image'
+ };
++export const NEWSLETTER_MEDIA_PATH_MAP = {
++    image: '/newsletter/newsletter-image',
++    video: '/newsletter/newsletter-video',
++    document: '/newsletter/newsletter-document',
++    audio: '/newsletter/newsletter-audio',
++    sticker: '/newsletter/newsletter-image',
++    'thumbnail-link': '/newsletter/newsletter-image'
++};
+ export const MEDIA_KEYS = Object.keys(MEDIA_PATH_MAP);
+ /** 120s timeout for history sync stall detection, same as WA Web's handleChunkProgress / restartPausedTimer (g = 120) */
+ export const HISTORY_SYNC_PAUSED_TIMEOUT_MS = 120000;
+--- a/node_modules/@whiskeysockets/baileys/lib/Utils/messages-media.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Utils/messages-media.js
+@@ -8,7 +8,7 @@
+ import { Readable, Transform } from 'stream';
+ import { URL } from 'url';
+ import { proto } from '../../WAProto/index.js';
+-import { DEFAULT_ORIGIN, MEDIA_HKDF_KEY_MAPPING, MEDIA_PATH_MAP } from '../Defaults/index.js';
++import { DEFAULT_ORIGIN, MEDIA_HKDF_KEY_MAPPING, MEDIA_PATH_MAP, NEWSLETTER_MEDIA_PATH_MAP } from '../Defaults/index.js';
+ import { getBinaryNodeChild, getBinaryNodeChildBuffer, jidNormalizedUser } from '../WABinary/index.js';
+ import { aesDecryptGCM, aesEncryptGCM, hkdf } from './crypto.js';
+ import { generateMessageIDV2 } from './generics.js';
+@@ -641,7 +641,7 @@
+     }
+ };
+ export const getWAUploadToServer = ({ customUploadHosts, fetchAgent, logger, options }, refreshMediaConn) => {
+-    return async (filePath, { mediaType, fileEncSha256B64, timeoutMs }) => {
++    return async (filePath, { mediaType, fileEncSha256B64, timeoutMs, newsletter }) => {
+         // send a query JSON to obtain the url & auth token to upload our media
+         let uploadInfo = await refreshMediaConn(false);
+         let urls;
+@@ -662,7 +662,11 @@
+         for (const { hostname } of hosts) {
+             logger.debug(`uploading to "${hostname}"`);
+             const auth = encodeURIComponent(uploadInfo.auth);
+-            const url = `https://${hostname}${MEDIA_PATH_MAP[mediaType]}/${fileEncSha256B64}?auth=${auth}&token=${fileEncSha256B64}`;
++            const mediaPath = (newsletter ? NEWSLETTER_MEDIA_PATH_MAP[mediaType] : undefined) || MEDIA_PATH_MAP[mediaType];
++            let url = `https://${hostname}${mediaPath}/${fileEncSha256B64}?auth=${auth}&token=${fileEncSha256B64}`;
++            if (newsletter) {
++                url += '&server_thumb_gen=1';
++            }
+             let result;
+             try {
+                 result = await uploadMedia({
+--- a/node_modules/@whiskeysockets/baileys/lib/Utils/messages.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Utils/messages.js
+@@ -104,7 +104,8 @@
+         const { mediaUrl, directPath } = await options.upload(filePath, {
+             fileEncSha256B64: fileSha256B64,
+             mediaType: mediaType,
+-            timeoutMs: options.mediaUploadTimeoutMs
++            timeoutMs: options.mediaUploadTimeoutMs,
++            newsletter: true
+         });
+         await fs.unlink(filePath);
+         const obj = WAProto.Message.fromObject({

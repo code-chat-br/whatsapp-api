@@ -432,6 +432,34 @@ export const sendLinkSchema: JSONSchema7 = {
   required: ['linkMessage', 'number'],
 };
 
+export const sendPollSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    number: { ...numberDefinition },
+    options: { ...optionsSchema },
+    pollMessage: {
+      type: 'object',
+      properties: {
+        name: { type: 'string', minLength: 1 },
+        // WhatsApp itself rejects a poll with fewer than two options or more
+        // than twelve, so reject here rather than at the socket.
+        values: {
+          type: 'array',
+          minItems: 2,
+          maxItems: 12,
+          uniqueItems: true,
+          items: { type: 'string', minLength: 1 },
+        },
+        selectableCount: { type: 'integer', minimum: 0 },
+      },
+      required: ['name', 'values'],
+      ...isNotEmpty('name'),
+    },
+  },
+  required: ['pollMessage', 'number'],
+};
+
 // Chat Schema
 export const whatsappNumberSchema: JSONSchema7 = {
   $id: ulid(),
