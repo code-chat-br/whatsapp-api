@@ -55,6 +55,7 @@ import makeWASocket, {
   GroupMetadata,
   GroupParticipant,
   isJidGroup,
+  isJidNewsletter,
   isLidUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
@@ -119,13 +120,23 @@ import {
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
-import { BadRequestException, InternalServerErrorException } from '../../exceptions';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '../../exceptions';
 import {
   CreateGroupDto,
   GroupJid,
   GroupPictureDto,
   GroupUpdateParticipantDto,
 } from '../dto/group.dto';
+import {
+  CreateNewsletterDto,
+  FetchNewsletterMessagesDto,
+  NewsletterJid,
+  UpdateNewsletterDto,
+} from '../dto/newsletter.dto';
 import NodeCache from 'node-cache';
 import {
   AuthState,
@@ -1379,12 +1390,21 @@ export class WAStartupService {
     }
 
     const jid = this.createJid(number);
-    const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
-    if (!isWA.exists && !isJidGroup(isWA.jid)) {
-      throw new BadRequestException(isWA);
-    }
 
-    const recipient = isJidGroup(jid) ? jid : isLidUser(jid) ? jid : isWA.jid;
+    // A newsletter (WhatsApp Channel) is not a phone number: onWhatsApp() reports
+    // it as non-existent, so running the check below would reject every channel
+    // post with `{ exists: false }`. Address the jid directly instead.
+    const newsletter = isJidNewsletter(jid);
+
+    let recipient = jid;
+    if (!newsletter) {
+      const isWA = (await this.whatsappNumber({ numbers: [jid] }))[0];
+      if (!isWA.exists && !isJidGroup(isWA.jid)) {
+        throw new BadRequestException(isWA);
+      }
+
+      recipient = isJidGroup(jid) ? jid : isLidUser(jid) ? jid : isWA.jid;
+    }
 
     if (isJidGroup(recipient)) {
       try {
@@ -1395,7 +1415,9 @@ export class WAStartupService {
     }
 
     try {
-      if (options?.delay) {
+      // Channels have no presence: there is nobody typing at a broadcast, and
+      // subscribing would fail. Callers still pass a delay for 1:1 chats.
+      if (options?.delay && !newsletter) {
         await this.client.presenceSubscribe(recipient);
         await this.client.sendPresenceUpdate(options?.presence ?? 'composing', jid);
         await delay(options.delay);
@@ -2549,6 +2571,165 @@ export class WAStartupService {
       return { groupJid: id.groupJid, leave: true };
     } catch (error) {
       throw new BadRequestException('Unable to leave the group', error.toString());
+    }
+  }
+
+  // ── Newsletters (WhatsApp Channels) ────────────────────────────────────────
+  // These wrap Baileys' unofficial newsletter API. WhatsApp changes it without
+  // notice, so every call is contained here and surfaced as a clean HTTP error
+  // rather than being allowed to reject into the socket's event loop.
+  //
+  // Posting to a channel does NOT need a dedicated endpoint: createJid() passes
+  // "<id>@newsletter" through untouched, so /message/sendText and
+  // /message/sendMediaFile already accept a newsletter jid as `number`.
+
+  public async createNewsletter(create: CreateNewsletterDto) {
+    try {
+      const metadata = await this.client.newsletterCreate(create.name, create.description);
+      return { newsletterMetadata: metadata };
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException(
+        'Error creating newsletter',
+        error?.toString(),
+      );
+    }
+  }
+
+  public async findAllNewsletters() {
+    try {
+      // Best-effort listing: the chat store only learns about a newsletter once
+      // it has synced activity for it, so a freshly-followed channel may be
+      // absent until it receives a post. Callers that need a specific channel
+      // should use /newsletter/metadata with the jid.
+      const chats = await this.repository.chat.findMany({
+        where: {
+          instanceId: this.instance.id,
+          remoteJid: { endsWith: '@newsletter' },
+        },
+      });
+
+      // The chat store only knows the jid, so hydrate each one. A single
+      // unreachable newsletter must not fail the whole listing.
+      const newsletters = await Promise.all(
+        chats.map(async (chat) => {
+          try {
+            return await this.client.newsletterMetadata('jid', chat.remoteJid);
+          } catch (error) {
+            this.logger.error(error);
+            return { id: chat.remoteJid, error: 'metadata unavailable' };
+          }
+        }),
+      );
+
+      return { newsletters: newsletters.filter(Boolean) };
+    } catch (error) {
+      throw new BadRequestException(
+        'Error searching all newsletters',
+        error?.toString(),
+      );
+    }
+  }
+
+  public async findNewsletter(data: NewsletterJid) {
+    try {
+      const metadata = await this.client.newsletterMetadata('jid', data.newsletterJid);
+      if (!metadata) {
+        throw new NotFoundException('Newsletter not found');
+      }
+      return { newsletterMetadata: metadata };
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw error;
+      }
+      throw new BadRequestException('Error finding newsletter', error?.toString());
+    }
+  }
+
+  /**
+   * Subscriber count for a channel.
+   *
+   * `newsletterSubscribers` is unreliable — against a live account it fails with
+   * "unexpected response structure" — so the count is also read from the
+   * metadata payload, which carries it as `thread_metadata.subscribers_count`.
+   *
+   * When neither source yields a number the response is `subscribers: null`
+   * rather than 0: a channel with no followers and a count we could not read
+   * are different things, and reporting the latter as zero is a lie a caller
+   * cannot detect.
+   */
+  public async newsletterSubscribers(data: NewsletterJid) {
+    try {
+      const result = await this.client.newsletterSubscribers(data.newsletterJid);
+      if (typeof result?.subscribers === 'number') {
+        return { newsletterJid: data.newsletterJid, subscribers: result.subscribers };
+      }
+      this.logger.warn(
+        `newsletterSubscribers returned no count for ${data.newsletterJid}; falling back to metadata`,
+      );
+    } catch (error) {
+      this.logger.error(error);
+    }
+
+    try {
+      const metadata: any = await this.client.newsletterMetadata('jid', data.newsletterJid);
+      const raw = metadata?.thread_metadata?.subscribers_count;
+      const count = typeof raw === 'string' ? Number(raw) : raw;
+      if (typeof count === 'number' && Number.isFinite(count)) {
+        return { newsletterJid: data.newsletterJid, subscribers: count };
+      }
+    } catch (error) {
+      this.logger.error(error);
+      throw new BadRequestException(
+        'Error fetching newsletter subscribers',
+        error?.toString(),
+      );
+    }
+
+    return { newsletterJid: data.newsletterJid, subscribers: null };
+  }
+
+  public async updateNewsletter(update: UpdateNewsletterDto) {
+    try {
+      if (update.name) {
+        await this.client.newsletterUpdateName(update.newsletterJid, update.name);
+      }
+
+      if (update.description) {
+        await this.client.newsletterUpdateDescription(
+          update.newsletterJid,
+          update.description,
+        );
+      }
+
+      const metadata = await this.client.newsletterMetadata('jid', update.newsletterJid);
+
+      return { newsletterMetadata: metadata };
+    } catch (error) {
+      throw new BadRequestException('Error updating newsletter', error?.toString());
+    }
+  }
+
+  public async fetchNewsletterMessages(data: FetchNewsletterMessagesDto) {
+    try {
+      // Query params arrive as strings; Baileys wants numbers.
+      const count = Number(data.count ?? 20);
+      const since = Number(data.since ?? 0);
+      const after = Number(data.after ?? 0);
+
+      const messages = await this.client.newsletterFetchMessages(
+        data.newsletterJid,
+        count,
+        since,
+        after,
+      );
+
+      return { newsletterJid: data.newsletterJid, messages };
+    } catch (error) {
+      throw new BadRequestException(
+        'Error fetching newsletter messages',
+        error?.toString(),
+      );
     }
   }
 }

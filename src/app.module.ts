@@ -48,6 +48,7 @@ import { eventEmitter } from './config/event.config';
 import { ChatController } from './whatsapp/controllers/chat.controller';
 import { GroupController } from './whatsapp/controllers/group.controller';
 import { InstanceController } from './whatsapp/controllers/instance.controller';
+import { NewsletterController } from './whatsapp/controllers/newsletter.controller';
 import { SendMessageController } from './whatsapp/controllers/sendMessage.controller';
 import { ViewsController } from './whatsapp/controllers/views.controller';
 import { WebhookController } from './whatsapp/controllers/webhook.controller';
@@ -60,6 +61,7 @@ import { InstanceRouter } from './whatsapp/routers/instance.router';
 import { ViewsRouter } from './whatsapp/routers/view.router';
 import { MessageRouter } from './whatsapp/routers/sendMessage.router';
 import { GroupRouter } from './whatsapp/routers/group.router';
+import { NewsletterRouter } from './whatsapp/routers/newsletter.router';
 import { WebhookRouter } from './whatsapp/routers/webhook.router';
 import session from 'express-session';
 import { ROOT_DIR } from './config/path.config';
@@ -185,6 +187,10 @@ export async function AppModule(context: Map<string, any>) {
   const groupRouter = GroupRouter(groupController, ...middlewares);
   logger.info('group-router:on');
 
+  const newsletterController = new NewsletterController(waMonitor);
+  const newsletterRouter = NewsletterRouter(newsletterController, ...middlewares);
+  logger.info('newsletter-router:on');
+
   const webhookController = new WebhookController(webhookService);
   const webhookRouter = WebhookRouter(webhookController, ...middlewares);
   logger.info('webhook-router:on');
@@ -199,6 +205,7 @@ export async function AppModule(context: Map<string, any>) {
   router.use(...describeRoutes('/message', messageRouter, logger));
   router.use(...describeRoutes('/chat', chatRouter, logger));
   router.use(...describeRoutes('/group', groupRouter, logger));
+  router.use(...describeRoutes('/newsletter', newsletterRouter, logger));
   router.use(...describeRoutes('/webhook', webhookRouter, logger));
   router.use(...describeRoutes('/s3', s3Router, logger));
 

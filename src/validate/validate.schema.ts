@@ -659,6 +659,66 @@ export const groupJidSchema: JSONSchema7 = {
   ...isNotEmpty('groupJid'),
 };
 
+/** A non-negative integer, accepted either as a number or as query-string text. */
+const NON_NEGATIVE_INT: JSONSchema7 = {
+  anyOf: [
+    { type: 'integer', minimum: 0 },
+    { type: 'string', pattern: '^\\d+$' },
+  ],
+};
+
+export const createNewsletterSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    name: { type: 'string', maxLength: 25 },
+    description: { type: 'string' },
+  },
+  required: ['name'],
+  ...isNotEmpty('name', 'description'),
+};
+
+export const newsletterJidSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    newsletterJid: { type: 'string', pattern: '^\\d+@newsletter$' },
+  },
+  required: ['newsletterJid'],
+  ...isNotEmpty('newsletterJid'),
+};
+
+export const updateNewsletterSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    newsletterJid: { type: 'string', pattern: '^\\d+@newsletter$' },
+    // minLength guards against '' — the service skips falsy values, so an empty
+    // string would report a successful update while changing nothing.
+    name: { type: 'string', minLength: 1, maxLength: 25 },
+    description: { type: 'string', minLength: 1 },
+  },
+  required: ['newsletterJid'],
+  anyOf: [{ required: ['name'] }, { required: ['description'] }],
+  ...isNotEmpty('newsletterJid'),
+};
+
+export const fetchNewsletterMessagesSchema: JSONSchema7 = {
+  $id: ulid(),
+  type: 'object',
+  properties: {
+    newsletterJid: { type: 'string', pattern: '^\\d+@newsletter$' },
+    // Query params arrive as strings, so both forms are accepted — but only
+    // non-negative integers. Without the pattern, 'abc' became NaN and was
+    // handed straight to Baileys.
+    count: NON_NEGATIVE_INT,
+    since: NON_NEGATIVE_INT,
+    after: NON_NEGATIVE_INT,
+  },
+  required: ['newsletterJid'],
+  ...isNotEmpty('newsletterJid'),
+};
+
 export const updateParticipantsSchema: JSONSchema7 = {
   $id: ulid(),
   type: 'object',
