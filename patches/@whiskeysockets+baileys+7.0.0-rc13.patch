@@ -1,0 +1,126 @@
+diff --git a/node_modules/@whiskeysockets/baileys/lib/Defaults/index.js b/node_modules/@whiskeysockets/baileys/lib/Defaults/index.js
+index ef16578..0e620e2 100644
+--- a/node_modules/@whiskeysockets/baileys/lib/Defaults/index.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Defaults/index.js
+@@ -93,6 +93,14 @@ export const MEDIA_PATH_MAP = {
+     'md-msg-hist': '/mms/md-app-state',
+     'biz-cover-photo': '/pps/biz-cover-photo'
+ };
++export const NEWSLETTER_MEDIA_PATH_MAP = {
++    image: '/newsletter/newsletter-image',
++    video: '/newsletter/newsletter-video',
++    document: '/newsletter/newsletter-document',
++    audio: '/newsletter/newsletter-audio',
++    sticker: '/newsletter/newsletter-image',
++    'thumbnail-link': '/newsletter/newsletter-thumbnail-link'
++};
+ export const MEDIA_HKDF_KEY_MAPPING = {
+     audio: 'Audio',
+     document: 'Document',
+diff --git a/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js b/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js
+index d61e064..4534bfe 100644
+--- a/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Socket/messages-send.js
+@@ -466,16 +466,19 @@ export const makeMessagesSocket = (config) => {
+             });
+         }
+         await authState.keys.transaction(async () => {
+-            const mediaType = getMediaType(message);
++            const mediaType = getMediaType(normalizeMessageContent(message));
+             if (mediaType) {
+                 extraAttrs['mediatype'] = mediaType;
+             }
+             if (isNewsletter) {
+                 const patched = patchMessageBeforeSending ? await patchMessageBeforeSending(message, []) : message;
+                 const bytes = encodeNewsletterMessage(patched);
++                if (additionalNodes && additionalNodes.length > 0) {
++                    binaryNodeContent.push(...additionalNodes);
++                }
+                 binaryNodeContent.push({
+                     tag: 'plaintext',
+-                    attrs: {},
++                    attrs: extraAttrs,
+                     content: bytes
+                 });
+                 const stanza = {
+@@ -1113,7 +1116,8 @@ export const makeMessagesSocket = (config) => {
+                     additionalNodes.push({
+                         tag: 'meta',
+                         attrs: {
+-                            polltype: 'creation'
++                            polltype: 'creation',
++                            ...(jidDecode(jid)?.server === 'newsletter' ? { contenttype: 'text' } : {})
+                         }
+                     });
+                 }
+diff --git a/node_modules/@whiskeysockets/baileys/lib/Utils/messages-media.js b/node_modules/@whiskeysockets/baileys/lib/Utils/messages-media.js
+index a3d2fa6..98745c8 100644
+--- a/node_modules/@whiskeysockets/baileys/lib/Utils/messages-media.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Utils/messages-media.js
+@@ -8,7 +8,7 @@ import { join } from 'path';
+ import { Readable, Transform } from 'stream';
+ import { URL } from 'url';
+ import { proto } from '../../WAProto/index.js';
+-import { DEFAULT_ORIGIN, MEDIA_HKDF_KEY_MAPPING, MEDIA_PATH_MAP } from '../Defaults/index.js';
++import { DEFAULT_ORIGIN, MEDIA_HKDF_KEY_MAPPING, MEDIA_PATH_MAP, NEWSLETTER_MEDIA_PATH_MAP } from '../Defaults/index.js';
+ import { getBinaryNodeChild, getBinaryNodeChildBuffer, jidNormalizedUser } from '../WABinary/index.js';
+ import { aesDecryptGCM, aesEncryptGCM, hkdf } from './crypto.js';
+ import { generateMessageIDV2 } from './generics.js';
+@@ -641,7 +641,7 @@ const uploadMedia = async (params, logger) => {
+     }
+ };
+ export const getWAUploadToServer = ({ customUploadHosts, fetchAgent, logger, options }, refreshMediaConn) => {
+-    return async (filePath, { mediaType, fileEncSha256B64, timeoutMs }) => {
++    return async (filePath, { mediaType, fileEncSha256B64, timeoutMs, newsletter }) => {
+         // send a query JSON to obtain the url & auth token to upload our media
+         let uploadInfo = await refreshMediaConn(false);
+         let urls;
+@@ -662,7 +662,9 @@ export const getWAUploadToServer = ({ customUploadHosts, fetchAgent, logger, opt
+         for (const { hostname } of hosts) {
+             logger.debug(`uploading to "${hostname}"`);
+             const auth = encodeURIComponent(uploadInfo.auth);
+-            const url = `https://${hostname}${MEDIA_PATH_MAP[mediaType]}/${fileEncSha256B64}?auth=${auth}&token=${fileEncSha256B64}`;
++            const mediaPathMap = newsletter ? NEWSLETTER_MEDIA_PATH_MAP : MEDIA_PATH_MAP;
++            const serverThumb = newsletter ? '&server_thumb_gen=1' : '';
++            const url = `https://${hostname}${mediaPathMap[mediaType]}/${fileEncSha256B64}?auth=${auth}&token=${fileEncSha256B64}${serverThumb}`;
+             let result;
+             try {
+                 result = await uploadMedia({
+@@ -678,7 +680,9 @@ export const getWAUploadToServer = ({ customUploadHosts, fetchAgent, logger, opt
+                         directPath: result.direct_path,
+                         meta_hmac: result.meta_hmac,
+                         fbid: result.fbid,
+-                        ts: result.ts
++                        ts: result.ts,
++                        thumbnailDirectPath: result.thumbnail_info?.thumbnail_direct_path,
++                        thumbnailSha256: result.thumbnail_info?.thumbnail_sha256
+                     };
+                     break;
+                 }
+diff --git a/node_modules/@whiskeysockets/baileys/lib/Utils/messages.js b/node_modules/@whiskeysockets/baileys/lib/Utils/messages.js
+index 247b1f1..5854ec3 100644
+--- a/node_modules/@whiskeysockets/baileys/lib/Utils/messages.js
++++ b/node_modules/@whiskeysockets/baileys/lib/Utils/messages.js
+@@ -101,10 +101,11 @@ export const prepareWAMessageMedia = async (message, options) => {
+         logger?.info({ key: cacheableKey }, 'Preparing raw media for newsletter');
+         const { filePath, fileSha256, fileLength } = await getRawMediaUploadData(uploadData.media, options.mediaTypeOverride || mediaType, logger);
+         const fileSha256B64 = fileSha256.toString('base64');
+-        const { mediaUrl, directPath } = await options.upload(filePath, {
++        const { mediaUrl, directPath, thumbnailDirectPath, thumbnailSha256 } = await options.upload(filePath, {
+             fileEncSha256B64: fileSha256B64,
+             mediaType: mediaType,
+-            timeoutMs: options.mediaUploadTimeoutMs
++            timeoutMs: options.mediaUploadTimeoutMs,
++            newsletter: true
+         });
+         await fs.unlink(filePath);
+         const obj = WAProto.Message.fromObject({
+@@ -114,6 +115,8 @@ export const prepareWAMessageMedia = async (message, options) => {
+                 directPath,
+                 fileSha256,
+                 fileLength,
++                thumbnailDirectPath,
++                thumbnailSha256,
+                 ...uploadData,
+                 media: undefined
+             })

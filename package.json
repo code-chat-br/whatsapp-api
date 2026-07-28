@@ -4,6 +4,7 @@
   "description": "Rest api for communication with WhatsApp",
   "main": "./dist/src/main.js",
   "scripts": {
+    "postinstall": "patch-package",
     "build": "tsc",
     "start": "cross-env NODE_ENV=development ts-node --files --transpile-only ./src/main.ts",
     "start:pm2": "pm2 start ecosystem.config.mjs",
@@ -103,6 +104,7 @@
     "eslint": "10.2.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
+    "patch-package": "^8.0.1",
     "prettier": "^3.8.3",
     "prisma": "^7.8.0",
     "ts-node-dev": "^2.0.0",
