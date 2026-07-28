@@ -1,4 +1,5 @@
-</br>
+## WhatsApp-Api-NodeJs
+
 <hr style="height: 5px;background: #007500;margin: 20px 0;box-shadow: 0px 3px 5px 0px rgb(204 204 204);">
 
 <div align="center">
@@ -10,14 +11,20 @@
 [![Support](https://img.shields.io/badge/Buy%20me%20coffe-pix-blue)](#pix-2b526ada-4ef4-4db4-bbeb-f60da2421fce)
 
 </div>
-  
-<div align="center"><img src="./public/images/cover.png"></div>
+
+## [Go API](https://github.com/code-chat-br/whatsapp-api-go)
+
+<div>
+  <a href="https://github.com/code-chat-br/whatsapp-api-go" target="_blank" rel="noopener noreferrer">
+    <img src="./public/images/go-api.png" alt="WhatsApp API — Go implementation" style="width: 50% !important;">
+  </a>
+</div>
+
+---
 
 ## Project Structure
 
 * [Look here](./PROJECT_STRUCTURE.md)
-
-## WhatsApp-Api-NodeJs
 
 This code is an implementation of [WhiskeySockets](https://github.com/WhiskeySockets/Baileys), as a RestFull Api service, which controls whatsapp functions.</br>
 With this one you can create multiservice chats, service bots or any other system that uses whatsapp. With this code you don't need to know javascript for nodejs , just start the server and make the language requests that you feel most comfortable with.
@@ -59,7 +66,7 @@ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 * Installing Node.js using NVM, a version manager that allows us to switch between different versions of Node.js easily.
 
 ```sh
-nvm install 20
+nvm install 24
 ```
 
 ### 4. pm2 installation
@@ -81,7 +88,7 @@ Go to the project directory and install all dependencies.
 >
 
 ```sh
-cd whatsapp-api-v2
+cd whatsapp-api
 
 npm install
 # or
@@ -186,7 +193,7 @@ docker-compose up
 | Send Reaction - emoji | ✔ |
 
 ## Postman collections
-  - [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
 
 ## Webhook Events
 

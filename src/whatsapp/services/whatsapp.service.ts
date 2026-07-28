@@ -550,6 +550,8 @@ export class WAStartupService {
     this.authState = await this.defineAuthState();
 
     const { version } = fetchLatestBaileysVersionV2();
+    // QR pairing shows this on the linked-devices list, so keep it configurable.
+    // Pairing-code flow requires a browser WhatsApp recognises, hence macOS/Chrome.
     const session = this.configService.get<ConfigSessionPhone>('CONFIG_SESSION_PHONE');
     const browser: WABrowserDescription = !this.phoneNumber
       ? [session.CLIENT, session.NAME, release()]

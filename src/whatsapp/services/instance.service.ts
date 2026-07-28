@@ -43,13 +43,16 @@ import { InstanceDto } from '../dto/instance.dto';
 import { name as apiName } from '../../../package.json';
 import { verify, sign } from 'jsonwebtoken';
 import { Logger } from '../../config/logger.config';
-import { isArray, isJWT } from 'class-validator';
-import { BadRequestException } from '../../exceptions';
+import { isArray, isJWT, isNotEmptyObject } from 'class-validator';
+import { BadRequestException, InternalServerErrorException } from '../../exceptions';
 import axios from 'axios';
 import { Repository } from '../../repository/repository.service';
 import { WebhookEvents } from '../dto/webhook.dto';
 import { WAMonitoringService } from './monitor.service';
 import { ulid } from 'ulid';
+import { join } from 'node:path';
+import { INSTANCE_DIR } from '../../config/path.config';
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
 
 export type JwtPayload = {
   instanceName: string;
@@ -164,44 +167,49 @@ export class InstanceService {
 
       return updated;
     } catch (error) {
-      //
+      throw new InternalServerErrorException([error?.message]);
     }
   }
 
   public async fetchInstance(instanceName?: string) {
-    const instances = await this.repository.instance.findMany({
-      where: { name: instanceName },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        connectionStatus: true,
-        ownerJid: true,
-        profilePicUrl: true,
-        createdAt: true,
-        updatedAt: true,
-        Auth: {
-          select: {
-            id: true,
-            token: true,
-            createdAt: true,
-            updatedAt: true,
+    try {
+      const instances = await this.repository.instance.findMany({
+        where: { name: instanceName },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          connectionStatus: true,
+          ownerJid: true,
+          profilePicUrl: true,
+          createdAt: true,
+          updatedAt: true,
+          Auth: {
+            select: {
+              id: true,
+              token: true,
+              createdAt: true,
+              updatedAt: true,
+            },
+          },
+          Webhook: {
+            select: {
+              id: true,
+              enabled: true,
+              url: true,
+              events: true,
+              createdAt: true,
+              updatedAt: true,
+            },
           },
         },
-        Webhook: {
-          select: {
-            id: true,
-            enabled: true,
-            url: true,
-            events: true,
-            createdAt: true,
-            updatedAt: true,
-          },
-        },
-      },
-    });
+      });
 
-    return instances;
+      return instances;
+    } catch (error) {
+      this.logger.error(error);
+      throw new InternalServerErrorException([error?.message]);
+    }
   }
 
   public async deleteInstance(instance: InstanceDto, force = false) {
@@ -303,4 +311,119 @@ export class InstanceService {
       throw new BadRequestException('Invalid "oldToken"');
     }
   }
+
+  public async connectCreds(instanceName: string, creds: object) {
+    if (!creds || !isNotEmptyObject(creds)) {
+      throw new BadRequestException(['invalid creds']);
+    }
+
+    // The name becomes a directory under INSTANCE_DIR, so it must be a single
+    // safe path segment — "../" would otherwise let a caller write creds.json
+    // anywhere the process can reach.
+    if (!/^[\w.-]+$/.test(instanceName) || instanceName === '.' || instanceName === '..') {
+      throw new BadRequestException(['invalid instance name']);
+    }
+
+    const instancePath = join(INSTANCE_DIR, instanceName);
+    const credsPath = join(instancePath, 'creds.json');
+    if (existsSync(credsPath)) {
+      throw new BadRequestException(['creds exists']);
+    }
+
+    creds = credsToBufferTypeProps(creds);
+
+    const find = (await this.fetchInstance(instanceName))[0];
+    if (!find) {
+      throw new BadRequestException('Instance not found');
+    }
+
+    let written = false;
+    try {
+      mkdirSync(instancePath, { recursive: true });
+      // 'wx' fails if the file already exists, closing the race between the
+      // existsSync check above and this write: two concurrent calls for the
+      // same instance can both pass that check, but only one can create.
+      writeFileSync(credsPath, JSON.stringify(creds), { encoding: 'utf-8', flag: 'wx' });
+      written = true;
+      await this.waMonitor.initInstance(instanceName);
+    } catch (error) {
+      // Without this, a transient initInstance failure would leave creds.json
+      // behind and every retry would then trip the 'creds exists' guard —
+      // permanently blocking the recovery this endpoint exists to provide.
+      if (written) {
+        try {
+          rmSync(credsPath, { force: true });
+        } catch (cleanupError) {
+          this.logger.error(cleanupError);
+        }
+      }
+
+      if (error?.code === 'EEXIST') {
+        throw new BadRequestException(['creds exists']);
+      }
+
+      throw new InternalServerErrorException([error?.message]);
+    }
+  }
 }
+
+const toTypeBuffer = (value: any) => {
+  if (typeof value === 'string') {
+    return {
+      type: 'Buffer',
+      data: value,
+    };
+  }
+
+  return value;
+};
+
+const keyPairToTypeBuffer = (keyPair: any) => {
+  keyPair.private = toTypeBuffer(keyPair.private);
+  keyPair.public = toTypeBuffer(keyPair.public);
+
+  return keyPair;
+};
+
+const credsToBufferTypeProps = (creds: any) => {
+  try {
+    // Required by Baileys' Noise handshake and Signal session. Missing or
+    // malformed values throw below and surface as "invalid creds".
+    keyPairToTypeBuffer(creds.noiseKey);
+    keyPairToTypeBuffer(creds.signedIdentityKey);
+    keyPairToTypeBuffer(creds.signedPreKey.keyPair);
+    creds.signedPreKey.signature = toTypeBuffer(creds.signedPreKey.signature);
+
+    // Optional: only present once the device has paired/synced.
+    if (creds.pairingEphemeralKeyPair) {
+      keyPairToTypeBuffer(creds.pairingEphemeralKeyPair);
+    }
+
+    if (isArray(creds.signalIdentities)) {
+      creds.signalIdentities.forEach((identity: any) => {
+        identity.identifierKey = toTypeBuffer(identity.identifierKey);
+      });
+    }
+
+    if (creds.account) {
+      for (const prop of [
+        'details',
+        'accountSignatureKey',
+        'accountSignature',
+        'deviceSignature',
+      ]) {
+        if (creds.account[prop]) {
+          creds.account[prop] = toTypeBuffer(creds.account[prop]);
+        }
+      }
+    }
+
+    if (creds.routingInfo) {
+      creds.routingInfo = toTypeBuffer(creds.routingInfo);
+    }
+
+    return creds;
+  } catch {
+    throw new BadRequestException(['invalid creds']);
+  }
+};

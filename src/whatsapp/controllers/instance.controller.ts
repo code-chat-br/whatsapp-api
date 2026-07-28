@@ -308,4 +308,8 @@ export class InstanceController {
 
     return token;
   }
+
+  public async connectCreds(instance: InstanceDto, creds: object) {
+    return await this.instanceService.connectCreds(instance.instanceName, creds);
+  }
 }

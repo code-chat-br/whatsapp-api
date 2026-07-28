@@ -143,6 +143,15 @@ export function InstanceRouter(
       });
 
       res.status(HttpStatus.CREATED).json(response);
+    })
+    .post(routerPath('connectCreds'), ...guards, async (req, res) => {
+      await dataValidate<InstanceDto>({
+        request: req,
+        schema: instanceNameSchema,
+        execute: (instance) => instanceController.connectCreds(instance, req.body),
+      });
+
+      res.sendStatus(HttpStatus.ACCEPTABLE);
     });
 
   return router;

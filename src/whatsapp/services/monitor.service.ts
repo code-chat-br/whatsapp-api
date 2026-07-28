@@ -149,32 +149,35 @@ export class WAMonitoringService {
     }
   }
 
-  public async loadInstance() {
-    const set = async (name: string) => {
-      const instance = await this.repository.instance.findUnique({
-        where: { name },
-      });
-      if (!instance) {
-        return this.eventEmitter.emit('remove.instance', instance);
-      }
-      const init = new WAStartupService(
-        this.configService,
-        this.eventEmitter,
-        this.repository,
-        this.providerFiles,
-        this.ws,
-      );
-      await init.setInstanceName(name);
-      this.addInstance(init.instanceName, init);
-      await init.connectToWhatsapp();
-    };
+  public async initInstance(name: string) {
+    const instance = await this.repository.instance.findUnique({
+      where: { name },
+    });
+    if (!instance) {
+      return this.eventEmitter.emit('remove.instance', instance);
+    }
+    const init = new WAStartupService(
+      this.configService,
+      this.eventEmitter,
+      this.repository,
+      this.providerFiles,
+      this.ws,
+    );
+    await init.setInstanceName(name);
+    this.addInstance(init.instanceName, init);
+    await init.connectToWhatsapp();
+  }
 
+  public async loadInstance() {
     try {
       if (this.providerSession.ENABLED) {
         const [instances] = await this.providerFiles.allInstances();
-        instances.data.forEach(async (name: string) => {
-          await set(name);
-        });
+        // Sequential await, matching the filesystem branch below. forEach with
+        // an async callback returned before any instance had connected, and a
+        // failure became an unhandled rejection instead of reaching the catch.
+        for (const name of instances.data as string[]) {
+          await this.initInstance(name);
+        }
 
         return;
       }
@@ -190,7 +193,7 @@ export class WAMonitoringService {
             break;
           }
 
-          await set(dirent.name);
+          await this.initInstance(dirent.name);
         }
       }
     } catch (error) {
