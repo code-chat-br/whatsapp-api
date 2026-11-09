@@ -155,7 +155,7 @@ websocket compatibility added.
 ## Swagger - OpenAPI 3.0.0
 
 * Route: `http://localhost:8084/docs`
-* YAML file: [swagger.yaml](./src/docs/swagger.yaml)
+* YAML file: [swagger.yaml](./docs/swagger.yaml)
 
 ## Authentication
 

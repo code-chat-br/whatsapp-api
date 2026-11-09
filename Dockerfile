@@ -1,5 +1,9 @@
 ### BASE IMAGE
-FROM node:24-bullseye-slim AS base
+FROM node:24-bookworm-slim AS base
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates ffmpeg openssl \
+    && rm -rf /var/lib/apt/lists/*
 
 ### BUILD IMAGE
 FROM base AS builder
@@ -7,7 +11,9 @@ FROM base AS builder
 WORKDIR /codechat
 
 # Instalar dependências de construção primeiro
-RUN apt-get update && apt-get install -y git ffmpeg && rm -rf /var/lib/apt/lists/*
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copiar arquivos package.json e instalar dependências
 COPY package*.json ./

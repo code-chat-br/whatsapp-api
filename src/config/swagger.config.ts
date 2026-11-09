@@ -33,7 +33,7 @@
 
 import { Router } from 'express';
 import { join } from 'path';
-import YAML from 'yamljs';
+import { load } from 'js-yaml';
 import { readFileSync } from 'fs';
 import { serve, setup } from 'swagger-ui-express';
 import pkg from '../../package.json';
@@ -44,7 +44,11 @@ const yamlFile = readFileSync(join(process.cwd(), 'docs', 'swagger.yaml'), {
   encoding: 'utf8',
 });
 
-const json = YAML.parse(yamlFile);
+const json = load(yamlFile) as {
+  info: { version: string };
+  servers: { variables: { prod_host?: { default: string } } }[];
+};
+json.info.version = pkg.version;
 
 if (process.env?.API_BACKEND) {
   json.servers[0].variables.prod_host.default = process.env?.API_BACKEND;
