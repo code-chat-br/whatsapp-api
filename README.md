@@ -197,7 +197,7 @@ docker-compose up
 
 ## Webhook Events
 
-Encrypted message edits are reported through `messages.update` (`messagesUpdated` in the webhook settings). An edit carries `type: MESSAGE_EDIT`, the original message's `id`, and `messageTimestamp` in Unix seconds. Baileys must support decrypting the edit before the new text is available.
+Encrypted text edits arrive through `messages.update` (`messagesUpdated` in the webhook settings). The event includes `type: MESSAGE_EDIT`, the original message's `id`, and `messageTimestamp` in Unix seconds. When CodeChat has the original message secret and authenticates the edit, the event also includes `messageType` and `content.text`, and `findMessages` returns the updated text. Older messages without a saved secret can still produce an edit notification with the ID and timestamp.
 
 | Name                        | Event                       | TypeData | Description                                                                           |
 | --------------------------- | --------------------------- | -------- | ------------------------------------------------------------------------------------- | 
