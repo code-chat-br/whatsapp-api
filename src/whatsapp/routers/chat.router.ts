@@ -60,7 +60,6 @@ import {
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
 import { InstanceDto } from '../dto/instance.dto';
-import { Transform } from 'stream';
 import { Query } from '../../repository/repository.service';
 import { Contact, Message } from '@prisma/client';
 import { HttpStatus } from '../../app.module';
@@ -69,7 +68,7 @@ import { routerPath, dataValidate } from '../../validate/router.validate';
 import FormData from 'form-data';
 import { ulid } from 'ulid';
 import { promisify } from 'node:util';
-import { pipeline } from 'node:stream';
+import { pipeline, Transform } from 'node:stream';
 
 const pipelineAsync = promisify(pipeline);
 
@@ -124,7 +123,8 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
       const response = await dataValidate<DeleteMessage>({
         request: req,
         schema: deleteMessageSchema,
-        execute: (instance, data) => chatController.deleteMessage(instance, data),
+        execute: (instance, data) =>
+          chatController.deleteMessage(instance, { ...data, everyOne: true }),
       });
 
       res.status(HttpStatus.CREATED).json(response);
@@ -207,6 +207,22 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
           chatController.getBinaryMediaFromMessage(instance, data),
       });
 
+      const stream = response.stream;
+      const handleStreamError = (err: Error) => {
+        if (res.destroyed || res.writableEnded) {
+          return;
+        }
+        console.error(err);
+        if (res.headersSent) {
+          res.destroy();
+          return;
+        }
+        res.removeHeader('Content-Type');
+        res.removeHeader('Content-Disposition');
+        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err.message]);
+      };
+      res.once('close', () => stream.destroy());
+
       const query = req.query as Record<string, string>;
       if (query?.binary === 'true') {
         res
@@ -216,19 +232,13 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
             'inline; filename="' + encodeURIComponent(response.fileName) + '"',
           );
 
-        const transform: Transform = response.stream;
-
-        transform.pipe(res);
-        transform.on('error', (err) => {
-          if (err) {
-            console.error(err);
-            res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
-          }
-        });
+        stream.on('error', handleStreamError);
+        stream.pipe(res);
         return;
       }
 
       const form = new FormData();
+      form.on('error', handleStreamError);
 
       form.append('mediaType', response.mediaType);
       form.append('fileName', encodeURIComponent(response.fileName));
@@ -239,17 +249,14 @@ export function ChatRouter(chatController: ChatController, ...guards: RequestHan
         form.append('caption', response.caption);
       }
 
-      form.append('file', response.stream, {
+      form.append('file', stream, {
         filename: encodeURIComponent(response.fileName),
         contentType: response.mimetype,
       });
 
+      res.once('close', () => form.destroy());
+      res.set(form.getHeaders());
       form.pipe(res);
-
-      form.on('error', (err) => {
-        console.error(err);
-        res.status(HttpStatus.INTERNAL_SERVER_ERROR).json([err?.message, err?.stack]);
-      });
     })
     .get('/public/:type/download', async (req, res) => {
       try {

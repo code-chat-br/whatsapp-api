@@ -70,7 +70,7 @@ export class ReadMessageDto {
 }
 
 export class ReadMessageIdDto {
-  messageId: number[];
+  ids: number[];
 }
 
 class LastMessage {
@@ -88,7 +88,7 @@ export class MessageId {
 }
 
 export class DeleteMessage extends MessageId {
-  everyOne?: 'true' | 'false';
+  everyOne?: boolean | 'true' | 'false';
 }
 
 export class RejectCallDto {

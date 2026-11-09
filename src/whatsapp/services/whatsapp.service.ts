@@ -41,6 +41,7 @@ import makeWASocket, {
   AnyMessageContent,
   BaileysEventMap,
   Browsers,
+  BufferJSON,
   BufferedEventData,
   CacheStore,
   Chat,
@@ -58,6 +59,7 @@ import makeWASocket, {
   isLidUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
+  normalizeMessageContent,
   ParticipantAction,
   prepareWAMessageMedia,
   proto,
@@ -70,6 +72,7 @@ import makeWASocket, {
   WAConnectionState,
   WAMediaUpload,
   WAMessage,
+  WAMessageKey,
   WAMessageUpdate,
   WASocket,
 } from '@whiskeysockets/baileys';
@@ -119,7 +122,11 @@ import {
   UpdatePresenceDto,
   WhatsAppNumberDto,
 } from '../dto/chat.dto';
-import { BadRequestException, InternalServerErrorException } from '../../exceptions';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  NotFoundException,
+} from '../../exceptions';
 import {
   CreateGroupDto,
   GroupJid,
@@ -186,6 +193,15 @@ type InstanceStateConnection = {
   state: 'refused' | WAConnectionState;
   statusReason?: number;
 };
+
+function getEncryptedMessageEdit(message: proto.IMessage) {
+  const edit = normalizeMessageContent(message)?.secretEncryptedMessage;
+  if (
+    edit?.secretEncType === proto.Message.SecretEncryptedMessage.SecretEncType.MESSAGE_EDIT
+  ) {
+    return edit;
+  }
+}
 
 export class WAStartupService {
   constructor(
@@ -536,6 +552,40 @@ export class WAStartupService {
     }
   }
 
+  private async getSocketMessage(key: WAMessageKey): Promise<proto.IMessage | undefined> {
+    if (!key.id || !key.remoteJid) {
+      return;
+    }
+
+    const chatIds = [key.remoteJid];
+    if (key.remoteJidAlt) {
+      chatIds.push(key.remoteJidAlt);
+    }
+    const stored = await this.repository.message.findFirst({
+      where: {
+        instanceId: this.instance.id,
+        keyId: key.id,
+        keyFromMe: key.fromMe ?? undefined,
+        OR: [{ keyRemoteJid: { in: chatIds } }, { keyLid: { in: chatIds } }],
+      },
+      orderBy: { messageSecret: { sort: 'desc', nulls: 'last' } },
+      select: { content: true, messageType: true, messageSecret: true },
+    });
+    if (!stored) {
+      return;
+    }
+
+    let content = stored.content;
+    if (stored.messageType === 'conversation' && typeof content === 'object') {
+      content = (content as { text?: string })?.text;
+    }
+    const message: proto.IMessage = { [stored.messageType]: content };
+    if (stored.messageSecret) {
+      message.messageContextInfo = { messageSecret: stored.messageSecret };
+    }
+    return message;
+  }
+
   private async defineAuthState() {
     if (this.configService.get<ProviderSession>('PROVIDER')?.ENABLED) {
       return await this.authStateProvider.authStateProvider(this.instance.name);
@@ -584,7 +634,7 @@ export class WAStartupService {
       msgRetryCounterCache: this.msgRetryCounterCache,
       retryRequestDelayMs: 5 * 1000,
       maxMsgRetryCount: 1000,
-      getMessage: this.getMessage as any,
+      getMessage: (key) => this.getSocketMessage(key),
       generateHighQualityLinkPreview: true,
       syncFullHistory: true,
       userDevicesCache: this.userDevicesCache,
@@ -810,20 +860,40 @@ export class WAStartupService {
     },
   };
 
-  private async syncMessage(messages: PrismType.Message[]) {
+  private async syncMessage(
+    messages: PrismType.Message[],
+    messageSecrets: Map<string, Uint8Array<ArrayBuffer>>,
+  ) {
     const messagesRepository = await this.repository.message.findMany({
       where: { instanceId: this.instance.id },
+      select: { keyId: true },
     });
+    const storedKeys = new Set(messagesRepository.map(({ keyId }) => keyId));
 
-    for await (const message of messages) {
+    for (const message of messages) {
       try {
-        if (messagesRepository.find((mr) => mr.keyId === message.keyId)) {
+        const messageSecret = messageSecrets.get(message.keyId);
+        if (storedKeys.has(message.keyId)) {
+          if (messageSecret) {
+            await this.repository.message.updateMany({
+              where: {
+                instanceId: this.instance.id,
+                keyId: message.keyId,
+                keyFromMe: message.keyFromMe,
+                keyRemoteJid: message.keyRemoteJid ?? null,
+                keyLid: message.keyLid ?? null,
+                messageSecret: null,
+              },
+              data: { messageSecret },
+            });
+          }
           continue;
         }
 
         await this.repository.message.create({
-          data: message,
+          data: { ...message, messageSecret },
         });
+        storedKeys.add(message.keyId);
       } catch {
         //
       }
@@ -848,11 +918,13 @@ export class WAStartupService {
 
       if (messages && messages?.length > 0) {
         const messagesRaw: PrismType.Message[] = [];
+        const messageSecrets = new Map<string, Uint8Array<ArrayBuffer>>();
         for (const [, m] of Object.entries(messages)) {
           if (
             m.message?.protocolMessage ||
             m.message?.senderKeyDistributionMessage ||
-            !m.message
+            !m.message ||
+            getEncryptedMessageEdit(m.message)
           ) {
             continue;
           }
@@ -884,6 +956,10 @@ export class WAStartupService {
 
           const user = getJidUser(m.key);
           const group = getUserGroup(m.key, m?.participant);
+          const messageSecret = m.message.messageContextInfo?.messageSecret;
+          if (messageSecret?.length) {
+            messageSecrets.set(m.key.id, Uint8Array.from(messageSecret));
+          }
 
           messagesRaw.push({
             keyId: m.key.id,
@@ -904,7 +980,7 @@ export class WAStartupService {
         this.sendDataWebhook('messagesSet', messagesRaw).catch(() => null);
 
         if (this.databaseOptions.DB_OPTIONS.SYNC_MESSAGES) {
-          await this.syncMessage(messagesRaw);
+          await this.syncMessage(messagesRaw, messageSecrets);
         }
 
         messages = undefined;
@@ -923,8 +999,6 @@ export class WAStartupService {
           await this.client.waitForMessage(received.key.id);
           continue;
         }
-
-        await this.client.sendPresenceUpdate('unavailable');
 
         let timestamp = received?.messageTimestamp;
 
@@ -945,6 +1019,24 @@ export class WAStartupService {
           timestamp = 0;
         }
 
+        const edit = getEncryptedMessageEdit(received.message);
+        if (edit) {
+          if (edit.targetMessageKey?.id) {
+            const update = {
+              ...received.key,
+              id: edit.targetMessageKey.id,
+              type: 'MESSAGE_EDIT',
+              messageTimestamp: timestamp,
+              dateTime: new Date(),
+              instanceId: this.instance.id,
+            };
+            this.ws.send(this.instance.name, 'messages.update', update);
+            await this.sendDataWebhook('messagesUpdated', update);
+          }
+          continue;
+        }
+
+        await this.client.sendPresenceUpdate('unavailable');
         const messageType = getContentType(received.message);
         if (!messageType) {
           return;
@@ -993,7 +1085,13 @@ export class WAStartupService {
         } as PrismType.Message;
 
         if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
-          const { id } = await this.repository.message.create({ data: messageRaw });
+          const messageSecret = received.message.messageContextInfo?.messageSecret;
+          const { id } = await this.repository.message.create({
+            data: {
+              ...messageRaw,
+              messageSecret: messageSecret?.length ? Uint8Array.from(messageSecret) : undefined,
+            },
+          });
           messageRaw.id = id;
         }
 
@@ -1397,6 +1495,7 @@ export class WAStartupService {
         await this.client.sendPresenceUpdate('paused', recipient);
       }
 
+      let messageSecret: Uint8Array<ArrayBuffer> | undefined;
       const messageSent: Partial<PrismType.Message> = await (async () => {
         let q: WAMessage;
         if (quoted) {
@@ -1474,6 +1573,10 @@ export class WAStartupService {
           timestamp = 0;
         }
 
+        const secret = m.message?.messageContextInfo?.messageSecret;
+        if (secret?.length) {
+          messageSecret = Uint8Array.from(secret);
+        }
         return {
           keyId: m.key.id,
           keyFromMe: m.key.fromMe,
@@ -1492,7 +1595,7 @@ export class WAStartupService {
       })();
       if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
         const { id } = await this.repository.message.create({
-          data: messageSent as PrismType.Message,
+          data: { ...(messageSent as PrismType.Message), messageSecret },
         });
         messageSent.id = id;
       }
@@ -2095,21 +2198,23 @@ export class WAStartupService {
     const keys: proto.IMessageKey[] = [];
     try {
       const messages = await this.repository.message.findMany({
-        where: { id: { in: data.messageId } },
+        where: { instanceId: this.instance.id, id: { in: data.ids } },
         select: {
           keyFromMe: true,
           keyId: true,
           keyRemoteJid: true,
+          keyLid: true,
           keyParticipant: true,
+          keyParticipantLid: true,
         },
       });
 
       for (const message of messages) {
         keys.push({
-          remoteJid: message.keyRemoteJid,
+          remoteJid: message.keyRemoteJid || message.keyLid,
           fromMe: message.keyFromMe,
           id: message.keyId,
-          participant: message?.keyParticipant,
+          participant: message.keyParticipant || message.keyParticipantLid,
         });
       }
       await this.client.readMessages(keys);
@@ -2147,43 +2252,45 @@ export class WAStartupService {
   }
 
   public async deleteMessage(del: DeleteMessage) {
-    try {
-      const id = Number.parseInt(del.id);
-      const everyOne = del?.everyOne === 'true';
-      const message = await this.repository.message.findUnique({
-        where: { id },
-      });
+    const message = await this.repository.message.findUnique({
+      where: { id: Number(del.id), instanceId: this.instance.id },
+      omit: { messageSecret: true },
+    });
+    if (!message) {
+      throw new NotFoundException('Message not found');
+    }
 
-      if (!everyOne) {
+    const jid = message.keyRemoteJid || message.keyLid;
+    if (!jid) {
+      throw new BadRequestException('Message has no chat address');
+    }
+    const key = {
+      id: message.keyId,
+      fromMe: message.keyFromMe,
+      participant: message.keyParticipant || message.keyParticipantLid,
+      remoteJid: jid,
+    };
+
+    try {
+      if (del.everyOne === true || del.everyOne === 'true') {
+        await this.client.sendMessage(jid, { delete: key });
+      } else {
         await this.client.chatModify(
           {
-            clear: {
-              messages: [
-                {
-                  id: message.keyId,
-                  fromMe: message.keyFromMe,
-                  timestamp: message.messageTimestamp,
-                },
-              ],
+            deleteForMe: {
+              key,
+              timestamp: message.messageTimestamp,
+              deleteMedia: false,
             },
-          } as any,
-          message.keyRemoteJid,
+          },
+          jid,
         );
       }
-
-      await this.client.sendMessage(message.keyRemoteJid, {
-        delete: {
-          id: message.keyId,
-          fromMe: message.keyFromMe,
-          participant: message?.keyParticipant,
-          remoteJid: message.keyRemoteJid,
-        },
-      });
 
       return { deletedAt: new Date(), message };
     } catch (error) {
       throw new InternalServerErrorException(
-        'Error while deleting message for everyone',
+        'Error while deleting message',
         error?.toString(),
       );
     }
@@ -2247,9 +2354,20 @@ export class WAStartupService {
         throw new Error('The message is not of the media type');
       }
 
-      if (typeof mediaMessage['mediaKey'] === 'object') {
-        msg.message = JSON.parse(JSON.stringify(msg.message));
+      const storedKey = mediaMessage.mediaKey;
+      const keyBytes = storedKey?.type === 'Buffer' ? storedKey.data : storedKey;
+      let mediaKey = keyBytes;
+      if (typeof keyBytes === 'string') {
+        mediaKey = Buffer.from(keyBytes.replace(/^data:;base64,/, ''), 'base64');
+      } else if (Array.isArray(keyBytes)) {
+        mediaKey = Buffer.from(keyBytes);
+      } else if (!(keyBytes instanceof Uint8Array)) {
+        mediaKey = BufferJSON.reviver('', keyBytes);
       }
+      if (!(mediaKey instanceof Uint8Array) || mediaKey.length !== 32) {
+        throw new Error('Invalid media key');
+      }
+      msg.message = { ...msg.message, [mediaType]: { ...mediaMessage, mediaKey } };
 
       const stream = await downloadMediaMessage(
         { key: msg?.key, message: msg?.message },

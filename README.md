@@ -197,6 +197,8 @@ docker-compose up
 
 ## Webhook Events
 
+Encrypted message edits are reported through `messages.update` (`messagesUpdated` in the webhook settings). An edit carries `type: MESSAGE_EDIT`, the original message's `id`, and `messageTimestamp` in Unix seconds. Baileys must support decrypting the edit before the new text is available.
+
 | Name                        | Event                       | TypeData | Description                                                                           |
 | --------------------------- | --------------------------- | -------- | ------------------------------------------------------------------------------------- | 
 | QRCODE\_UPDATED             | `qrcode.updated`            | JSON     | Sends the base64 of the QR code for reading                                           |

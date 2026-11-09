@@ -97,6 +97,7 @@ model Message {
   pushName          String?         @db.VarChar(100)
   messageType       String          @db.VarChar(100)
   content           Json            @db.JsonB
+  messageSecret     Bytes?
   messageTimestamp  Int             @db.Integer
   device            DeviceMessage
   isGroup           Boolean?        @db.Boolean

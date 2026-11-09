@@ -1318,10 +1318,19 @@ paths:
         - Chat Controller
       summary: Read Messages
       requestBody:
+        required: true
         content:
           application/json:
             schema:
               type: object
+              required: [ids]
+              properties:
+                ids:
+                  type: array
+                  minItems: 1
+                  uniqueItems: true
+                  items:
+                    type: integer
               example:
                 ids:
                   - 1235
@@ -1417,7 +1426,7 @@ paths:
             required: true
             description: 'ID of the message to be deleted'
         responses:
-          '200':
+          '201':
             description: Successful response
             content:
               application/json: {}
@@ -1428,7 +1437,8 @@ paths:
           - Chat Controller
         summary: Delete Message
         description: |
-            This endpoint is used to delete a message for everyone in a chat instance.
+            Deletes a single message for the connected WhatsApp account by default.
+            Set `everyOne=true` to request revocation for all participants.
             It requires the `instanceName` parameter in the path and the `id` parameter in the query.
         parameters:
           - name: instanceName
@@ -1447,18 +1457,17 @@ paths:
           - name: everyOne
             in: query
             schema:
-              type: string
+              type: boolean
               default: false
-              enum:
-                - true
-                - false
             required: false
-            description: "Specifies whether the message should be deleted for everyone in the chat."
+            description: Requests revocation for all participants when true.
         responses:
           '200':
-            description: Successful response
+            description: WhatsApp acknowledged the request. Device synchronization may occur later.
             content:
               application/json: {}
+          '404':
+            description: Message not found for this instance.
 
   /chat/deleteChat/{instanceName}:
       delete:
@@ -1649,6 +1658,7 @@ paths:
       summary: Retrieve Media Message
       description: |
         Retrieve a specific media message from a given chat instance. This endpoint requires the `instanceName` as a path parameter and `keyId` of the media message in the request body.
+        If a download fails after streaming begins, the server closes the connection.
       parameters:
         - name: instanceName
           in: path
@@ -1659,12 +1669,10 @@ paths:
         - name: binary
           in: query
           schema:
-            type: string
+            type: boolean
             default: false
-            enum:
-              - true
-              - false
           required: false
+          description: Returns the media bytes directly when true. Defaults to a multipart response.
       requestBody:
         required: true
         content:
@@ -1681,12 +1689,29 @@ paths:
                 keyId: "3A778B978B5D9995F574"
       responses:
         '200':
-          description: Media message retrieved successfully. The response is a binary file of the media.
+          description: Media retrieved successfully.
           content:
             application/octet-stream:
               schema:
                 type: string
                 format: binary
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  mediaType:
+                    type: string
+                  fileName:
+                    type: string
+                  size:
+                    type: string
+                  mimetype:
+                    type: string
+                  caption:
+                    type: string
+                  file:
+                    type: string
+                    format: binary
         '404':
           description: Media message not found or instance not found.
           content:

@@ -65,13 +65,9 @@ export async function dataValidate<T>(args: DataValidate<T>) {
   const { request, schema, execute } = args;
 
   const body = request.body ?? {};
-  const instance = request.params as unknown as InstanceDto;
+  const instance = { ...request.query, ...request.params } as unknown as InstanceDto;
 
   const isNotEmptyQuery = Object.keys(request?.query ?? {}).length > 0;
-
-  if (isNotEmptyQuery) {
-    Object.assign(instance, request.query);
-  }
 
   if (request.originalUrl.includes('/instance/create')) {
     Object.assign(instance, body);

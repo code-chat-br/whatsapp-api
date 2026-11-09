@@ -532,7 +532,8 @@ export const deleteMessageSchema: JSONSchema7 = {
   $id: ulid(),
   type: 'object',
   properties: {
-    id: { type: 'string', pattern: '\\d+', minLength: 1 },
+    id: { type: 'string', pattern: '^\\d+$', minLength: 1 },
+    everyOne: { enum: [true, false, 'true', 'false'] },
   },
   required: ['id'],
   ...isNotEmpty('id'),
