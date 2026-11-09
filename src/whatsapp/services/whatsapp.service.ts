@@ -57,12 +57,14 @@ import makeWASocket, {
   GroupParticipant,
   isJidGroup,
   isLidUser,
+  jidNormalizedUser,
   makeCacheableSignalKeyStore,
   MessageUpsertType,
   normalizeMessageContent,
   ParticipantAction,
   prepareWAMessageMedia,
   proto,
+  toNumber,
   useMultiFileAuthState,
   UserFacingSocketConfig,
   USyncQuery,
@@ -165,6 +167,11 @@ import { fetchLatestBaileysVersionV2 } from '../../utils/wa-version';
 import { getJidUser, getUserGroup } from '../../utils/extract-id';
 import { getObjectUrl } from '../../integrations/minio/minio.utils';
 import { encodeProps } from '../../utils/encode.props';
+import {
+  decryptMessageEdit,
+  getEncryptedMessageEdit,
+  userJidAliases,
+} from '../../utils/message-edit';
 
 export const MessageSubtype = () => [
   'ephemeralMessage',
@@ -193,15 +200,6 @@ type InstanceStateConnection = {
   state: 'refused' | WAConnectionState;
   statusReason?: number;
 };
-
-function getEncryptedMessageEdit(message: proto.IMessage) {
-  const edit = normalizeMessageContent(message)?.secretEncryptedMessage;
-  if (
-    edit?.secretEncType === proto.Message.SecretEncryptedMessage.SecretEncType.MESSAGE_EDIT
-  ) {
-    return edit;
-  }
-}
 
 export class WAStartupService {
   constructor(
@@ -552,23 +550,57 @@ export class WAStartupService {
     }
   }
 
-  private async getSocketMessage(key: WAMessageKey): Promise<proto.IMessage | undefined> {
-    if (!key.id || !key.remoteJid) {
+  private async messageScope(
+    key: WAMessageKey,
+  ): Promise<PrismType.Prisma.MessageWhereInput | undefined> {
+    const chat = jidNormalizedUser(key.remoteJid);
+    if (!key.id || !chat || typeof key.fromMe !== 'boolean') {
       return;
     }
 
-    const chatIds = [key.remoteJid];
-    if (key.remoteJidAlt) {
-      chatIds.push(key.remoteJidAlt);
+    const mapping = this.client?.signalRepository?.lidMapping;
+    const group = isJidGroup(chat);
+    const aliases = group ? [] : await userJidAliases([chat, key.remoteJidAlt], mapping);
+    const chatIds = [...new Set([chat, ...aliases])];
+    const scope: PrismType.Prisma.MessageWhereInput = {
+      instanceId: this.instance.id,
+      keyId: key.id,
+      keyFromMe: key.fromMe,
+      OR: [{ keyRemoteJid: { in: chatIds } }, { keyLid: { in: chatIds } }],
+    };
+    const me = this.authState.state?.creds.me;
+    const ownAddresses = [me?.id, me?.lid].map(jidNormalizedUser).filter(Boolean);
+    if (key.fromMe && !group && ownAddresses.includes(chat)) {
+      // Older linked-device rows can carry our account as the alternate address of a different chat.
+      scope.AND = [
+        { OR: [{ keyRemoteJid: null }, { keyRemoteJid: { in: ownAddresses } }] },
+        { OR: [{ keyLid: null }, { keyLid: { in: ownAddresses } }] },
+      ];
     }
+    if (group && !key.fromMe) {
+      const authors = await userJidAliases([key.participant, key.participantAlt], mapping);
+      if (!authors.length) {
+        return;
+      }
+      scope.AND = {
+        OR: [{ keyParticipant: { in: authors } }, { keyParticipantLid: { in: authors } }],
+      };
+    }
+    return scope;
+  }
+
+  private async getSocketMessage(key: WAMessageKey): Promise<proto.IMessage | undefined> {
+    const where = await this.messageScope(key);
+    if (!where) {
+      return;
+    }
+
     const stored = await this.repository.message.findFirst({
-      where: {
-        instanceId: this.instance.id,
-        keyId: key.id,
-        keyFromMe: key.fromMe ?? undefined,
-        OR: [{ keyRemoteJid: { in: chatIds } }, { keyLid: { in: chatIds } }],
-      },
-      orderBy: { messageSecret: { sort: 'desc', nulls: 'last' } },
+      where,
+      orderBy: [
+        { messageEditedAt: { sort: 'desc', nulls: 'last' } },
+        { messageSecret: { sort: 'desc', nulls: 'last' } },
+      ],
       select: { content: true, messageType: true, messageSecret: true },
     });
     if (!stored) {
@@ -584,6 +616,85 @@ export class WAStartupService {
       message.messageContextInfo = { messageSecret: stored.messageSecret };
     }
     return message;
+  }
+
+  private async handleEncryptedMessageEdit(
+    envelope: WAMessage,
+    edit: proto.Message.ISecretEncryptedMessage,
+  ) {
+    const target = edit.targetMessageKey;
+    if (!target?.id) {
+      return;
+    }
+
+    const key = { ...envelope.key, id: target.id };
+    const update = {
+      ...key,
+      type: 'MESSAGE_EDIT',
+      messageTimestamp: toNumber(envelope.messageTimestamp),
+      dateTime: new Date(),
+      instanceId: this.instance.id,
+    };
+    let edited: { messageType: string; content: PrismType.Prisma.InputJsonValue } | undefined;
+
+    try {
+      const scope = await this.messageScope(key);
+      const stored = scope && (await this.repository.message.findFirst({
+          where: { ...scope, messageSecret: { not: null } },
+          orderBy: { id: 'desc' },
+          select: { messageSecret: true },
+        }));
+      if (stored?.messageSecret) {
+        const mapping = this.client?.signalRepository?.lidMapping;
+        const me = this.authState.state?.creds.me;
+        const group = isJidGroup(key.remoteJid);
+        const senderJids = group ? [key.participant, key.participantAlt] : [key.remoteJid, key.remoteJidAlt];
+        const editorJids = key.fromMe ? [me?.id, me?.lid] : senderJids;
+        const editors = await userJidAliases(editorJids, mapping);
+        const senders = target.fromMe
+          ? editors
+          : await userJidAliases([group ? target.participant : target.remoteJid], mapping);
+        const protocol = decryptMessageEdit(edit, stored.messageSecret, senders, editors);
+        const message = normalizeMessageContent(protocol?.editedMessage);
+        const timestamp = toNumber(protocol?.timestampMs) || update.messageTimestamp * 1000;
+
+        if (typeof message?.conversation === 'string') {
+          edited = { messageType: 'conversation', content: { text: message.conversation } };
+        } else if (typeof message?.extendedTextMessage?.text === 'string') {
+          edited = {
+            messageType: 'extendedTextMessage',
+            content: JSON.parse(JSON.stringify(message.extendedTextMessage)),
+          };
+        }
+
+        if (edited && Number.isSafeInteger(timestamp) && timestamp > 0 && timestamp <= 8640000000000000) {
+          const messageEditedAt = new Date(timestamp);
+          const result = await this.repository.message.updateMany({
+            where: {
+              AND: [
+                scope,
+                { OR: [{ messageSecret: stored.messageSecret }, { messageSecret: null }] },
+                { OR: [{ messageEditedAt: null }, { messageEditedAt: { lt: messageEditedAt } }] },
+              ],
+            },
+            data: { ...edited, messageEditedAt },
+          });
+          if (!result.count) {
+            return;
+          }
+          update.messageTimestamp = Math.floor(timestamp / 1000);
+        } else {
+          edited = undefined;
+        }
+      }
+    } catch {
+      this.logger.warn('Could not apply encrypted message edit');
+      edited = undefined;
+    }
+
+    const event = { ...update, ...edited };
+    this.ws.send(this.instance.name, 'messages.update', event);
+    await this.sendDataWebhook('messagesUpdated', event);
   }
 
   private async defineAuthState() {
@@ -1021,18 +1132,7 @@ export class WAStartupService {
 
         const edit = getEncryptedMessageEdit(received.message);
         if (edit) {
-          if (edit.targetMessageKey?.id) {
-            const update = {
-              ...received.key,
-              id: edit.targetMessageKey.id,
-              type: 'MESSAGE_EDIT',
-              messageTimestamp: timestamp,
-              dateTime: new Date(),
-              instanceId: this.instance.id,
-            };
-            this.ws.send(this.instance.name, 'messages.update', update);
-            await this.sendDataWebhook('messagesUpdated', update);
-          }
+          await this.handleEncryptedMessageEdit(received, edit);
           continue;
         }
 
@@ -1084,8 +1184,29 @@ export class WAStartupService {
           isGroup: isJidGroup(received.key.remoteJid),
         } as PrismType.Message;
 
-        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
-          const messageSecret = received.message.messageContextInfo?.messageSecret;
+        const messageSecret = received.message.messageContextInfo?.messageSecret;
+        if (type === 'append') {
+          const where = await this.messageScope(received.key);
+          const existing = where && (await this.repository.message.findFirst({
+            where,
+            orderBy: { messageEditedAt: { sort: 'desc', nulls: 'last' } },
+            select: { id: true, messageSecret: true, messageEditedAt: true },
+          }));
+          if (existing?.messageEditedAt) {
+            continue;
+          }
+          if (existing) {
+            messageRaw.id = existing.id;
+            if (!existing.messageSecret && messageSecret?.length && this.databaseOptions.DB_OPTIONS.NEW_MESSAGE) {
+              await this.repository.message.updateMany({
+                where: { id: existing.id, messageSecret: null },
+                data: { messageSecret: Uint8Array.from(messageSecret) },
+              });
+            }
+          }
+        }
+
+        if (this.databaseOptions.DB_OPTIONS.NEW_MESSAGE && !messageRaw.id) {
           const { id } = await this.repository.message.create({
             data: {
               ...messageRaw,
@@ -1093,19 +1214,6 @@ export class WAStartupService {
             },
           });
           messageRaw.id = id;
-        }
-
-        if (type === 'append') {
-          const find = await this.repository.message.findFirst({
-            where: {
-              keyId: messageRaw.keyId,
-              instanceId: messageRaw.instanceId,
-            },
-          });
-
-          if (find?.id) {
-            messageRaw.id = find.id;
-          }
         }
 
         messageRaw['info'] = { type };
@@ -2254,7 +2362,7 @@ export class WAStartupService {
   public async deleteMessage(del: DeleteMessage) {
     const message = await this.repository.message.findUnique({
       where: { id: Number(del.id), instanceId: this.instance.id },
-      omit: { messageSecret: true },
+      omit: { messageSecret: true, messageEditedAt: true },
     });
     if (!message) {
       throw new NotFoundException('Message not found');

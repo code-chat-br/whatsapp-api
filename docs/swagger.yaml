@@ -55,7 +55,7 @@ info:
     can build stronger and more authentic relationships with their customers, generating lasting satisfaction and loyalty.
 
     [![Run in Postman](https://run.pstmn.io/button.svg)](https://www.postman.com/codechat/codechat-api/overview)
-  version: 1.3.8
+  version: 1.3.9
   contact:
     name: jrCleber
     email: cleber@codechat.dev
@@ -2295,7 +2295,7 @@ paths:
       summary: Set or Update Webhook
       description: |
         Create or update a webhook configuration for a specific instance. This endpoint allows enabling or disabling the webhook and setting the events to be monitored.
-        Enable `messagesUpdated` to receive encrypted edit notifications. The `messages.update` event includes `type: MESSAGE_EDIT`, the original message ID, and `messageTimestamp` in Unix seconds.
+        Enable `messagesUpdated` to receive encrypted edit notifications. The `messages.update` event includes `type: MESSAGE_EDIT`, the original message ID, and `messageTimestamp` in Unix seconds. When the original message secret is available and the edit is authenticated, the event also includes `messageType` and `content.text`. The edited text is then available in `findMessages`.
       parameters:
         - name: instanceName
           in: path

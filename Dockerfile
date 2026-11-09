@@ -17,6 +17,7 @@ RUN apt-get update \
 
 # Copiar arquivos package.json e instalar dependências
 COPY package*.json ./
+COPY scripts/patch-baileys.cjs ./scripts/
 RUN npm install --force
 
 # Copiar os demais arquivos necessários para o build
